@@ -1,0 +1,7125 @@
+{
+ "app_title": "Level One App — Week 1-2",
+ "word_index": {
+  "Jobs and occupations (Kasblar)": [
+   {
+    "en": "bus driver",
+    "uz": "avtobus haydovchisi"
+   },
+   {
+    "en": "actor",
+    "uz": "aktyor"
+   },
+   {
+    "en": "nurse",
+    "uz": "hamshira"
+   },
+   {
+    "en": "police officer",
+    "uz": "politsiya xodimi"
+   },
+   {
+    "en": "shop assistant",
+    "uz": "sotuvchi"
+   },
+   {
+    "en": "office worker",
+    "uz": "ofis xodimi"
+   },
+   {
+    "en": "businessman",
+    "uz": "tadbirkor (erkak)"
+   },
+   {
+    "en": "businesswoman",
+    "uz": "tadbirkor ayol"
+   },
+   {
+    "en": "digital designer",
+    "uz": "raqamli dizayner"
+   },
+   {
+    "en": "football player",
+    "uz": "futbolchi"
+   },
+   {
+    "en": "artist",
+    "uz": "rassom"
+   }
+  ],
+  "Countries (Davlatlar)": [
+   {
+    "en": "Argentina",
+    "uz": "Argentina"
+   },
+   {
+    "en": "Australia",
+    "uz": "Avstraliya"
+   },
+   {
+    "en": "Brazil",
+    "uz": "Braziliya"
+   },
+   {
+    "en": "Colombia",
+    "uz": "Kolumbiya"
+   },
+   {
+    "en": "India",
+    "uz": "Hindiston"
+   },
+   {
+    "en": "Italy",
+    "uz": "Italiya"
+   },
+   {
+    "en": "Mexico",
+    "uz": "Meksika"
+   },
+   {
+    "en": "the US / the USA",
+    "uz": "AQSH (Amerika Qoʻshma Shtatlari)"
+   },
+   {
+    "en": "South Africa",
+    "uz": "Janubiy Afrika"
+   },
+   {
+    "en": "South Korea",
+    "uz": "Janubiy Koreya"
+   },
+   {
+    "en": "Poland",
+    "uz": "Polsha"
+   },
+   {
+    "en": "Spain",
+    "uz": "Ispaniya"
+   },
+   {
+    "en": "Turkey",
+    "uz": "Turkiya"
+   },
+   {
+    "en": "the UK",
+    "uz": "Buyuk Britaniya"
+   },
+   {
+    "en": "China",
+    "uz": "Xitoy"
+   },
+   {
+    "en": "Vietnam",
+    "uz": "Vyetnam"
+   },
+   {
+    "en": "Japan",
+    "uz": "Yaponiya"
+   },
+   {
+    "en": "France",
+    "uz": "Fransiya"
+   },
+   {
+    "en": "Germany",
+    "uz": "Germaniya"
+   },
+   {
+    "en": "Switzerland",
+    "uz": "Shveytsariya"
+   }
+  ],
+  "Nationalities (Millatlar)": [
+   {
+    "en": "Argentinian",
+    "uz": "argentinalik"
+   },
+   {
+    "en": "Australian",
+    "uz": "avstraliyalik"
+   },
+   {
+    "en": "Brazilian",
+    "uz": "braziliyalik"
+   },
+   {
+    "en": "Colombian",
+    "uz": "kolumbiyalik"
+   },
+   {
+    "en": "Indian",
+    "uz": "hindistonlik (hind)"
+   },
+   {
+    "en": "Italian",
+    "uz": "italiyalik (italyan)"
+   },
+   {
+    "en": "Mexican",
+    "uz": "meksikalik"
+   },
+   {
+    "en": "American",
+    "uz": "amerikalik"
+   },
+   {
+    "en": "South African",
+    "uz": "janubiy afrikalik"
+   },
+   {
+    "en": "South Korean",
+    "uz": "janubiy koreyalik"
+   },
+   {
+    "en": "Polish",
+    "uz": "polshalik (polyak)"
+   },
+   {
+    "en": "Spanish",
+    "uz": "ispaniyalik (ispan)"
+   },
+   {
+    "en": "Turkish",
+    "uz": "turkiyalik (turk)"
+   },
+   {
+    "en": "British",
+    "uz": "britaniyalik"
+   },
+   {
+    "en": "Chinese",
+    "uz": "xitoylik"
+   },
+   {
+    "en": "Vietnamese",
+    "uz": "vyetnamlik"
+   },
+   {
+    "en": "Japanese",
+    "uz": "yaponiyalik (yapon)"
+   },
+   {
+    "en": "French",
+    "uz": "fransiyalik (fransuz)"
+   },
+   {
+    "en": "German",
+    "uz": "germaniyalik (nemis)"
+   },
+   {
+    "en": "Swiss",
+    "uz": "shveytsariyalik"
+   }
+  ],
+  "Objects (Buyumlar)": [
+   {
+    "en": "bag",
+    "uz": "sumka"
+   },
+   {
+    "en": "banana",
+    "uz": "banan"
+   },
+   {
+    "en": "book",
+    "uz": "kitob"
+   },
+   {
+    "en": "bottle of water",
+    "uz": "bir shisha suv"
+   },
+   {
+    "en": "key",
+    "uz": "kalit"
+   },
+   {
+    "en": "laptop",
+    "uz": "noutbuk"
+   },
+   {
+    "en": "make-up",
+    "uz": "pardoz-andoz (kosmetika)"
+   },
+   {
+    "en": "mobile phone",
+    "uz": "mobil telefon"
+   },
+   {
+    "en": "notebook",
+    "uz": "daftar"
+   },
+   {
+    "en": "purse",
+    "uz": "hamyon (koʻpincha ayollarniki)"
+   },
+   {
+    "en": "sandwich",
+    "uz": "sendvich (buterbrod)"
+   },
+   {
+    "en": "umbrella",
+    "uz": "soyabon"
+   },
+   {
+    "en": "wallet",
+    "uz": "hamyon (koʻpincha erkaklarniki)"
+   }
+  ]
+ },
+ "exercises": [
+  {
+   "id": "g1_plural_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 1 · Birlik va koʻplik (Plural nouns)",
+   "number": 1,
+   "title": "Ex 1: Write the plural (-s)",
+   "instruction_en": "Write the plural form.",
+   "instruction_uz": "Koʻplik shaklini yozing (oddiy -s).",
+   "questions": [
+    {
+     "q": "1. pen →",
+     "a": "pens"
+    },
+    {
+     "q": "2. book →",
+     "a": "books"
+    },
+    {
+     "q": "3. car →",
+     "a": "cars"
+    },
+    {
+     "q": "4. cat →",
+     "a": "cats"
+    },
+    {
+     "q": "5. phone →",
+     "a": "phones"
+    },
+    {
+     "q": "6. bag →",
+     "a": "bags"
+    },
+    {
+     "q": "7. key →",
+     "a": "keys"
+    },
+    {
+     "q": "8. student →",
+     "a": "students"
+    },
+    {
+     "q": "9. apple →",
+     "a": "apples"
+    },
+    {
+     "q": "10. bottle →",
+     "a": "bottles"
+    }
+   ]
+  },
+  {
+   "id": "g1_plural_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 1 · Birlik va koʻplik (Plural nouns)",
+   "number": 2,
+   "title": "Ex 2: Write the plural (-es)",
+   "instruction_en": "Add -es. Write the plural form.",
+   "instruction_uz": "Soʻzlar -s, -x, -ch, -sh bilan tugasa, -es qoʻshiladi. Koʻplik shaklini yozing.",
+   "questions": [
+    {
+     "q": "1. watch →",
+     "a": "watches"
+    },
+    {
+     "q": "2. glass →",
+     "a": "glasses"
+    },
+    {
+     "q": "3. dish →",
+     "a": "dishes"
+    },
+    {
+     "q": "4. box →",
+     "a": "boxes"
+    },
+    {
+     "q": "5. bus →",
+     "a": "buses"
+    },
+    {
+     "q": "6. class →",
+     "a": "classes"
+    },
+    {
+     "q": "7. sandwich →",
+     "a": "sandwiches"
+    },
+    {
+     "q": "8. brush →",
+     "a": "brushes"
+    }
+   ]
+  },
+  {
+   "id": "g1_plural_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 1 · Birlik va koʻplik (Plural nouns)",
+   "number": 3,
+   "title": "Ex 3: Consonant + y → -ies",
+   "instruction_en": "Choose the correct plural.",
+   "instruction_uz": "Toʻgʻri koʻplik shaklini tanlang (undoshdan keyin y turgan soʻzlar -ies boʻladi).",
+   "questions": [
+    {
+     "q": "1. country →",
+     "options": [
+      "countrys",
+      "countries",
+      "countryes"
+     ],
+     "a": "countries"
+    },
+    {
+     "q": "2. baby →",
+     "options": [
+      "babys",
+      "babies",
+      "babyes"
+     ],
+     "a": "babies"
+    },
+    {
+     "q": "3. city →",
+     "options": [
+      "cities",
+      "cityes",
+      "citys"
+     ],
+     "a": "cities"
+    },
+    {
+     "q": "4. family →",
+     "options": [
+      "families",
+      "familyes",
+      "familys"
+     ],
+     "a": "families"
+    },
+    {
+     "q": "5. story →",
+     "options": [
+      "stories",
+      "storyes",
+      "storys"
+     ],
+     "a": "stories"
+    },
+    {
+     "q": "6. lady →",
+     "options": [
+      "ladies",
+      "ladys",
+      "ladyes"
+     ],
+     "a": "ladies"
+    },
+    {
+     "q": "7. party →",
+     "options": [
+      "parties",
+      "partyes",
+      "partys"
+     ],
+     "a": "parties"
+    },
+    {
+     "q": "8. body →",
+     "options": [
+      "bodyes",
+      "bodies",
+      "bodys"
+     ],
+     "a": "bodies"
+    }
+   ]
+  },
+  {
+   "id": "g1_plural_4",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 1 · Birlik va koʻplik (Plural nouns)",
+   "number": 4,
+   "title": "Ex 4: -s, -es or -ies?",
+   "instruction_en": "Which ending do we add?",
+   "instruction_uz": "Qaysi qoʻshimcha qoʻshiladi: -s, -es yoki -ies?",
+   "questions": [
+    {
+     "q": "1. book + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-s"
+    },
+    {
+     "q": "2. watch + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-es"
+    },
+    {
+     "q": "3. country + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-ies"
+    },
+    {
+     "q": "4. dish + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-es"
+    },
+    {
+     "q": "5. baby + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-ies"
+    },
+    {
+     "q": "6. glass + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-es"
+    },
+    {
+     "q": "7. pen + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-s"
+    },
+    {
+     "q": "8. city + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-ies"
+    },
+    {
+     "q": "9. box + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-es"
+    },
+    {
+     "q": "10. phone + ?",
+     "options": [
+      "-s",
+      "-es",
+      "-ies"
+     ],
+     "a": "-s"
+    }
+   ]
+  },
+  {
+   "id": "g1_plural_5",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 1 · Birlik va koʻplik (Plural nouns)",
+   "number": 5,
+   "title": "Ex 5: Irregular plurals",
+   "instruction_en": "Write the plural form. Some nouns are irregular.",
+   "instruction_uz": "Koʻplik shaklini yozing. Ba'zi otlar qoidaga boʻysunmaydi: man, woman, child, person.",
+   "questions": [
+    {
+     "q": "1. man →",
+     "a": "men"
+    },
+    {
+     "q": "2. woman →",
+     "a": "women"
+    },
+    {
+     "q": "3. child →",
+     "a": "children"
+    },
+    {
+     "q": "4. person →",
+     "a": "people"
+    },
+    {
+     "q": "5. one child, two ___",
+     "a": "children"
+    },
+    {
+     "q": "6. one woman, three ___",
+     "a": "women"
+    },
+    {
+     "q": "7. one man, four ___",
+     "a": "men"
+    },
+    {
+     "q": "8. one person, many ___",
+     "a": "people"
+    },
+    {
+     "q": "9. baby →",
+     "a": "babies"
+    },
+    {
+     "q": "10. watch →",
+     "a": "watches"
+    }
+   ]
+  },
+  {
+   "id": "g1_artA_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 2 · Noaniq artikl (A and An)",
+   "number": 1,
+   "title": "Ex 1: A or an?",
+   "instruction_en": "Choose a or an.",
+   "instruction_uz": "A yoki an ni tanlang.",
+   "questions": [
+    {
+     "q": "1. ___ dog",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "2. ___ apple",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "3. ___ egg",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "4. ___ cat",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "5. ___ orange",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "6. ___ waiter",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "7. ___ engineer",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "8. ___ book",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "9. ___ umbrella",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "10. ___ teacher",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    }
+   ]
+  },
+  {
+   "id": "g1_artA_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 2 · Noaniq artikl (A and An)",
+   "number": 2,
+   "title": "Ex 2: Sounds, not letters",
+   "instruction_en": "Choose a or an. Listen to the first sound.",
+   "instruction_uz": "Birinchi harf emas, birinchi tovushga qarang: a university, an hour.",
+   "questions": [
+    {
+     "q": "1. ___ university",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "2. ___ hour",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "3. ___ uniform",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "4. ___ honest man",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "5. ___ actor",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "6. ___ banana",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "7. ___ artist",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "8. ___ office worker",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    }
+   ]
+  },
+  {
+   "id": "g1_artA_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 2 · Noaniq artikl (A and An)",
+   "number": 3,
+   "title": "Ex 3: Complete the sentence",
+   "instruction_en": "Write a or an.",
+   "instruction_uz": "Boʻsh joyga a yoki an ni yozing.",
+   "questions": [
+    {
+     "q": "1. She is ___ nurse.",
+     "a": "a"
+    },
+    {
+     "q": "2. He is ___ actor.",
+     "a": "an"
+    },
+    {
+     "q": "3. It is ___ egg.",
+     "a": "an"
+    },
+    {
+     "q": "4. I have ___ phone.",
+     "a": "a"
+    },
+    {
+     "q": "5. He is ___ engineer.",
+     "a": "an"
+    },
+    {
+     "q": "6. This is ___ umbrella.",
+     "a": "an"
+    },
+    {
+     "q": "7. She is ___ police officer.",
+     "a": "a"
+    },
+    {
+     "q": "8. It is ___ orange.",
+     "a": "an"
+    }
+   ]
+  },
+  {
+   "id": "g1_tobe_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 3 · To be: am, is, are",
+   "number": 1,
+   "title": "Ex 1: Am, is or are?",
+   "instruction_en": "Choose am, is or are.",
+   "instruction_uz": "Am, is yoki are ni tanlang.",
+   "questions": [
+    {
+     "q": "1. I ___ a student.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "am"
+    },
+    {
+     "q": "2. He ___ a teacher.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "3. She ___ a nurse.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "4. It ___ a cat.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "5. We ___ friends.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "6. You ___ a waiter.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "7. They ___ students.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "8. I ___ an engineer.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "am"
+    },
+    {
+     "q": "9. She ___ a driver.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "10. We ___ teachers.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    }
+   ]
+  },
+  {
+   "id": "g1_tobe_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 3 · To be: am, is, are",
+   "number": 2,
+   "title": "Ex 2: Write am, is or are",
+   "instruction_en": "Write am, is or are.",
+   "instruction_uz": "Boʻsh joyga am, is yoki are ni yozing.",
+   "questions": [
+    {
+     "q": "1. I ___ a doctor.",
+     "a": "am"
+    },
+    {
+     "q": "2. They ___ police officers.",
+     "a": "are"
+    },
+    {
+     "q": "3. He ___ an actor.",
+     "a": "is"
+    },
+    {
+     "q": "4. We ___ students.",
+     "a": "are"
+    },
+    {
+     "q": "5. It ___ a dog.",
+     "a": "is"
+    },
+    {
+     "q": "6. You ___ an artist.",
+     "a": "are"
+    },
+    {
+     "q": "7. She ___ a manager.",
+     "a": "is"
+    },
+    {
+     "q": "8. I ___ a baker.",
+     "a": "am"
+    },
+    {
+     "q": "9. They ___ footballers.",
+     "a": "are"
+    },
+    {
+     "q": "10. It ___ an egg.",
+     "a": "is"
+    }
+   ]
+  },
+  {
+   "id": "g1_tobe_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 3 · To be: am, is, are",
+   "number": 3,
+   "title": "Ex 3: Translate into English",
+   "instruction_en": "Translate the sentence into English.",
+   "instruction_uz": "Gapni inglizchaga tarjima qiling.",
+   "questions": [
+    {
+     "q": "1. Men oʻquvchiman.",
+     "a": "I am a student|I'm a student"
+    },
+    {
+     "q": "2. U (erkak) oʻqituvchi.",
+     "a": "He is a teacher|He's a teacher"
+    },
+    {
+     "q": "3. U (ayol) hamshira.",
+     "a": "She is a nurse|She's a nurse"
+    },
+    {
+     "q": "4. Biz doʻstmiz.",
+     "a": "We are friends|We're friends"
+    },
+    {
+     "q": "5. Ular talabalar.",
+     "a": "They are students|They're students"
+    },
+    {
+     "q": "6. Siz haydovchisiz. (bitta odamga)",
+     "a": "You are a driver|You're a driver"
+    },
+    {
+     "q": "7. Bu mushuk.",
+     "a": "It is a cat|It's a cat"
+    },
+    {
+     "q": "8. Men muhandisman.",
+     "a": "I am an engineer|I'm an engineer"
+    }
+   ]
+  },
+  {
+   "id": "g1_tobe_4",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 3 · To be: am, is, are",
+   "number": 4,
+   "title": "Ex 4: Correct the mistake",
+   "instruction_en": "Correct the mistake. Write the correct sentence.",
+   "instruction_uz": "Xatoni toping va toʻgʻri gapni yozing.",
+   "questions": [
+    {
+     "q": "1. He are a teacher.",
+     "a": "He is a teacher"
+    },
+    {
+     "q": "2. I is a student.",
+     "a": "I am a student"
+    },
+    {
+     "q": "3. They is nurses.",
+     "a": "They are nurses"
+    },
+    {
+     "q": "4. We am friends.",
+     "a": "We are friends"
+    },
+    {
+     "q": "5. She are a doctor.",
+     "a": "She is a doctor"
+    },
+    {
+     "q": "6. It are a cat.",
+     "a": "It is a cat"
+    },
+    {
+     "q": "7. You is a waiter.",
+     "a": "You are a waiter"
+    },
+    {
+     "q": "8. I are an actor.",
+     "a": "I am an actor"
+    }
+   ]
+  },
+  {
+   "id": "g1_noun_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 4 · Am, is, are + ot (noun)",
+   "number": 1,
+   "title": "Ex 1: Choose the correct sentence",
+   "instruction_en": "Choose the correct sentence.",
+   "instruction_uz": "Toʻgʻri gapni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which sentence is correct?",
+     "options": [
+      "I is a teacher.",
+      "I am a teacher.",
+      "I are a teacher."
+     ],
+     "a": "I am a teacher."
+    },
+    {
+     "q": "2. Which sentence is correct?",
+     "options": [
+      "She is a engineer.",
+      "She is an engineer.",
+      "She are an engineer."
+     ],
+     "a": "She is an engineer."
+    },
+    {
+     "q": "3. Which sentence is correct?",
+     "options": [
+      "We are students.",
+      "We is students.",
+      "We are student."
+     ],
+     "a": "We are students."
+    },
+    {
+     "q": "4. Which sentence is correct?",
+     "options": [
+      "He am an actor.",
+      "He is an actor.",
+      "He is a actor."
+     ],
+     "a": "He is an actor."
+    },
+    {
+     "q": "5. Which sentence is correct?",
+     "options": [
+      "They is police officers.",
+      "They are a police officer.",
+      "They are police officers."
+     ],
+     "a": "They are police officers."
+    },
+    {
+     "q": "6. Which sentence is correct?",
+     "options": [
+      "You am waiters.",
+      "You are waiters.",
+      "You is waiters."
+     ],
+     "a": "You are waiters."
+    },
+    {
+     "q": "7. Which sentence is correct?",
+     "options": [
+      "It is a cat.",
+      "It is an cat.",
+      "It are a cat."
+     ],
+     "a": "It is a cat."
+    },
+    {
+     "q": "8. Which sentence is correct?",
+     "options": [
+      "I are an artist.",
+      "I am an artist.",
+      "I am a artist."
+     ],
+     "a": "I am an artist."
+    }
+   ]
+  },
+  {
+   "id": "g1_noun_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 4 · Am, is, are + ot (noun)",
+   "number": 2,
+   "title": "Ex 2: A, an or plural?",
+   "instruction_en": "Choose the correct word.",
+   "instruction_uz": "Toʻgʻri variantni tanlang.",
+   "questions": [
+    {
+     "q": "1. I am ___ engineer.",
+     "options": [
+      "a",
+      "an",
+      "—"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "2. We are ___.",
+     "options": [
+      "student",
+      "a student",
+      "students"
+     ],
+     "a": "students"
+    },
+    {
+     "q": "3. He is ___ driver.",
+     "options": [
+      "a",
+      "an",
+      "—"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "4. They are ___.",
+     "options": [
+      "a nurse",
+      "nurses",
+      "an nurse"
+     ],
+     "a": "nurses"
+    },
+    {
+     "q": "5. She is ___ actor.",
+     "options": [
+      "a",
+      "an",
+      "—"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "6. You are ___. (many people)",
+     "options": [
+      "a waiter",
+      "waiters",
+      "an waiter"
+     ],
+     "a": "waiters"
+    },
+    {
+     "q": "7. It is ___ egg.",
+     "options": [
+      "a",
+      "an",
+      "—"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "8. We are ___.",
+     "options": [
+      "teacher",
+      "an teacher",
+      "teachers"
+     ],
+     "a": "teachers"
+    },
+    {
+     "q": "9. I am ___ baker.",
+     "options": [
+      "a",
+      "an",
+      "—"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "10. They are ___.",
+     "options": [
+      "businessmen",
+      "a businessman",
+      "an businessman"
+     ],
+     "a": "businessmen"
+    }
+   ]
+  },
+  {
+   "id": "g1_noun_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 4 · Am, is, are + ot (noun)",
+   "number": 3,
+   "title": "Ex 3: Make a sentence",
+   "instruction_en": "Make a sentence with am, is or are.",
+   "instruction_uz": "Berilgan soʻzlardan gap tuzing (am, is yoki are qoʻshing).",
+   "questions": [
+    {
+     "q": "1. I / artist",
+     "a": "I am an artist|I'm an artist"
+    },
+    {
+     "q": "2. She / nurse",
+     "a": "She is a nurse|She's a nurse"
+    },
+    {
+     "q": "3. They / police officers",
+     "a": "They are police officers|They're police officers"
+    },
+    {
+     "q": "4. He / bus driver",
+     "a": "He is a bus driver|He's a bus driver"
+    },
+    {
+     "q": "5. We / students",
+     "a": "We are students|We're students"
+    },
+    {
+     "q": "6. It / dog",
+     "a": "It is a dog|It's a dog"
+    },
+    {
+     "q": "7. You / waiters",
+     "a": "You are waiters|You're waiters"
+    },
+    {
+     "q": "8. He / engineer",
+     "a": "He is an engineer|He's an engineer"
+    }
+   ]
+  },
+  {
+   "id": "g1_adj_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 5 · Am, is, are + sifat (adjective)",
+   "number": 1,
+   "title": "Ex 1: Am, is or are + adjective",
+   "instruction_en": "Choose am, is or are.",
+   "instruction_uz": "Am, is yoki are ni tanlang.",
+   "questions": [
+    {
+     "q": "1. I ___ cold.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "am"
+    },
+    {
+     "q": "2. He ___ sad.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "3. She ___ happy.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "4. It ___ hungry.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "5. We ___ young.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "6. You ___ old.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "7. They ___ tired.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "8. I ___ hungry.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "am"
+    },
+    {
+     "q": "9. She ___ cold.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "10. We ___ happy.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    }
+   ]
+  },
+  {
+   "id": "g1_adj_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 5 · Am, is, are + sifat (adjective)",
+   "number": 2,
+   "title": "Ex 2: No article before an adjective",
+   "instruction_en": "Choose the correct sentence.",
+   "instruction_uz": "Sifatdan oldin a/an qoʻyilmaydi. Toʻgʻri gapni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which sentence is correct?",
+     "options": [
+      "I am a cold.",
+      "I am cold."
+     ],
+     "a": "I am cold."
+    },
+    {
+     "q": "2. Which sentence is correct?",
+     "options": [
+      "She is happy.",
+      "She is a happy."
+     ],
+     "a": "She is happy."
+    },
+    {
+     "q": "3. Which sentence is correct?",
+     "options": [
+      "We are tired.",
+      "We are a tired."
+     ],
+     "a": "We are tired."
+    },
+    {
+     "q": "4. Which sentence is correct?",
+     "options": [
+      "He is sad.",
+      "He is a sad."
+     ],
+     "a": "He is sad."
+    },
+    {
+     "q": "5. Which sentence is correct?",
+     "options": [
+      "It is hungry.",
+      "It is a hungry."
+     ],
+     "a": "It is hungry."
+    },
+    {
+     "q": "6. Which sentence is correct?",
+     "options": [
+      "They are a young.",
+      "They are young."
+     ],
+     "a": "They are young."
+    },
+    {
+     "q": "7. Which sentence is correct?",
+     "options": [
+      "You are old.",
+      "You are an old."
+     ],
+     "a": "You are old."
+    },
+    {
+     "q": "8. Which sentence is correct?",
+     "options": [
+      "I am an hungry.",
+      "I am hungry."
+     ],
+     "a": "I am hungry."
+    }
+   ]
+  },
+  {
+   "id": "g1_adj_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 5 · Am, is, are + sifat (adjective)",
+   "number": 3,
+   "title": "Ex 3: Adjective + noun: a or an?",
+   "instruction_en": "Choose a or an. Look at the first sound of the adjective.",
+   "instruction_uz": "A yoki an ni tanlang. Sifatning birinchi tovushiga qarang.",
+   "questions": [
+    {
+     "q": "1. I am ___ beautiful girl.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "2. He is ___ handsome boy.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "3. He is ___ honest man.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "4. She is ___ friendly person.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "5. It is ___ old car.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "6. It is ___ expensive phone.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "7. She is ___ intelligent girl.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "8. He is ___ kind man.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "9. It is ___ big dog.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "10. She is ___ happy girl.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    }
+   ]
+  },
+  {
+   "id": "g1_adj_4",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 5 · Am, is, are + sifat (adjective)",
+   "number": 4,
+   "title": "Ex 4: Person or people?",
+   "instruction_en": "Choose the correct word.",
+   "instruction_uz": "Toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. They are friendly ___.",
+     "options": [
+      "person",
+      "persons",
+      "people"
+     ],
+     "a": "people"
+    },
+    {
+     "q": "2. She is a friendly ___.",
+     "options": [
+      "person",
+      "persons",
+      "people"
+     ],
+     "a": "person"
+    },
+    {
+     "q": "3. We are good ___.",
+     "options": [
+      "man",
+      "men",
+      "mans"
+     ],
+     "a": "men"
+    },
+    {
+     "q": "4. He is a good ___.",
+     "options": [
+      "man",
+      "men",
+      "mans"
+     ],
+     "a": "man"
+    },
+    {
+     "q": "5. They are beautiful ___.",
+     "options": [
+      "woman",
+      "women",
+      "womans"
+     ],
+     "a": "women"
+    },
+    {
+     "q": "6. She is a beautiful ___.",
+     "options": [
+      "woman",
+      "women",
+      "womans"
+     ],
+     "a": "woman"
+    },
+    {
+     "q": "7. They are happy ___.",
+     "options": [
+      "child",
+      "children",
+      "childs"
+     ],
+     "a": "children"
+    },
+    {
+     "q": "8. He is a happy ___.",
+     "options": [
+      "child",
+      "children",
+      "childs"
+     ],
+     "a": "child"
+    }
+   ]
+  },
+  {
+   "id": "g1_adj_5",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 5 · Am, is, are + sifat (adjective)",
+   "number": 5,
+   "title": "Ex 5: Correct the mistake",
+   "instruction_en": "Correct the mistake. Write the correct sentence.",
+   "instruction_uz": "Xatoni toping va toʻgʻri gapni yozing.",
+   "questions": [
+    {
+     "q": "1. I am a happy.",
+     "a": "I am happy"
+    },
+    {
+     "q": "2. She is a beautiful.",
+     "a": "She is beautiful"
+    },
+    {
+     "q": "3. They are friendly persons.",
+     "a": "They are friendly people"
+    },
+    {
+     "q": "4. He is a honest man.",
+     "a": "He is an honest man"
+    },
+    {
+     "q": "5. We are a tired.",
+     "a": "We are tired"
+    },
+    {
+     "q": "6. It is a old car.",
+     "a": "It is an old car"
+    },
+    {
+     "q": "7. She is hungry girl.",
+     "a": "She is a hungry girl"
+    },
+    {
+     "q": "8. They are happy childs.",
+     "a": "They are happy children"
+    }
+   ]
+  },
+  {
+   "id": "g1_have_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 6 · Have va has",
+   "number": 1,
+   "title": "Ex 1: Have or has?",
+   "instruction_en": "Choose have or has.",
+   "instruction_uz": "Have yoki has ni tanlang.",
+   "questions": [
+    {
+     "q": "1. I ___ a new phone.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "2. He ___ a new laptop.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "3. She ___ five dogs.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "4. We ___ five apples.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "5. They ___ nice cars.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "6. It ___ a long tail.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "7. You ___ a nice watch.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "8. I ___ two pencils.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "9. He ___ two brothers.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "10. They ___ a big house.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    }
+   ]
+  },
+  {
+   "id": "g1_have_2",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 6 · Have va has",
+   "number": 2,
+   "title": "Ex 2: Write have or has",
+   "instruction_en": "Write have or has.",
+   "instruction_uz": "Boʻsh joyga have yoki has ni yozing.",
+   "questions": [
+    {
+     "q": "1. She ___ a bag.",
+     "a": "has"
+    },
+    {
+     "q": "2. We ___ two keys.",
+     "a": "have"
+    },
+    {
+     "q": "3. It ___ a small nose.",
+     "a": "has"
+    },
+    {
+     "q": "4. They ___ three laptops.",
+     "a": "have"
+    },
+    {
+     "q": "5. He ___ a blue umbrella.",
+     "a": "has"
+    },
+    {
+     "q": "6. I ___ a sandwich.",
+     "a": "have"
+    },
+    {
+     "q": "7. You ___ a beautiful car.",
+     "a": "have"
+    },
+    {
+     "q": "8. My friend ___ a dog.",
+     "a": "has"
+    }
+   ]
+  },
+  {
+   "id": "g1_have_3",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 6 · Have va has",
+   "number": 3,
+   "title": "Ex 3: Translate into English",
+   "instruction_en": "Translate the sentence into English.",
+   "instruction_uz": "Gapni inglizchaga tarjima qiling.",
+   "questions": [
+    {
+     "q": "1. Menda ikkita qalam bor.",
+     "a": "I have two pencils"
+    },
+    {
+     "q": "2. Uning (erkak) ikkita akasi bor.",
+     "a": "He has two brothers"
+    },
+    {
+     "q": "3. Bizda beshta olma bor.",
+     "a": "We have five apples"
+    },
+    {
+     "q": "4. Uning (ayol) beshta iti bor.",
+     "a": "She has five dogs"
+    },
+    {
+     "q": "5. Ularda chiroyli mashinalar bor.",
+     "a": "They have nice cars"
+    },
+    {
+     "q": "6. Uning (hayvon) uzun dumi bor.",
+     "a": "It has a long tail"
+    }
+   ]
+  },
+  {
+   "id": "g1_review_1",
+   "category": "grammar",
+   "week": "Week 1",
+   "part": "Part 7 · Review test",
+   "number": 1,
+   "title": "Ex 1: Week 1 review test",
+   "instruction_en": "Choose the correct answer.",
+   "instruction_uz": "1-hafta takrorlash testi. Toʻgʻri javobni tanlang.",
+   "questions": [
+    {
+     "q": "1. book → (plural)",
+     "options": [
+      "books",
+      "bookes",
+      "bookies"
+     ],
+     "a": "books"
+    },
+    {
+     "q": "2. watch → (plural)",
+     "options": [
+      "watchs",
+      "watches",
+      "watchies"
+     ],
+     "a": "watches"
+    },
+    {
+     "q": "3. country → (plural)",
+     "options": [
+      "countrys",
+      "countries",
+      "countryes"
+     ],
+     "a": "countries"
+    },
+    {
+     "q": "4. child → (plural)",
+     "options": [
+      "childs",
+      "childes",
+      "children"
+     ],
+     "a": "children"
+    },
+    {
+     "q": "5. ___ egg",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "6. ___ university",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "7. I ___ a teacher.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "am"
+    },
+    {
+     "q": "8. They ___ students.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "9. She ___ happy.",
+     "options": [
+      "am",
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "10. He is ___ honest man.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "an"
+    },
+    {
+     "q": "11. She is ___ beautiful girl.",
+     "options": [
+      "a",
+      "an"
+     ],
+     "a": "a"
+    },
+    {
+     "q": "12. We are ___.",
+     "options": [
+      "tired",
+      "a tired",
+      "an tired"
+     ],
+     "a": "tired"
+    },
+    {
+     "q": "13. They are friendly ___.",
+     "options": [
+      "person",
+      "persons",
+      "people"
+     ],
+     "a": "people"
+    },
+    {
+     "q": "14. I ___ a new phone.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "have"
+    },
+    {
+     "q": "15. She ___ five dogs.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "16. It ___ a long tail.",
+     "options": [
+      "have",
+      "has"
+     ],
+     "a": "has"
+    },
+    {
+     "q": "17. Which sentence is correct?",
+     "options": [
+      "He are a driver.",
+      "He is a driver.",
+      "He am a driver."
+     ],
+     "a": "He is a driver."
+    },
+    {
+     "q": "18. Which sentence is correct?",
+     "options": [
+      "I am a engineer.",
+      "I am an engineer.",
+      "I is an engineer."
+     ],
+     "a": "I am an engineer."
+    },
+    {
+     "q": "19. man → (plural)",
+     "options": [
+      "mans",
+      "men",
+      "manes"
+     ],
+     "a": "men"
+    },
+    {
+     "q": "20. baby → (plural)",
+     "options": [
+      "babys",
+      "babies",
+      "babyes"
+     ],
+     "a": "babies"
+    }
+   ]
+  },
+  {
+   "id": "v1_1a_1",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part A · Kasblar (Jobs)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the word.",
+   "instruction_uz": "Rasmga qarang va toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. What is this person's job?",
+     "options": [
+      "actor",
+      "police officer",
+      "bus driver",
+      "shop assistant"
+     ],
+     "a": "bus driver",
+     "img": "/static/img/vocab/w1_a01.webp"
+    },
+    {
+     "q": "2. What is this person's job?",
+     "options": [
+      "artist",
+      "actor",
+      "shop assistant",
+      "police officer"
+     ],
+     "a": "actor",
+     "img": "/static/img/vocab/w1_a02.webp"
+    },
+    {
+     "q": "3. What is this person's job?",
+     "options": [
+      "actor",
+      "businesswoman",
+      "artist",
+      "police officer"
+     ],
+     "a": "police officer",
+     "img": "/static/img/vocab/w1_a04.webp"
+    },
+    {
+     "q": "4. What is this person's job?",
+     "options": [
+      "shop assistant",
+      "digital designer",
+      "nurse",
+      "police officer"
+     ],
+     "a": "shop assistant",
+     "img": "/static/img/vocab/w1_a05.webp"
+    },
+    {
+     "q": "5. What is this person's job?",
+     "options": [
+      "digital designer",
+      "businessman",
+      "football player",
+      "shop assistant"
+     ],
+     "a": "businessman",
+     "img": "/static/img/vocab/w1_a07.webp"
+    },
+    {
+     "q": "6. What is this person's job?",
+     "options": [
+      "bus driver",
+      "businessman",
+      "shop assistant",
+      "office worker"
+     ],
+     "a": "office worker",
+     "img": "/static/img/vocab/w1_a06.webp"
+    },
+    {
+     "q": "7. What is this person's job?",
+     "options": [
+      "nurse",
+      "businessman",
+      "businesswoman",
+      "office worker"
+     ],
+     "a": "nurse",
+     "img": "/static/img/vocab/w1_a03.webp"
+    },
+    {
+     "q": "8. What is this person's job?",
+     "options": [
+      "businesswoman",
+      "police officer",
+      "digital designer",
+      "nurse"
+     ],
+     "a": "businesswoman",
+     "img": "/static/img/vocab/w1_a08.webp"
+    },
+    {
+     "q": "9. What is this person's job?",
+     "options": [
+      "shop assistant",
+      "football player",
+      "digital designer",
+      "nurse"
+     ],
+     "a": "digital designer",
+     "img": "/static/img/vocab/w1_a09.webp"
+    },
+    {
+     "q": "10. What is this person's job?",
+     "options": [
+      "actor",
+      "football player",
+      "police officer",
+      "businessman"
+     ],
+     "a": "football player",
+     "img": "/static/img/vocab/w1_a10.webp"
+    },
+    {
+     "q": "11. What is this person's job?",
+     "options": [
+      "artist",
+      "police officer",
+      "nurse",
+      "businessman"
+     ],
+     "a": "artist",
+     "img": "/static/img/vocab/w1_a11.webp"
+    }
+   ]
+  },
+  {
+   "id": "v1_1a_2",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part A · Kasblar (Jobs)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. shop assistant",
+     "options": [
+      "futbolchi",
+      "politsiya xodimi",
+      "sotuvchi",
+      "avtobus haydovchisi"
+     ],
+     "a": "sotuvchi"
+    },
+    {
+     "q": "2. businesswoman",
+     "options": [
+      "politsiya xodimi",
+      "aktyor",
+      "rassom",
+      "tadbirkor ayol"
+     ],
+     "a": "tadbirkor ayol"
+    },
+    {
+     "q": "3. office worker",
+     "options": [
+      "tadbirkor ayol",
+      "hamshira",
+      "politsiya xodimi",
+      "ofis xodimi"
+     ],
+     "a": "ofis xodimi"
+    },
+    {
+     "q": "4. nurse",
+     "options": [
+      "sotuvchi",
+      "hamshira",
+      "avtobus haydovchisi",
+      "politsiya xodimi"
+     ],
+     "a": "hamshira"
+    },
+    {
+     "q": "5. artist",
+     "options": [
+      "tadbirkor (erkak)",
+      "rassom",
+      "tadbirkor ayol",
+      "raqamli dizayner"
+     ],
+     "a": "rassom"
+    },
+    {
+     "q": "6. actor",
+     "options": [
+      "ofis xodimi",
+      "aktyor",
+      "futbolchi",
+      "sotuvchi"
+     ],
+     "a": "aktyor"
+    },
+    {
+     "q": "7. bus driver",
+     "options": [
+      "sotuvchi",
+      "rassom",
+      "raqamli dizayner",
+      "avtobus haydovchisi"
+     ],
+     "a": "avtobus haydovchisi"
+    },
+    {
+     "q": "8. football player",
+     "options": [
+      "futbolchi",
+      "politsiya xodimi",
+      "hamshira",
+      "sotuvchi"
+     ],
+     "a": "futbolchi"
+    },
+    {
+     "q": "9. digital designer",
+     "options": [
+      "sotuvchi",
+      "raqamli dizayner",
+      "aktyor",
+      "politsiya xodimi"
+     ],
+     "a": "raqamli dizayner"
+    },
+    {
+     "q": "10. police officer",
+     "options": [
+      "politsiya xodimi",
+      "aktyor",
+      "hamshira",
+      "avtobus haydovchisi"
+     ],
+     "a": "politsiya xodimi"
+    },
+    {
+     "q": "11. businessman",
+     "options": [
+      "politsiya xodimi",
+      "ofis xodimi",
+      "sotuvchi",
+      "tadbirkor (erkak)"
+     ],
+     "a": "tadbirkor (erkak)"
+    }
+   ]
+  },
+  {
+   "id": "v1_1a_3",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part A · Kasblar (Jobs)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. politsiya xodimi",
+     "options": [
+      "football player",
+      "bus driver",
+      "office worker",
+      "police officer"
+     ],
+     "a": "police officer"
+    },
+    {
+     "q": "2. tadbirkor ayol",
+     "options": [
+      "shop assistant",
+      "office worker",
+      "businesswoman",
+      "businessman"
+     ],
+     "a": "businesswoman"
+    },
+    {
+     "q": "3. tadbirkor (erkak)",
+     "options": [
+      "football player",
+      "nurse",
+      "businessman",
+      "artist"
+     ],
+     "a": "businessman"
+    },
+    {
+     "q": "4. hamshira",
+     "options": [
+      "businessman",
+      "artist",
+      "nurse",
+      "businesswoman"
+     ],
+     "a": "nurse"
+    },
+    {
+     "q": "5. aktyor",
+     "options": [
+      "artist",
+      "actor",
+      "football player",
+      "businesswoman"
+     ],
+     "a": "actor"
+    },
+    {
+     "q": "6. ofis xodimi",
+     "options": [
+      "bus driver",
+      "nurse",
+      "office worker",
+      "shop assistant"
+     ],
+     "a": "office worker"
+    },
+    {
+     "q": "7. raqamli dizayner",
+     "options": [
+      "bus driver",
+      "digital designer",
+      "police officer",
+      "shop assistant"
+     ],
+     "a": "digital designer"
+    },
+    {
+     "q": "8. rassom",
+     "options": [
+      "nurse",
+      "actor",
+      "artist",
+      "shop assistant"
+     ],
+     "a": "artist"
+    },
+    {
+     "q": "9. futbolchi",
+     "options": [
+      "football player",
+      "office worker",
+      "artist",
+      "police officer"
+     ],
+     "a": "football player"
+    },
+    {
+     "q": "10. sotuvchi",
+     "options": [
+      "shop assistant",
+      "businessman",
+      "police officer",
+      "nurse"
+     ],
+     "a": "shop assistant"
+    },
+    {
+     "q": "11. avtobus haydovchisi",
+     "options": [
+      "football player",
+      "police officer",
+      "office worker",
+      "bus driver"
+     ],
+     "a": "bus driver"
+    }
+   ]
+  },
+  {
+   "id": "v1_1a_4",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part A · Kasblar (Jobs)",
+   "number": 4,
+   "title": "Ex 4: Write the word",
+   "instruction_en": "Write the word for the picture.",
+   "instruction_uz": "Rasmga mos soʻzni yozing.",
+   "questions": [
+    {
+     "q": "1. Write the word for this picture.",
+     "a": "bus driver",
+     "img": "/static/img/vocab/w1_a01.webp"
+    },
+    {
+     "q": "2. Write the word for this picture.",
+     "a": "businesswoman",
+     "img": "/static/img/vocab/w1_a08.webp"
+    },
+    {
+     "q": "3. Write the word for this picture.",
+     "a": "nurse",
+     "img": "/static/img/vocab/w1_a03.webp"
+    },
+    {
+     "q": "4. Write the word for this picture.",
+     "a": "office worker",
+     "img": "/static/img/vocab/w1_a06.webp"
+    },
+    {
+     "q": "5. Write the word for this picture.",
+     "a": "police officer",
+     "img": "/static/img/vocab/w1_a04.webp"
+    },
+    {
+     "q": "6. Write the word for this picture.",
+     "a": "shop assistant",
+     "img": "/static/img/vocab/w1_a05.webp"
+    },
+    {
+     "q": "7. Write the word for this picture.",
+     "a": "digital designer",
+     "img": "/static/img/vocab/w1_a09.webp"
+    },
+    {
+     "q": "8. Write the word for this picture.",
+     "a": "football player",
+     "img": "/static/img/vocab/w1_a10.webp"
+    },
+    {
+     "q": "9. Write the word for this picture.",
+     "a": "actor",
+     "img": "/static/img/vocab/w1_a02.webp"
+    },
+    {
+     "q": "10. Write the word for this picture.",
+     "a": "artist",
+     "img": "/static/img/vocab/w1_a11.webp"
+    },
+    {
+     "q": "11. Write the word for this picture.",
+     "a": "businessman",
+     "img": "/static/img/vocab/w1_a07.webp"
+    }
+   ]
+  },
+  {
+   "id": "v1_1b_1",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part B · Davlatlar (Countries)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the country.",
+   "instruction_uz": "Rasmga qarang va davlat nomini tanlang.",
+   "questions": [
+    {
+     "q": "1. Which country is this?",
+     "options": [
+      "Poland",
+      "Vietnam",
+      "the UK",
+      "Germany"
+     ],
+     "a": "Vietnam",
+     "img": "/static/img/vocab/w1_b16.webp"
+    },
+    {
+     "q": "2. Which country is this?",
+     "options": [
+      "Japan",
+      "Turkey",
+      "Italy",
+      "South Africa"
+     ],
+     "a": "Turkey",
+     "img": "/static/img/vocab/w1_b13.webp"
+    },
+    {
+     "q": "3. Which country is this?",
+     "options": [
+      "Poland",
+      "Spain",
+      "Argentina",
+      "China"
+     ],
+     "a": "Argentina",
+     "img": "/static/img/vocab/w1_b01.webp"
+    },
+    {
+     "q": "4. Which country is this?",
+     "options": [
+      "Italy",
+      "Spain",
+      "Switzerland",
+      "Mexico"
+     ],
+     "a": "Italy",
+     "img": "/static/img/vocab/w1_b06.webp"
+    },
+    {
+     "q": "5. Which country is this?",
+     "options": [
+      "China",
+      "Spain",
+      "Japan",
+      "Poland"
+     ],
+     "a": "Poland",
+     "img": "/static/img/vocab/w1_b11.webp"
+    },
+    {
+     "q": "6. Which country is this?",
+     "options": [
+      "the US / the USA",
+      "Japan",
+      "Australia",
+      "Argentina"
+     ],
+     "a": "Australia",
+     "img": "/static/img/vocab/w1_b02.webp"
+    },
+    {
+     "q": "7. Which country is this?",
+     "options": [
+      "Australia",
+      "Colombia",
+      "Poland",
+      "Mexico"
+     ],
+     "a": "Colombia",
+     "img": "/static/img/vocab/w1_b04.webp"
+    },
+    {
+     "q": "8. Which country is this?",
+     "options": [
+      "India",
+      "Colombia",
+      "Germany",
+      "Poland"
+     ],
+     "a": "Germany",
+     "img": "/static/img/vocab/w1_b19.webp"
+    },
+    {
+     "q": "9. Which country is this?",
+     "options": [
+      "Switzerland",
+      "Brazil",
+      "the UK",
+      "France"
+     ],
+     "a": "Brazil",
+     "img": "/static/img/vocab/w1_b03.webp"
+    },
+    {
+     "q": "10. Which country is this?",
+     "options": [
+      "India",
+      "Turkey",
+      "the US / the USA",
+      "the UK"
+     ],
+     "a": "the UK",
+     "img": "/static/img/vocab/w1_b14.webp"
+    }
+   ]
+  },
+  {
+   "id": "v1_1b_2",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part B · Davlatlar (Countries)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek (1)",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. South Africa",
+     "options": [
+      "AQSH (Amerika Qoʻshma Shtatlari)",
+      "Buyuk Britaniya",
+      "Kolumbiya",
+      "Janubiy Afrika"
+     ],
+     "a": "Janubiy Afrika"
+    },
+    {
+     "q": "2. Argentina",
+     "options": [
+      "Buyuk Britaniya",
+      "Germaniya",
+      "Shveytsariya",
+      "Argentina"
+     ],
+     "a": "Argentina"
+    },
+    {
+     "q": "3. India",
+     "options": [
+      "Avstraliya",
+      "Vyetnam",
+      "Hindiston",
+      "Janubiy Koreya"
+     ],
+     "a": "Hindiston"
+    },
+    {
+     "q": "4. Spain",
+     "options": [
+      "Ispaniya",
+      "Shveytsariya",
+      "Janubiy Koreya",
+      "Hindiston"
+     ],
+     "a": "Ispaniya"
+    },
+    {
+     "q": "5. Turkey",
+     "options": [
+      "Turkiya",
+      "Argentina",
+      "Janubiy Koreya",
+      "Shveytsariya"
+     ],
+     "a": "Turkiya"
+    },
+    {
+     "q": "6. South Korea",
+     "options": [
+      "Janubiy Koreya",
+      "Italiya",
+      "Meksika",
+      "Ispaniya"
+     ],
+     "a": "Janubiy Koreya"
+    },
+    {
+     "q": "7. Mexico",
+     "options": [
+      "Meksika",
+      "Italiya",
+      "Hindiston",
+      "Polsha"
+     ],
+     "a": "Meksika"
+    },
+    {
+     "q": "8. Brazil",
+     "options": [
+      "Braziliya",
+      "Janubiy Afrika",
+      "AQSH (Amerika Qoʻshma Shtatlari)",
+      "Turkiya"
+     ],
+     "a": "Braziliya"
+    },
+    {
+     "q": "9. Germany",
+     "options": [
+      "Italiya",
+      "Germaniya",
+      "Hindiston",
+      "Vyetnam"
+     ],
+     "a": "Germaniya"
+    },
+    {
+     "q": "10. Japan",
+     "options": [
+      "Turkiya",
+      "Yaponiya",
+      "Polsha",
+      "Hindiston"
+     ],
+     "a": "Yaponiya"
+    }
+   ]
+  },
+  {
+   "id": "v1_1b_3",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part B · Davlatlar (Countries)",
+   "number": 3,
+   "title": "Ex 3: English → Uzbek (2)",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. Australia",
+     "options": [
+      "Hindiston",
+      "Xitoy",
+      "Avstraliya",
+      "Turkiya"
+     ],
+     "a": "Avstraliya"
+    },
+    {
+     "q": "2. China",
+     "options": [
+      "Fransiya",
+      "Braziliya",
+      "Yaponiya",
+      "Xitoy"
+     ],
+     "a": "Xitoy"
+    },
+    {
+     "q": "3. the UK",
+     "options": [
+      "Janubiy Koreya",
+      "Turkiya",
+      "Buyuk Britaniya",
+      "Braziliya"
+     ],
+     "a": "Buyuk Britaniya"
+    },
+    {
+     "q": "4. the US / the USA",
+     "options": [
+      "Vyetnam",
+      "Germaniya",
+      "AQSH (Amerika Qoʻshma Shtatlari)",
+      "Xitoy"
+     ],
+     "a": "AQSH (Amerika Qoʻshma Shtatlari)"
+    },
+    {
+     "q": "5. Italy",
+     "options": [
+      "Shveytsariya",
+      "Yaponiya",
+      "Italiya",
+      "Buyuk Britaniya"
+     ],
+     "a": "Italiya"
+    },
+    {
+     "q": "6. Vietnam",
+     "options": [
+      "Argentina",
+      "AQSH (Amerika Qoʻshma Shtatlari)",
+      "Shveytsariya",
+      "Vyetnam"
+     ],
+     "a": "Vyetnam"
+    },
+    {
+     "q": "7. France",
+     "options": [
+      "Fransiya",
+      "Argentina",
+      "Germaniya",
+      "Xitoy"
+     ],
+     "a": "Fransiya"
+    },
+    {
+     "q": "8. Poland",
+     "options": [
+      "Italiya",
+      "Argentina",
+      "Braziliya",
+      "Polsha"
+     ],
+     "a": "Polsha"
+    },
+    {
+     "q": "9. Switzerland",
+     "options": [
+      "Shveytsariya",
+      "Kolumbiya",
+      "Argentina",
+      "Janubiy Koreya"
+     ],
+     "a": "Shveytsariya"
+    },
+    {
+     "q": "10. Colombia",
+     "options": [
+      "Xitoy",
+      "Janubiy Koreya",
+      "Shveytsariya",
+      "Kolumbiya"
+     ],
+     "a": "Kolumbiya"
+    }
+   ]
+  },
+  {
+   "id": "v1_1b_4",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part B · Davlatlar (Countries)",
+   "number": 4,
+   "title": "Ex 4: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. Germaniya",
+     "options": [
+      "France",
+      "South Africa",
+      "Switzerland",
+      "Germany"
+     ],
+     "a": "Germany"
+    },
+    {
+     "q": "2. Turkiya",
+     "options": [
+      "Australia",
+      "Italy",
+      "India",
+      "Turkey"
+     ],
+     "a": "Turkey"
+    },
+    {
+     "q": "3. Kolumbiya",
+     "options": [
+      "Colombia",
+      "Spain",
+      "the UK",
+      "France"
+     ],
+     "a": "Colombia"
+    },
+    {
+     "q": "4. Janubiy Afrika",
+     "options": [
+      "Australia",
+      "South Africa",
+      "France",
+      "Italy"
+     ],
+     "a": "South Africa"
+    },
+    {
+     "q": "5. Buyuk Britaniya",
+     "options": [
+      "Poland",
+      "Turkey",
+      "the UK",
+      "the US / the USA"
+     ],
+     "a": "the UK"
+    },
+    {
+     "q": "6. Fransiya",
+     "options": [
+      "Italy",
+      "South Africa",
+      "France",
+      "the UK"
+     ],
+     "a": "France"
+    },
+    {
+     "q": "7. Avstraliya",
+     "options": [
+      "Spain",
+      "Australia",
+      "Germany",
+      "Argentina"
+     ],
+     "a": "Australia"
+    },
+    {
+     "q": "8. Italiya",
+     "options": [
+      "Vietnam",
+      "Italy",
+      "France",
+      "Colombia"
+     ],
+     "a": "Italy"
+    },
+    {
+     "q": "9. Shveytsariya",
+     "options": [
+      "Switzerland",
+      "China",
+      "Turkey",
+      "Colombia"
+     ],
+     "a": "Switzerland"
+    },
+    {
+     "q": "10. Yaponiya",
+     "options": [
+      "Germany",
+      "Australia",
+      "Japan",
+      "the US / the USA"
+     ],
+     "a": "Japan"
+    }
+   ]
+  },
+  {
+   "id": "v1_1b_5",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part B · Davlatlar (Countries)",
+   "number": 5,
+   "title": "Ex 5: Write the word",
+   "instruction_en": "Write the country for the picture.",
+   "instruction_uz": "Rasmga mos davlat nomini yozing.",
+   "questions": [
+    {
+     "q": "1. Write the word for this picture.",
+     "a": "Vietnam",
+     "img": "/static/img/vocab/w1_b16.webp"
+    },
+    {
+     "q": "2. Write the word for this picture.",
+     "a": "Argentina",
+     "img": "/static/img/vocab/w1_b01.webp"
+    },
+    {
+     "q": "3. Write the word for this picture.",
+     "a": "Switzerland",
+     "img": "/static/img/vocab/w1_b20.webp"
+    },
+    {
+     "q": "4. Write the word for this picture.",
+     "a": "India",
+     "img": "/static/img/vocab/w1_b05.webp"
+    },
+    {
+     "q": "5. Write the word for this picture.",
+     "a": "Australia",
+     "img": "/static/img/vocab/w1_b02.webp"
+    },
+    {
+     "q": "6. Write the word for this picture.",
+     "a": "Japan",
+     "img": "/static/img/vocab/w1_b17.webp"
+    },
+    {
+     "q": "7. Write the word for this picture.",
+     "a": "Mexico",
+     "img": "/static/img/vocab/w1_b07.webp"
+    },
+    {
+     "q": "8. Write the word for this picture.",
+     "a": "China",
+     "img": "/static/img/vocab/w1_b15.webp"
+    },
+    {
+     "q": "9. Write the word for this picture.",
+     "a": "the US / the USA",
+     "img": "/static/img/vocab/w1_b08.webp"
+    },
+    {
+     "q": "10. Write the word for this picture.",
+     "a": "Colombia",
+     "img": "/static/img/vocab/w1_b04.webp"
+    }
+   ]
+  },
+  {
+   "id": "v1_1c_1",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part C · Millatlar (Nationalities)",
+   "number": 1,
+   "title": "Ex 1: Country → nationality (1)",
+   "instruction_en": "Choose the nationality.",
+   "instruction_uz": "Davlatga mos millatni tanlang.",
+   "questions": [
+    {
+     "q": "1. Mexico →",
+     "options": [
+      "Chinese",
+      "Indian",
+      "South Korean",
+      "Mexican"
+     ],
+     "a": "Mexican"
+    },
+    {
+     "q": "2. South Africa →",
+     "options": [
+      "Australian",
+      "South African",
+      "Spanish",
+      "American"
+     ],
+     "a": "South African"
+    },
+    {
+     "q": "3. Vietnam →",
+     "options": [
+      "Vietnamese",
+      "Japanese",
+      "South African",
+      "French"
+     ],
+     "a": "Vietnamese"
+    },
+    {
+     "q": "4. Brazil →",
+     "options": [
+      "Chinese",
+      "Brazilian",
+      "German",
+      "Mexican"
+     ],
+     "a": "Brazilian"
+    },
+    {
+     "q": "5. Spain →",
+     "options": [
+      "Spanish",
+      "South African",
+      "Turkish",
+      "British"
+     ],
+     "a": "Spanish"
+    },
+    {
+     "q": "6. France →",
+     "options": [
+      "Vietnamese",
+      "French",
+      "South African",
+      "Colombian"
+     ],
+     "a": "French"
+    },
+    {
+     "q": "7. Colombia →",
+     "options": [
+      "South African",
+      "Spanish",
+      "German",
+      "Colombian"
+     ],
+     "a": "Colombian"
+    },
+    {
+     "q": "8. China →",
+     "options": [
+      "American",
+      "Japanese",
+      "Chinese",
+      "French"
+     ],
+     "a": "Chinese"
+    },
+    {
+     "q": "9. Japan →",
+     "options": [
+      "Mexican",
+      "Australian",
+      "Japanese",
+      "South Korean"
+     ],
+     "a": "Japanese"
+    },
+    {
+     "q": "10. Italy →",
+     "options": [
+      "Spanish",
+      "Italian",
+      "Chinese",
+      "Australian"
+     ],
+     "a": "Italian"
+    }
+   ]
+  },
+  {
+   "id": "v1_1c_2",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part C · Millatlar (Nationalities)",
+   "number": 2,
+   "title": "Ex 2: Country → nationality (2)",
+   "instruction_en": "Choose the nationality.",
+   "instruction_uz": "Davlatga mos millatni tanlang.",
+   "questions": [
+    {
+     "q": "1. Germany →",
+     "options": [
+      "Spanish",
+      "German",
+      "British",
+      "Australian"
+     ],
+     "a": "German"
+    },
+    {
+     "q": "2. Switzerland →",
+     "options": [
+      "Swiss",
+      "Turkish",
+      "British",
+      "German"
+     ],
+     "a": "Swiss"
+    },
+    {
+     "q": "3. India →",
+     "options": [
+      "Indian",
+      "South Korean",
+      "Brazilian",
+      "German"
+     ],
+     "a": "Indian"
+    },
+    {
+     "q": "4. Poland →",
+     "options": [
+      "British",
+      "Japanese",
+      "Mexican",
+      "Polish"
+     ],
+     "a": "Polish"
+    },
+    {
+     "q": "5. South Korea →",
+     "options": [
+      "South Korean",
+      "German",
+      "Colombian",
+      "Brazilian"
+     ],
+     "a": "South Korean"
+    },
+    {
+     "q": "6. Australia →",
+     "options": [
+      "Italian",
+      "Australian",
+      "Turkish",
+      "British"
+     ],
+     "a": "Australian"
+    },
+    {
+     "q": "7. Turkey →",
+     "options": [
+      "South African",
+      "Turkish",
+      "Chinese",
+      "Vietnamese"
+     ],
+     "a": "Turkish"
+    },
+    {
+     "q": "8. Argentina →",
+     "options": [
+      "Japanese",
+      "Swiss",
+      "Argentinian",
+      "Brazilian"
+     ],
+     "a": "Argentinian"
+    }
+   ]
+  },
+  {
+   "id": "v1_1c_3",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part C · Millatlar (Nationalities)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. xitoylik",
+     "options": [
+      "Spanish",
+      "Indian",
+      "Chinese",
+      "Colombian"
+     ],
+     "a": "Chinese"
+    },
+    {
+     "q": "2. hindistonlik (hind)",
+     "options": [
+      "Indian",
+      "South African",
+      "Italian",
+      "South Korean"
+     ],
+     "a": "Indian"
+    },
+    {
+     "q": "3. vyetnamlik",
+     "options": [
+      "Vietnamese",
+      "French",
+      "Argentinian",
+      "Mexican"
+     ],
+     "a": "Vietnamese"
+    },
+    {
+     "q": "4. janubiy afrikalik",
+     "options": [
+      "South African",
+      "Turkish",
+      "Mexican",
+      "Vietnamese"
+     ],
+     "a": "South African"
+    },
+    {
+     "q": "5. italiyalik (italyan)",
+     "options": [
+      "American",
+      "Swiss",
+      "Turkish",
+      "Italian"
+     ],
+     "a": "Italian"
+    },
+    {
+     "q": "6. avstraliyalik",
+     "options": [
+      "Japanese",
+      "Australian",
+      "Mexican",
+      "Argentinian"
+     ],
+     "a": "Australian"
+    },
+    {
+     "q": "7. braziliyalik",
+     "options": [
+      "German",
+      "Brazilian",
+      "Vietnamese",
+      "Colombian"
+     ],
+     "a": "Brazilian"
+    },
+    {
+     "q": "8. kolumbiyalik",
+     "options": [
+      "Colombian",
+      "German",
+      "Italian",
+      "Japanese"
+     ],
+     "a": "Colombian"
+    },
+    {
+     "q": "9. janubiy koreyalik",
+     "options": [
+      "South Korean",
+      "Turkish",
+      "British",
+      "Indian"
+     ],
+     "a": "South Korean"
+    },
+    {
+     "q": "10. polshalik (polyak)",
+     "options": [
+      "Polish",
+      "Japanese",
+      "Chinese",
+      "British"
+     ],
+     "a": "Polish"
+    }
+   ]
+  },
+  {
+   "id": "v1_1c_4",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part C · Millatlar (Nationalities)",
+   "number": 4,
+   "title": "Ex 4: Write the nationality",
+   "instruction_en": "Write the nationality.",
+   "instruction_uz": "Davlatga mos millatni yozing.",
+   "questions": [
+    {
+     "q": "1. Argentina →",
+     "a": "Argentinian"
+    },
+    {
+     "q": "2. Turkey →",
+     "a": "Turkish"
+    },
+    {
+     "q": "3. Australia →",
+     "a": "Australian"
+    },
+    {
+     "q": "4. South Korea →",
+     "a": "South Korean"
+    },
+    {
+     "q": "5. Poland →",
+     "a": "Polish"
+    },
+    {
+     "q": "6. India →",
+     "a": "Indian"
+    },
+    {
+     "q": "7. Switzerland →",
+     "a": "Swiss"
+    },
+    {
+     "q": "8. Germany →",
+     "a": "German"
+    },
+    {
+     "q": "9. Italy →",
+     "a": "Italian"
+    },
+    {
+     "q": "10. Japan →",
+     "a": "Japanese"
+    }
+   ]
+  },
+  {
+   "id": "v1_1d_1",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part D · Kundalik buyumlar (Objects)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the word.",
+   "instruction_uz": "Rasmga qarang va toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. What is this?",
+     "options": [
+      "make-up",
+      "bottle of water",
+      "bag",
+      "notebook"
+     ],
+     "a": "make-up",
+     "img": "/static/img/vocab/w1_d07.webp"
+    },
+    {
+     "q": "2. What is this?",
+     "options": [
+      "mobile phone",
+      "umbrella",
+      "bottle of water",
+      "key"
+     ],
+     "a": "key",
+     "img": "/static/img/vocab/w1_d05.webp"
+    },
+    {
+     "q": "3. What is this?",
+     "options": [
+      "bag",
+      "notebook",
+      "purse",
+      "bottle of water"
+     ],
+     "a": "bag",
+     "img": "/static/img/vocab/w1_d01.webp"
+    },
+    {
+     "q": "4. What is this?",
+     "options": [
+      "umbrella",
+      "purse",
+      "laptop",
+      "book"
+     ],
+     "a": "umbrella",
+     "img": "/static/img/vocab/w1_d12.webp"
+    },
+    {
+     "q": "5. What is this?",
+     "options": [
+      "banana",
+      "bag",
+      "wallet",
+      "make-up"
+     ],
+     "a": "wallet",
+     "img": "/static/img/vocab/w1_d13.webp"
+    },
+    {
+     "q": "6. What is this?",
+     "options": [
+      "banana",
+      "mobile phone",
+      "purse",
+      "umbrella"
+     ],
+     "a": "purse",
+     "img": "/static/img/vocab/w1_d10.webp"
+    },
+    {
+     "q": "7. What is this?",
+     "options": [
+      "make-up",
+      "mobile phone",
+      "sandwich",
+      "umbrella"
+     ],
+     "a": "sandwich",
+     "img": "/static/img/vocab/w1_d11.webp"
+    },
+    {
+     "q": "8. What is this?",
+     "options": [
+      "sandwich",
+      "bag",
+      "book",
+      "umbrella"
+     ],
+     "a": "book",
+     "img": "/static/img/vocab/w1_d03.webp"
+    },
+    {
+     "q": "9. What is this?",
+     "options": [
+      "book",
+      "bag",
+      "bottle of water",
+      "banana"
+     ],
+     "a": "banana",
+     "img": "/static/img/vocab/w1_d02.webp"
+    },
+    {
+     "q": "10. What is this?",
+     "options": [
+      "mobile phone",
+      "umbrella",
+      "bottle of water",
+      "book"
+     ],
+     "a": "bottle of water",
+     "img": "/static/img/vocab/w1_d04.webp"
+    },
+    {
+     "q": "11. What is this?",
+     "options": [
+      "wallet",
+      "notebook",
+      "purse",
+      "mobile phone"
+     ],
+     "a": "mobile phone",
+     "img": "/static/img/vocab/w1_d08.webp"
+    },
+    {
+     "q": "12. What is this?",
+     "options": [
+      "laptop",
+      "make-up",
+      "banana",
+      "umbrella"
+     ],
+     "a": "laptop",
+     "img": "/static/img/vocab/w1_d06.webp"
+    },
+    {
+     "q": "13. What is this?",
+     "options": [
+      "notebook",
+      "bag",
+      "laptop",
+      "purse"
+     ],
+     "a": "notebook",
+     "img": "/static/img/vocab/w1_d09.webp"
+    }
+   ]
+  },
+  {
+   "id": "v1_1d_2",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part D · Kundalik buyumlar (Objects)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. sandwich",
+     "options": [
+      "pardoz-andoz (kosmetika)",
+      "bir shisha suv",
+      "sendvich (buterbrod)",
+      "noutbuk"
+     ],
+     "a": "sendvich (buterbrod)"
+    },
+    {
+     "q": "2. laptop",
+     "options": [
+      "hamyon (koʻpincha erkaklarniki)",
+      "noutbuk",
+      "banan",
+      "kitob"
+     ],
+     "a": "noutbuk"
+    },
+    {
+     "q": "3. wallet",
+     "options": [
+      "sendvich (buterbrod)",
+      "hamyon (koʻpincha erkaklarniki)",
+      "mobil telefon",
+      "pardoz-andoz (kosmetika)"
+     ],
+     "a": "hamyon (koʻpincha erkaklarniki)"
+    },
+    {
+     "q": "4. notebook",
+     "options": [
+      "kalit",
+      "bir shisha suv",
+      "daftar",
+      "sendvich (buterbrod)"
+     ],
+     "a": "daftar"
+    },
+    {
+     "q": "5. purse",
+     "options": [
+      "hamyon (koʻpincha ayollarniki)",
+      "mobil telefon",
+      "sumka",
+      "bir shisha suv"
+     ],
+     "a": "hamyon (koʻpincha ayollarniki)"
+    },
+    {
+     "q": "6. bag",
+     "options": [
+      "mobil telefon",
+      "sendvich (buterbrod)",
+      "hamyon (koʻpincha erkaklarniki)",
+      "sumka"
+     ],
+     "a": "sumka"
+    },
+    {
+     "q": "7. umbrella",
+     "options": [
+      "hamyon (koʻpincha erkaklarniki)",
+      "soyabon",
+      "daftar",
+      "hamyon (koʻpincha ayollarniki)"
+     ],
+     "a": "soyabon"
+    },
+    {
+     "q": "8. bottle of water",
+     "options": [
+      "bir shisha suv",
+      "sumka",
+      "hamyon (koʻpincha erkaklarniki)",
+      "kitob"
+     ],
+     "a": "bir shisha suv"
+    },
+    {
+     "q": "9. book",
+     "options": [
+      "sumka",
+      "kitob",
+      "soyabon",
+      "banan"
+     ],
+     "a": "kitob"
+    },
+    {
+     "q": "10. make-up",
+     "options": [
+      "hamyon (koʻpincha erkaklarniki)",
+      "pardoz-andoz (kosmetika)",
+      "hamyon (koʻpincha ayollarniki)",
+      "soyabon"
+     ],
+     "a": "pardoz-andoz (kosmetika)"
+    },
+    {
+     "q": "11. mobile phone",
+     "options": [
+      "mobil telefon",
+      "hamyon (koʻpincha erkaklarniki)",
+      "sendvich (buterbrod)",
+      "pardoz-andoz (kosmetika)"
+     ],
+     "a": "mobil telefon"
+    },
+    {
+     "q": "12. banana",
+     "options": [
+      "sendvich (buterbrod)",
+      "sumka",
+      "hamyon (koʻpincha ayollarniki)",
+      "banan"
+     ],
+     "a": "banan"
+    },
+    {
+     "q": "13. key",
+     "options": [
+      "soyabon",
+      "mobil telefon",
+      "kalit",
+      "sumka"
+     ],
+     "a": "kalit"
+    }
+   ]
+  },
+  {
+   "id": "v1_1d_3",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part D · Kundalik buyumlar (Objects)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. bir shisha suv",
+     "options": [
+      "book",
+      "make-up",
+      "bottle of water",
+      "sandwich"
+     ],
+     "a": "bottle of water"
+    },
+    {
+     "q": "2. mobil telefon",
+     "options": [
+      "mobile phone",
+      "purse",
+      "key",
+      "notebook"
+     ],
+     "a": "mobile phone"
+    },
+    {
+     "q": "3. sumka",
+     "options": [
+      "purse",
+      "key",
+      "notebook",
+      "bag"
+     ],
+     "a": "bag"
+    },
+    {
+     "q": "4. noutbuk",
+     "options": [
+      "notebook",
+      "book",
+      "bottle of water",
+      "laptop"
+     ],
+     "a": "laptop"
+    },
+    {
+     "q": "5. soyabon",
+     "options": [
+      "laptop",
+      "mobile phone",
+      "key",
+      "umbrella"
+     ],
+     "a": "umbrella"
+    },
+    {
+     "q": "6. sendvich (buterbrod)",
+     "options": [
+      "laptop",
+      "key",
+      "sandwich",
+      "umbrella"
+     ],
+     "a": "sandwich"
+    },
+    {
+     "q": "7. daftar",
+     "options": [
+      "laptop",
+      "notebook",
+      "wallet",
+      "purse"
+     ],
+     "a": "notebook"
+    },
+    {
+     "q": "8. kitob",
+     "options": [
+      "banana",
+      "book",
+      "make-up",
+      "purse"
+     ],
+     "a": "book"
+    },
+    {
+     "q": "9. kalit",
+     "options": [
+      "mobile phone",
+      "key",
+      "bottle of water",
+      "wallet"
+     ],
+     "a": "key"
+    },
+    {
+     "q": "10. banan",
+     "options": [
+      "umbrella",
+      "bag",
+      "banana",
+      "notebook"
+     ],
+     "a": "banana"
+    },
+    {
+     "q": "11. pardoz-andoz (kosmetika)",
+     "options": [
+      "bag",
+      "make-up",
+      "umbrella",
+      "key"
+     ],
+     "a": "make-up"
+    }
+   ]
+  },
+  {
+   "id": "v1_1d_4",
+   "category": "vocabulary",
+   "week": "Week 1",
+   "part": "Part D · Kundalik buyumlar (Objects)",
+   "number": 4,
+   "title": "Ex 4: Write the word",
+   "instruction_en": "Write the word for the picture.",
+   "instruction_uz": "Rasmga mos soʻzni yozing.",
+   "questions": [
+    {
+     "q": "1. Write the word for this picture.",
+     "a": "make-up",
+     "img": "/static/img/vocab/w1_d07.webp"
+    },
+    {
+     "q": "2. Write the word for this picture.",
+     "a": "key",
+     "img": "/static/img/vocab/w1_d05.webp"
+    },
+    {
+     "q": "3. Write the word for this picture.",
+     "a": "book",
+     "img": "/static/img/vocab/w1_d03.webp"
+    },
+    {
+     "q": "4. Write the word for this picture.",
+     "a": "umbrella",
+     "img": "/static/img/vocab/w1_d12.webp"
+    },
+    {
+     "q": "5. Write the word for this picture.",
+     "a": "bottle of water",
+     "img": "/static/img/vocab/w1_d04.webp"
+    },
+    {
+     "q": "6. Write the word for this picture.",
+     "a": "notebook",
+     "img": "/static/img/vocab/w1_d09.webp"
+    },
+    {
+     "q": "7. Write the word for this picture.",
+     "a": "bag",
+     "img": "/static/img/vocab/w1_d01.webp"
+    },
+    {
+     "q": "8. Write the word for this picture.",
+     "a": "laptop",
+     "img": "/static/img/vocab/w1_d06.webp"
+    },
+    {
+     "q": "9. Write the word for this picture.",
+     "a": "mobile phone",
+     "img": "/static/img/vocab/w1_d08.webp"
+    },
+    {
+     "q": "10. Write the word for this picture.",
+     "a": "sandwich",
+     "img": "/static/img/vocab/w1_d11.webp"
+    },
+    {
+     "q": "11. Write the word for this picture.",
+     "a": "purse",
+     "img": "/static/img/vocab/w1_d10.webp"
+    },
+    {
+     "q": "12. Write the word for this picture.",
+     "a": "wallet",
+     "img": "/static/img/vocab/w1_d13.webp"
+    },
+    {
+     "q": "13. Write the word for this picture.",
+     "a": "banana",
+     "img": "/static/img/vocab/w1_d02.webp"
+    }
+   ]
+  },
+  {
+   "id": "g2_quest_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 1 · Soʻroq shakli (Questions)",
+   "number": 1,
+   "title": "Ex 1: Choose the correct question",
+   "instruction_en": "Choose the correct question.",
+   "instruction_uz": "Toʻgʻri soʻroq gapni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which question is correct?",
+     "options": [
+      "I am a student?",
+      "Is I a student?",
+      "Am I a student?"
+     ],
+     "a": "Am I a student?"
+    },
+    {
+     "q": "2. Which question is correct?",
+     "options": [
+      "Is he happy?",
+      "Are he happy?",
+      "He is happy?"
+     ],
+     "a": "Is he happy?"
+    },
+    {
+     "q": "3. Which question is correct?",
+     "options": [
+      "Is you a teacher?",
+      "You are a teacher?",
+      "Are you a teacher?"
+     ],
+     "a": "Are you a teacher?"
+    },
+    {
+     "q": "4. Which question is correct?",
+     "options": [
+      "She is a kind person?",
+      "Is she a kind person?",
+      "Are she a kind person?"
+     ],
+     "a": "Is she a kind person?"
+    },
+    {
+     "q": "5. Which question is correct?",
+     "options": [
+      "Are it hungry?",
+      "It is hungry?",
+      "Is it hungry?"
+     ],
+     "a": "Is it hungry?"
+    },
+    {
+     "q": "6. Which question is correct?",
+     "options": [
+      "We are young?",
+      "Are we young?",
+      "Is we young?"
+     ],
+     "a": "Are we young?"
+    },
+    {
+     "q": "7. Which question is correct?",
+     "options": [
+      "They are tired?",
+      "Is they tired?",
+      "Are they tired?"
+     ],
+     "a": "Are they tired?"
+    },
+    {
+     "q": "8. Which question is correct?",
+     "options": [
+      "You are an office worker?",
+      "Are you an office worker?",
+      "Is you an office worker?"
+     ],
+     "a": "Are you an office worker?"
+    }
+   ]
+  },
+  {
+   "id": "g2_quest_2",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 1 · Soʻroq shakli (Questions)",
+   "number": 2,
+   "title": "Ex 2: Make a question",
+   "instruction_en": "Make a question.",
+   "instruction_uz": "Gapni soʻroq gapga aylantiring.",
+   "questions": [
+    {
+     "q": "1. You are a student.",
+     "a": "Are you a student"
+    },
+    {
+     "q": "2. He is happy.",
+     "a": "Is he happy"
+    },
+    {
+     "q": "3. They are tired.",
+     "a": "Are they tired"
+    },
+    {
+     "q": "4. She is a kind person.",
+     "a": "Is she a kind person"
+    },
+    {
+     "q": "5. It is hungry.",
+     "a": "Is it hungry"
+    },
+    {
+     "q": "6. We are young.",
+     "a": "Are we young"
+    },
+    {
+     "q": "7. I am a student.",
+     "a": "Am I a student"
+    },
+    {
+     "q": "8. You are teachers.",
+     "a": "Are you teachers"
+    }
+   ]
+  },
+  {
+   "id": "g2_quest_3",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 1 · Soʻroq shakli (Questions)",
+   "number": 3,
+   "title": "Ex 3: Order the words",
+   "instruction_en": "Put the words in the correct order to make a question.",
+   "instruction_uz": "Soʻzlarni toʻgʻri tartibda joylashtirib, soʻroq gap tuzing.",
+   "questions": [
+    {
+     "q": "1. he / is / a teacher / ?",
+     "a": "Is he a teacher"
+    },
+    {
+     "q": "2. you / are / tired / ?",
+     "a": "Are you tired"
+    },
+    {
+     "q": "3. am / a good student / I / ?",
+     "a": "Am I a good student"
+    },
+    {
+     "q": "4. they / new students / are / ?",
+     "a": "Are they new students"
+    },
+    {
+     "q": "5. she / is / hungry / ?",
+     "a": "Is she hungry"
+    },
+    {
+     "q": "6. it / a big dog / is / ?",
+     "a": "Is it a big dog"
+    },
+    {
+     "q": "7. we / are / late / ?",
+     "a": "Are we late"
+    },
+    {
+     "q": "8. happy / is / he / ?",
+     "a": "Is he happy"
+    }
+   ]
+  },
+  {
+   "id": "g2_quest_4",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 1 · Soʻroq shakli (Questions)",
+   "number": 4,
+   "title": "Ex 4: Short answers",
+   "instruction_en": "Choose the correct short answer.",
+   "instruction_uz": "Toʻgʻri qisqa javobni tanlang.",
+   "questions": [
+    {
+     "q": "1. Are you an office worker? — No, ___.",
+     "options": [
+      "I are not",
+      "I am not",
+      "I do not"
+     ],
+     "a": "I am not"
+    },
+    {
+     "q": "2. Are they new students? — Yes, ___.",
+     "options": [
+      "they is",
+      "they do",
+      "they are"
+     ],
+     "a": "they are"
+    },
+    {
+     "q": "3. Is he a teacher? — Yes, ___.",
+     "options": [
+      "he does",
+      "he are",
+      "he is"
+     ],
+     "a": "he is"
+    },
+    {
+     "q": "4. Is she hungry? — No, ___.",
+     "options": [
+      "she doesn't",
+      "she aren't",
+      "she isn't"
+     ],
+     "a": "she isn't"
+    },
+    {
+     "q": "5. Are you a driver? — Yes, ___.",
+     "options": [
+      "I is",
+      "I am",
+      "I are"
+     ],
+     "a": "I am"
+    },
+    {
+     "q": "6. Is it a cat? — No, ___.",
+     "options": [
+      "it aren't",
+      "it isn't",
+      "it amn't"
+     ],
+     "a": "it isn't"
+    },
+    {
+     "q": "7. Are we late? — Yes, ___.",
+     "options": [
+      "we am",
+      "we are",
+      "we is"
+     ],
+     "a": "we are"
+    },
+    {
+     "q": "8. Are they tired? — No, ___.",
+     "options": [
+      "they aren't",
+      "they isn't",
+      "they am not"
+     ],
+     "a": "they aren't"
+    }
+   ]
+  },
+  {
+   "id": "g2_quest_5",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 1 · Soʻroq shakli (Questions)",
+   "number": 5,
+   "title": "Ex 5: Answer the question",
+   "instruction_en": "Write a short answer using the information in brackets.",
+   "instruction_uz": "Qavs ichidagi maʼlumotga qarab, qisqa javob yozing.",
+   "questions": [
+    {
+     "q": "1. Is she a nurse? (yes)",
+     "a": "Yes, she is"
+    },
+    {
+     "q": "2. Is he a driver? (no)",
+     "a": "No, he is not|No, he isn't"
+    },
+    {
+     "q": "3. Are you a student? (yes, I am a student)",
+     "a": "Yes, I am"
+    },
+    {
+     "q": "4. Are they happy? (no)",
+     "a": "No, they are not|No, they aren't"
+    },
+    {
+     "q": "5. Is it a big dog? (yes)",
+     "a": "Yes, it is"
+    },
+    {
+     "q": "6. Are we late? (no)",
+     "a": "No, we are not|No, we aren't"
+    },
+    {
+     "q": "7. Is he a good person? (yes)",
+     "a": "Yes, he is"
+    },
+    {
+     "q": "8. Are you tired? (no, I am not tired)",
+     "a": "No, I am not|No, I'm not"
+    }
+   ]
+  },
+  {
+   "id": "g2_neg_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 2 · Inkor shakli (Negatives)",
+   "number": 1,
+   "title": "Ex 1: Choose the negative sentence",
+   "instruction_en": "Choose the correct negative sentence.",
+   "instruction_uz": "Toʻgʻri inkor gapni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which sentence is correct?",
+     "options": [
+      "I am no hungry.",
+      "I not am hungry.",
+      "I am not hungry."
+     ],
+     "a": "I am not hungry."
+    },
+    {
+     "q": "2. Which sentence is correct?",
+     "options": [
+      "He not is a good person.",
+      "He does not a good person.",
+      "He is not a good person."
+     ],
+     "a": "He is not a good person."
+    },
+    {
+     "q": "3. Which sentence is correct?",
+     "options": [
+      "She not is cold.",
+      "She no is cold.",
+      "She is not cold."
+     ],
+     "a": "She is not cold."
+    },
+    {
+     "q": "4. Which sentence is correct?",
+     "options": [
+      "It is not a big animal.",
+      "It not a big animal.",
+      "It is no a big animal."
+     ],
+     "a": "It is not a big animal."
+    },
+    {
+     "q": "5. Which sentence is correct?",
+     "options": [
+      "We not are students.",
+      "We are not students.",
+      "We are no students."
+     ],
+     "a": "We are not students."
+    },
+    {
+     "q": "6. Which sentence is correct?",
+     "options": [
+      "You are not a digital designer.",
+      "You is not a digital designer.",
+      "You not are a digital designer."
+     ],
+     "a": "You are not a digital designer."
+    },
+    {
+     "q": "7. Which sentence is correct?",
+     "options": [
+      "They not are happy.",
+      "They is not happy.",
+      "They are not happy."
+     ],
+     "a": "They are not happy."
+    },
+    {
+     "q": "8. Which sentence is correct?",
+     "options": [
+      "I not a teacher.",
+      "I amn't a teacher.",
+      "I am not a teacher."
+     ],
+     "a": "I am not a teacher."
+    }
+   ]
+  },
+  {
+   "id": "g2_neg_2",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 2 · Inkor shakli (Negatives)",
+   "number": 2,
+   "title": "Ex 2: Make it negative",
+   "instruction_en": "Make the sentence negative.",
+   "instruction_uz": "Gapni inkor shaklga oʻtkazing.",
+   "questions": [
+    {
+     "q": "1. I am hungry.",
+     "a": "I am not hungry|I'm not hungry"
+    },
+    {
+     "q": "2. He is a teacher.",
+     "a": "He is not a teacher|He isn't a teacher"
+    },
+    {
+     "q": "3. She is cold.",
+     "a": "She is not cold|She isn't cold"
+    },
+    {
+     "q": "4. We are students.",
+     "a": "We are not students|We aren't students"
+    },
+    {
+     "q": "5. They are happy.",
+     "a": "They are not happy|They aren't happy"
+    },
+    {
+     "q": "6. It is a big animal.",
+     "a": "It is not a big animal|It isn't a big animal"
+    },
+    {
+     "q": "7. You are a designer.",
+     "a": "You are not a designer|You aren't a designer"
+    },
+    {
+     "q": "8. He is a good person.",
+     "a": "He is not a good person|He isn't a good person"
+    }
+   ]
+  },
+  {
+   "id": "g2_neg_3",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 2 · Inkor shakli (Negatives)",
+   "number": 3,
+   "title": "Ex 3: Correct the mistake",
+   "instruction_en": "Correct the mistake. Write the correct sentence.",
+   "instruction_uz": "Xatoni toping va toʻgʻri gapni yozing.",
+   "questions": [
+    {
+     "q": "1. I not am tired.",
+     "a": "I am not tired"
+    },
+    {
+     "q": "2. She no is happy.",
+     "a": "She is not happy"
+    },
+    {
+     "q": "3. They not are students.",
+     "a": "They are not students"
+    },
+    {
+     "q": "4. He is no a driver.",
+     "a": "He is not a driver"
+    },
+    {
+     "q": "5. We are no young.",
+     "a": "We are not young"
+    },
+    {
+     "q": "6. It not is a cat.",
+     "a": "It is not a cat"
+    }
+   ]
+  },
+  {
+   "id": "g2_pron_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 3 · Kishilik olmoshlari (Subject pronouns)",
+   "number": 1,
+   "title": "Ex 1: Which pronoun?",
+   "instruction_en": "Choose the pronoun that can replace the word(s).",
+   "instruction_uz": "Qaysi olmosh bu soʻz(lar) oʻrniga ishlatiladi?",
+   "questions": [
+    {
+     "q": "1. Abror = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "he"
+    },
+    {
+     "q": "2. Laylo = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "she"
+    },
+    {
+     "q": "3. a dog = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "it"
+    },
+    {
+     "q": "4. My friend and I = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "we"
+    },
+    {
+     "q": "5. Kate and Susan = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "they"
+    },
+    {
+     "q": "6. a laptop = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "it"
+    },
+    {
+     "q": "7. doctors = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "they"
+    },
+    {
+     "q": "8. a brother = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "he"
+    },
+    {
+     "q": "9. a nurse (woman) = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "she"
+    },
+    {
+     "q": "10. a desk = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "we",
+      "they"
+     ],
+     "a": "it"
+    }
+   ]
+  },
+  {
+   "id": "g2_pron_2",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 3 · Kishilik olmoshlari (Subject pronouns)",
+   "number": 2,
+   "title": "Ex 2: Fill in the pronoun",
+   "instruction_en": "Write the correct pronoun: he, she, it, we or they.",
+   "instruction_uz": "Boʻsh joyga mos olmoshni yozing: he, she, it, we yoki they.",
+   "questions": [
+    {
+     "q": "1. Laylo is a nurse. ___ is kind.",
+     "a": "she"
+    },
+    {
+     "q": "2. Abror is a student. ___ is handsome.",
+     "a": "he"
+    },
+    {
+     "q": "3. A dog is clever. ___ is big.",
+     "a": "it"
+    },
+    {
+     "q": "4. Kate and Susan are teachers. ___ are kind.",
+     "a": "they"
+    },
+    {
+     "q": "5. Michael and I are friends. ___ are happy.",
+     "a": "we"
+    },
+    {
+     "q": "6. I have a brother. ___ is 25 years old.",
+     "a": "he"
+    },
+    {
+     "q": "7. My laptop is new. ___ is fast.",
+     "a": "it"
+    },
+    {
+     "q": "8. Doctors are kind. ___ are clever.",
+     "a": "they"
+    }
+   ]
+  },
+  {
+   "id": "g2_pron_3",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 3 · Kishilik olmoshlari (Subject pronouns)",
+   "number": 3,
+   "title": "Ex 3: Pronoun and verb",
+   "instruction_en": "Choose is or are.",
+   "instruction_uz": "Is yoki are ni tanlang.",
+   "questions": [
+    {
+     "q": "1. Laylo ___ beautiful.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "2. Abror ___ handsome.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "3. A dog ___ clever.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "4. Michael and I ___ friends.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "5. You and your children ___ in New York.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "6. Doctors ___ kind.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "7. My father ___ a driver.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "8. Kate and Susan ___ teachers.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "are"
+    }
+   ]
+  },
+  {
+   "id": "g2_pron_4",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 3 · Kishilik olmoshlari (Subject pronouns)",
+   "number": 4,
+   "title": "Ex 4: It, you and they",
+   "instruction_en": "Choose the correct answer.",
+   "instruction_uz": "Toʻgʻri javobni tanlang.",
+   "questions": [
+    {
+     "q": "1. 'What is 12+12?' — '___ is 24.'",
+     "options": [
+      "He",
+      "It",
+      "They"
+     ],
+     "a": "It"
+    },
+    {
+     "q": "2. ___ is hot today. (Havo issiq.)",
+     "options": [
+      "It",
+      "He",
+      "We"
+     ],
+     "a": "It"
+    },
+    {
+     "q": "3. 'You are a clever person.' Here 'you' means:",
+     "options": [
+      "siz (bitta odam)",
+      "sizlar (koʻp odam)"
+     ],
+     "a": "siz (bitta odam)"
+    },
+    {
+     "q": "4. 'You are talented musicians.' Here 'you' means:",
+     "options": [
+      "siz (bitta odam)",
+      "sizlar (koʻp odam)"
+     ],
+     "a": "sizlar (koʻp odam)"
+    },
+    {
+     "q": "5. We are close friends. 'We' is:",
+     "options": [
+      "bir kishi",
+      "koʻpchilik"
+     ],
+     "a": "koʻpchilik"
+    },
+    {
+     "q": "6. ___ is an ocean.",
+     "options": [
+      "It",
+      "They",
+      "He"
+     ],
+     "a": "It"
+    },
+    {
+     "q": "7. ___ are wonderful neighbours.",
+     "options": [
+      "They",
+      "It",
+      "He"
+     ],
+     "a": "They"
+    },
+    {
+     "q": "8. I have a sister. ___ is a nurse.",
+     "options": [
+      "She",
+      "He",
+      "It"
+     ],
+     "a": "She"
+    }
+   ]
+  },
+  {
+   "id": "g2_pron_5",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 3 · Kishilik olmoshlari (Subject pronouns)",
+   "number": 5,
+   "title": "Ex 5: Replace the words",
+   "instruction_en": "Write the sentence with a pronoun instead of the underlined words (the first word).",
+   "instruction_uz": "Gapni qayta yozing: birinchi soʻz(lar) oʻrniga olmosh qoʻying.",
+   "questions": [
+    {
+     "q": "1. Abror is handsome.",
+     "a": "He is handsome"
+    },
+    {
+     "q": "2. Laylo is beautiful.",
+     "a": "She is beautiful"
+    },
+    {
+     "q": "3. A dog is clever.",
+     "a": "It is clever"
+    },
+    {
+     "q": "4. Doctors are kind.",
+     "a": "They are kind"
+    },
+    {
+     "q": "5. Michael and I are friends.",
+     "a": "We are friends"
+    },
+    {
+     "q": "6. Kate and Susan are teachers.",
+     "a": "They are teachers"
+    },
+    {
+     "q": "7. My father is a driver.",
+     "a": "He is a driver"
+    },
+    {
+     "q": "8. The laptop is new.",
+     "a": "It is new"
+    }
+   ]
+  },
+  {
+   "id": "g2_poss_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 4 · Egalik olmoshlari (Possessive adjectives)",
+   "number": 1,
+   "title": "Ex 1: Pronoun → possessive",
+   "instruction_en": "Choose the possessive adjective.",
+   "instruction_uz": "Egalik olmoshini tanlang.",
+   "questions": [
+    {
+     "q": "1. I →",
+     "options": [
+      "me",
+      "my",
+      "mine"
+     ],
+     "a": "my"
+    },
+    {
+     "q": "2. he →",
+     "options": [
+      "he",
+      "him",
+      "his"
+     ],
+     "a": "his"
+    },
+    {
+     "q": "3. she →",
+     "options": [
+      "her",
+      "hers",
+      "she"
+     ],
+     "a": "her"
+    },
+    {
+     "q": "4. it →",
+     "options": [
+      "it",
+      "its",
+      "it's"
+     ],
+     "a": "its"
+    },
+    {
+     "q": "5. we →",
+     "options": [
+      "our",
+      "we",
+      "us"
+     ],
+     "a": "our"
+    },
+    {
+     "q": "6. you →",
+     "options": [
+      "you",
+      "your",
+      "yours"
+     ],
+     "a": "your"
+    },
+    {
+     "q": "7. they →",
+     "options": [
+      "their",
+      "they",
+      "them"
+     ],
+     "a": "their"
+    }
+   ]
+  },
+  {
+   "id": "g2_poss_2",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 4 · Egalik olmoshlari (Possessive adjectives)",
+   "number": 2,
+   "title": "Ex 2: Complete the sentence",
+   "instruction_en": "Write the possessive adjective for the pronoun in brackets.",
+   "instruction_uz": "Qavs ichidagi olmoshga mos egalik olmoshini yozing.",
+   "questions": [
+    {
+     "q": "1. ___ name is Alex. (I)",
+     "a": "My"
+    },
+    {
+     "q": "2. ___ car is new. (he)",
+     "a": "His"
+    },
+    {
+     "q": "3. ___ clothes are beautiful. (she)",
+     "a": "Her"
+    },
+    {
+     "q": "4. ___ tail is short. (it)",
+     "a": "Its"
+    },
+    {
+     "q": "5. ___ students are smart. (we)",
+     "a": "Our"
+    },
+    {
+     "q": "6. ___ watch is wrong. (you)",
+     "a": "Your"
+    },
+    {
+     "q": "7. ___ eyes are tired. (they)",
+     "a": "Their"
+    },
+    {
+     "q": "8. ___ phone is new. (I)",
+     "a": "My"
+    },
+    {
+     "q": "9. ___ sister is a nurse. (he)",
+     "a": "His"
+    },
+    {
+     "q": "10. ___ brother is a driver. (she)",
+     "a": "Her"
+    }
+   ]
+  },
+  {
+   "id": "g2_poss_3",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 4 · Egalik olmoshlari (Possessive adjectives)",
+   "number": 3,
+   "title": "Ex 3: I or my?",
+   "instruction_en": "Choose the correct word.",
+   "instruction_uz": "Toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. ___ am Abror.",
+     "options": [
+      "I",
+      "My"
+     ],
+     "a": "I"
+    },
+    {
+     "q": "2. ___ name is Abror.",
+     "options": [
+      "I",
+      "My"
+     ],
+     "a": "My"
+    },
+    {
+     "q": "3. ___ is happy. (he)",
+     "options": [
+      "He",
+      "His"
+     ],
+     "a": "He"
+    },
+    {
+     "q": "4. ___ car is new. (he)",
+     "options": [
+      "He",
+      "His"
+     ],
+     "a": "His"
+    },
+    {
+     "q": "5. ___ are students. (we)",
+     "options": [
+      "We",
+      "Our"
+     ],
+     "a": "We"
+    },
+    {
+     "q": "6. ___ teacher is kind. (we)",
+     "options": [
+      "We",
+      "Our"
+     ],
+     "a": "Our"
+    },
+    {
+     "q": "7. ___ are tired. (they)",
+     "options": [
+      "They",
+      "Their"
+     ],
+     "a": "They"
+    },
+    {
+     "q": "8. ___ eyes are tired. (they)",
+     "options": [
+      "They",
+      "Their"
+     ],
+     "a": "Their"
+    }
+   ]
+  },
+  {
+   "id": "g2_poss_4",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 4 · Egalik olmoshlari (Possessive adjectives)",
+   "number": 4,
+   "title": "Ex 4: Which word fits?",
+   "instruction_en": "Complete the second sentence with a possessive adjective.",
+   "instruction_uz": "Ikkinchi gapni egalik olmoshi bilan toʻldiring.",
+   "questions": [
+    {
+     "q": "1. Abror has a car. ___ car is new.",
+     "a": "His"
+    },
+    {
+     "q": "2. Laylo has a bag. ___ bag is beautiful.",
+     "a": "Her"
+    },
+    {
+     "q": "3. We have a teacher. ___ teacher is kind.",
+     "a": "Our"
+    },
+    {
+     "q": "4. They have a dog. ___ dog is big.",
+     "a": "Their"
+    },
+    {
+     "q": "5. I have a brother. ___ brother is 25 years old.",
+     "a": "My"
+    },
+    {
+     "q": "6. You have a watch. ___ watch is wrong.",
+     "a": "Your"
+    },
+    {
+     "q": "7. It has a tail. ___ tail is short.",
+     "a": "Its"
+    },
+    {
+     "q": "8. Kate has a phone. ___ phone is old.",
+     "a": "Her"
+    }
+   ]
+  },
+  {
+   "id": "g2_wh_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 5 · Soʻroq soʻzlar (Question words)",
+   "number": 1,
+   "title": "Ex 1: Choose the question word",
+   "instruction_en": "Choose the correct question word.",
+   "instruction_uz": "Toʻgʻri soʻroq soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. ___ are you? — I am Aziz.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "Who"
+    },
+    {
+     "q": "2. ___ is your name? — My name is Laylo.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "What"
+    },
+    {
+     "q": "3. ___ is he? — He is in London.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "Where"
+    },
+    {
+     "q": "4. ___ is your class? — At nine o'clock.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "When"
+    },
+    {
+     "q": "5. ___ are you? — I am fine.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "How"
+    },
+    {
+     "q": "6. ___ is she? — She is my sister.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "Who"
+    },
+    {
+     "q": "7. ___ is your phone number?",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "What"
+    },
+    {
+     "q": "8. ___ are they? — They are at school.",
+     "options": [
+      "Who",
+      "What",
+      "Where",
+      "When",
+      "How"
+     ],
+     "a": "Where"
+    }
+   ]
+  },
+  {
+   "id": "g2_wh_2",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 5 · Soʻroq soʻzlar (Question words)",
+   "number": 2,
+   "title": "Ex 2: Order the words",
+   "instruction_en": "Put the words in the correct order.",
+   "instruction_uz": "Soʻzlarni toʻgʻri tartibda joylashtiring.",
+   "questions": [
+    {
+     "q": "1. your / is / what / name / ?",
+     "a": "What is your name"
+    },
+    {
+     "q": "2. are / who / you / ?",
+     "a": "Who are you"
+    },
+    {
+     "q": "3. is / where / he / ?",
+     "a": "Where is he"
+    },
+    {
+     "q": "4. class / is / when / your / ?",
+     "a": "When is your class"
+    },
+    {
+     "q": "5. you / how / are / ?",
+     "a": "How are you"
+    },
+    {
+     "q": "6. she / is / who / ?",
+     "a": "Who is she"
+    },
+    {
+     "q": "7. they / where / are / ?",
+     "a": "Where are they"
+    },
+    {
+     "q": "8. what / is / his / name / ?",
+     "a": "What is his name"
+    }
+   ]
+  },
+  {
+   "id": "g2_wh_3",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 5 · Soʻroq soʻzlar (Question words)",
+   "number": 3,
+   "title": "Ex 3: How + adjective",
+   "instruction_en": "Choose the correct answer.",
+   "instruction_uz": "Toʻgʻri javobni tanlang. (How old = yoshi nechida)",
+   "questions": [
+    {
+     "q": "1. How old is he?",
+     "options": [
+      "He is 25.",
+      "He is in London.",
+      "He is a driver."
+     ],
+     "a": "He is 25."
+    },
+    {
+     "q": "2. How fast is your car?",
+     "options": [
+      "It is super fast.",
+      "It is red.",
+      "It is in the garage."
+     ],
+     "a": "It is super fast."
+    },
+    {
+     "q": "3. How tired are you?",
+     "options": [
+      "A little bit.",
+      "At nine.",
+      "In London."
+     ],
+     "a": "A little bit."
+    },
+    {
+     "q": "4. How beautiful is she?",
+     "options": [
+      "She is very beautiful.",
+      "She is a nurse.",
+      "She is in Paris."
+     ],
+     "a": "She is very beautiful."
+    },
+    {
+     "q": "5. How old are they?",
+     "options": [
+      "They are 10 and 12.",
+      "They are in class.",
+      "They are doctors."
+     ],
+     "a": "They are 10 and 12."
+    },
+    {
+     "q": "6. How big is your dog?",
+     "options": [
+      "It is very big.",
+      "It is Tuesday.",
+      "It is my friend."
+     ],
+     "a": "It is very big."
+    }
+   ]
+  },
+  {
+   "id": "g2_wh_4",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 5 · Soʻroq soʻzlar (Question words)",
+   "number": 4,
+   "title": "Ex 4: Am, is or are?",
+   "instruction_en": "Write am, is or are.",
+   "instruction_uz": "Boʻsh joyga am, is yoki are ni yozing.",
+   "questions": [
+    {
+     "q": "1. Where ___ he?",
+     "a": "is"
+    },
+    {
+     "q": "2. Who ___ you?",
+     "a": "are"
+    },
+    {
+     "q": "3. What ___ your name?",
+     "a": "is"
+    },
+    {
+     "q": "4. How ___ you?",
+     "a": "are"
+    },
+    {
+     "q": "5. When ___ your class?",
+     "a": "is"
+    },
+    {
+     "q": "6. Where ___ they?",
+     "a": "are"
+    },
+    {
+     "q": "7. How old ___ she?",
+     "a": "is"
+    },
+    {
+     "q": "8. Who ___ I?",
+     "a": "am"
+    },
+    {
+     "q": "9. How tired ___ they?",
+     "a": "are"
+    },
+    {
+     "q": "10. What ___ his phone number?",
+     "a": "is"
+    }
+   ]
+  },
+  {
+   "id": "g2_wh_5",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 5 · Soʻroq soʻzlar (Question words)",
+   "number": 5,
+   "title": "Ex 5: Correct the mistake",
+   "instruction_en": "Correct the mistake. Write the correct question.",
+   "instruction_uz": "Xatoni toping va toʻgʻri soʻroq gapni yozing.",
+   "questions": [
+    {
+     "q": "1. Where he is?",
+     "a": "Where is he"
+    },
+    {
+     "q": "2. What your name is?",
+     "a": "What is your name"
+    },
+    {
+     "q": "3. How you are?",
+     "a": "How are you"
+    },
+    {
+     "q": "4. Who you are?",
+     "a": "Who are you"
+    },
+    {
+     "q": "5. When your class is?",
+     "a": "When is your class"
+    },
+    {
+     "q": "6. How old he is?",
+     "a": "How old is he"
+    },
+    {
+     "q": "7. Where they are?",
+     "a": "Where are they"
+    },
+    {
+     "q": "8. What is name your?",
+     "a": "What is your name"
+    }
+   ]
+  },
+  {
+   "id": "g2_review_1",
+   "category": "grammar",
+   "week": "Week 2",
+   "part": "Part 6 · Review test",
+   "number": 1,
+   "title": "Ex 1: Week 2 review test",
+   "instruction_en": "Choose the correct answer.",
+   "instruction_uz": "2-hafta takrorlash testi. Toʻgʻri javobni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which question is correct?",
+     "options": [
+      "Is he happy?",
+      "He is happy?",
+      "Are he happy?"
+     ],
+     "a": "Is he happy?"
+    },
+    {
+     "q": "2. Which question is correct?",
+     "options": [
+      "You are a student?",
+      "Are you a student?",
+      "Is you a student?"
+     ],
+     "a": "Are you a student?"
+    },
+    {
+     "q": "3. Are they new students? — Yes, ___.",
+     "options": [
+      "they are",
+      "they is",
+      "they do"
+     ],
+     "a": "they are"
+    },
+    {
+     "q": "4. Is she a nurse? — No, ___.",
+     "options": [
+      "she isn't",
+      "she aren't",
+      "she doesn't"
+     ],
+     "a": "she isn't"
+    },
+    {
+     "q": "5. Which sentence is correct?",
+     "options": [
+      "I not am hungry.",
+      "I am not hungry.",
+      "I am no hungry."
+     ],
+     "a": "I am not hungry."
+    },
+    {
+     "q": "6. Which sentence is correct?",
+     "options": [
+      "We are not students.",
+      "We not are students.",
+      "We is not students."
+     ],
+     "a": "We are not students."
+    },
+    {
+     "q": "7. Abror = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "they"
+     ],
+     "a": "he"
+    },
+    {
+     "q": "8. Kate and Susan = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "they"
+     ],
+     "a": "they"
+    },
+    {
+     "q": "9. a laptop = ?",
+     "options": [
+      "he",
+      "she",
+      "it",
+      "they"
+     ],
+     "a": "it"
+    },
+    {
+     "q": "10. Michael and I ___ friends.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "are"
+    },
+    {
+     "q": "11. A dog ___ clever.",
+     "options": [
+      "is",
+      "are"
+     ],
+     "a": "is"
+    },
+    {
+     "q": "12. I → ?",
+     "options": [
+      "my",
+      "me",
+      "mine"
+     ],
+     "a": "my"
+    },
+    {
+     "q": "13. she → ?",
+     "options": [
+      "his",
+      "her",
+      "their"
+     ],
+     "a": "her"
+    },
+    {
+     "q": "14. they → ?",
+     "options": [
+      "their",
+      "our",
+      "its"
+     ],
+     "a": "their"
+    },
+    {
+     "q": "15. ___ car is new. (he)",
+     "options": [
+      "His",
+      "Her",
+      "Its"
+     ],
+     "a": "His"
+    },
+    {
+     "q": "16. ___ is your name?",
+     "options": [
+      "Who",
+      "What",
+      "Where"
+     ],
+     "a": "What"
+    },
+    {
+     "q": "17. ___ is he? — He is in London.",
+     "options": [
+      "How",
+      "When",
+      "Where"
+     ],
+     "a": "Where"
+    },
+    {
+     "q": "18. ___ are you? — I am fine.",
+     "options": [
+      "How",
+      "Who",
+      "When"
+     ],
+     "a": "How"
+    },
+    {
+     "q": "19. Which question is correct?",
+     "options": [
+      "Where is he?",
+      "Where he is?",
+      "Where are he?"
+     ],
+     "a": "Where is he?"
+    },
+    {
+     "q": "20. How old is he?",
+     "options": [
+      "He is 25.",
+      "He is in London.",
+      "He is a driver."
+     ],
+     "a": "He is 25."
+    }
+   ]
+  },
+  {
+   "id": "v2_2a_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part A · Salomlashish (Greetings)",
+   "number": 1,
+   "title": "Ex 1: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. hello",
+     "options": [
+      "hoy / salom (juda norasmiy)",
+      "xayrli tun",
+      "salom (assalomu alaykum)",
+      "xayr"
+     ],
+     "a": "salom (assalomu alaykum)"
+    },
+    {
+     "q": "2. good morning",
+     "options": [
+      "xayrli kech",
+      "xayrli kun",
+      "xayrli tong",
+      "koʻrishguncha"
+     ],
+     "a": "xayrli tong"
+    },
+    {
+     "q": "3. hey",
+     "options": [
+      "koʻrishguncha",
+      "xayr (qisqa)",
+      "hoy / salom (juda norasmiy)",
+      "xayrli kech"
+     ],
+     "a": "hoy / salom (juda norasmiy)"
+    },
+    {
+     "q": "4. bye",
+     "options": [
+      "koʻrishguncha",
+      "salom",
+      "xayrli kun",
+      "xayr (qisqa)"
+     ],
+     "a": "xayr (qisqa)"
+    },
+    {
+     "q": "5. good evening",
+     "options": [
+      "xayrli kech",
+      "xayr (qisqa)",
+      "hoy / salom (juda norasmiy)",
+      "xayrli tong"
+     ],
+     "a": "xayrli kech"
+    },
+    {
+     "q": "6. goodbye",
+     "options": [
+      "koʻrishguncha",
+      "xayrli kun",
+      "salom",
+      "xayr"
+     ],
+     "a": "xayr"
+    },
+    {
+     "q": "7. good afternoon",
+     "options": [
+      "xayrli kun",
+      "xayr",
+      "hoy / salom (juda norasmiy)",
+      "xayrli tun"
+     ],
+     "a": "xayrli kun"
+    },
+    {
+     "q": "8. good night",
+     "options": [
+      "koʻrishguncha",
+      "salom (assalomu alaykum)",
+      "xayrli tun",
+      "hoy / salom (juda norasmiy)"
+     ],
+     "a": "xayrli tun"
+    },
+    {
+     "q": "9. hi",
+     "options": [
+      "xayr",
+      "xayrli tong",
+      "salom",
+      "xayr (qisqa)"
+     ],
+     "a": "salom"
+    },
+    {
+     "q": "10. see you",
+     "options": [
+      "salom (assalomu alaykum)",
+      "koʻrishguncha",
+      "salom",
+      "xayr (qisqa)"
+     ],
+     "a": "koʻrishguncha"
+    }
+   ]
+  },
+  {
+   "id": "v2_2a_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part A · Salomlashish (Greetings)",
+   "number": 2,
+   "title": "Ex 2: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. xayrli tong",
+     "options": [
+      "see you",
+      "good morning",
+      "hi",
+      "good evening"
+     ],
+     "a": "good morning"
+    },
+    {
+     "q": "2. xayrli kun",
+     "options": [
+      "good afternoon",
+      "hey",
+      "hi",
+      "good evening"
+     ],
+     "a": "good afternoon"
+    },
+    {
+     "q": "3. koʻrishguncha",
+     "options": [
+      "good afternoon",
+      "see you",
+      "good night",
+      "bye"
+     ],
+     "a": "see you"
+    },
+    {
+     "q": "4. xayrli tun",
+     "options": [
+      "good morning",
+      "goodbye",
+      "good night",
+      "hi"
+     ],
+     "a": "good night"
+    },
+    {
+     "q": "5. hoy / salom (juda norasmiy)",
+     "options": [
+      "good afternoon",
+      "good night",
+      "hey",
+      "goodbye"
+     ],
+     "a": "hey"
+    },
+    {
+     "q": "6. xayrli kech",
+     "options": [
+      "hey",
+      "hello",
+      "good night",
+      "good evening"
+     ],
+     "a": "good evening"
+    }
+   ]
+  },
+  {
+   "id": "v2_2d_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part D · Kasblar va boshqa soʻzlar (Jobs & Other)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the word.",
+   "instruction_uz": "Rasmga qarang va toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. What is this?",
+     "options": [
+      "baker",
+      "manager",
+      "competition",
+      "birthday cake"
+     ],
+     "a": "manager",
+     "img": "/static/img/vocab/w2_d06.webp"
+    },
+    {
+     "q": "2. What is this?",
+     "options": [
+      "birthday cake",
+      "baker",
+      "presenter",
+      "judge"
+     ],
+     "a": "presenter",
+     "img": "/static/img/vocab/w2_d05.webp"
+    },
+    {
+     "q": "3. What is this?",
+     "options": [
+      "winner",
+      "baker",
+      "presenter",
+      "competition"
+     ],
+     "a": "competition",
+     "img": "/static/img/vocab/w2_d03.webp"
+    },
+    {
+     "q": "4. What is this?",
+     "options": [
+      "manager",
+      "winner",
+      "presenter",
+      "birthday cake"
+     ],
+     "a": "winner",
+     "img": "/static/img/vocab/w2_d07.webp"
+    },
+    {
+     "q": "5. What is this?",
+     "options": [
+      "birthday cake",
+      "baker",
+      "winner",
+      "judge"
+     ],
+     "a": "birthday cake",
+     "img": "/static/img/vocab/w2_d02.webp"
+    },
+    {
+     "q": "6. What is this?",
+     "options": [
+      "manager",
+      "baker",
+      "presenter",
+      "judge"
+     ],
+     "a": "judge",
+     "img": "/static/img/vocab/w2_d04.webp"
+    },
+    {
+     "q": "7. What is this?",
+     "options": [
+      "manager",
+      "winner",
+      "presenter",
+      "baker"
+     ],
+     "a": "baker",
+     "img": "/static/img/vocab/w2_d01.webp"
+    }
+   ]
+  },
+  {
+   "id": "v2_2d_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part D · Kasblar va boshqa soʻzlar (Jobs & Other)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. judge",
+     "options": [
+      "novvoy",
+      "hakam (hayʼat aʼzosi)",
+      "boshlovchi (teleboshlovchi)",
+      "tugʻilgan kun torti"
+     ],
+     "a": "hakam (hayʼat aʼzosi)"
+    },
+    {
+     "q": "2. winner",
+     "options": [
+      "gʻolib",
+      "menejer (rahbar)",
+      "tugʻilgan kun torti",
+      "boshlovchi (teleboshlovchi)"
+     ],
+     "a": "gʻolib"
+    },
+    {
+     "q": "3. baker",
+     "options": [
+      "menejer (rahbar)",
+      "novvoy",
+      "musobaqa",
+      "gʻolib"
+     ],
+     "a": "novvoy"
+    },
+    {
+     "q": "4. presenter",
+     "options": [
+      "tugʻilgan kun torti",
+      "boshlovchi (teleboshlovchi)",
+      "gʻolib",
+      "hakam (hayʼat aʼzosi)"
+     ],
+     "a": "boshlovchi (teleboshlovchi)"
+    },
+    {
+     "q": "5. manager",
+     "options": [
+      "gʻolib",
+      "novvoy",
+      "menejer (rahbar)",
+      "boshlovchi (teleboshlovchi)"
+     ],
+     "a": "menejer (rahbar)"
+    },
+    {
+     "q": "6. birthday cake",
+     "options": [
+      "hakam (hayʼat aʼzosi)",
+      "menejer (rahbar)",
+      "musobaqa",
+      "tugʻilgan kun torti"
+     ],
+     "a": "tugʻilgan kun torti"
+    },
+    {
+     "q": "7. competition",
+     "options": [
+      "novvoy",
+      "menejer (rahbar)",
+      "musobaqa",
+      "gʻolib"
+     ],
+     "a": "musobaqa"
+    }
+   ]
+  },
+  {
+   "id": "v2_2d_3",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part D · Kasblar va boshqa soʻzlar (Jobs & Other)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. hakam (hayʼat aʼzosi)",
+     "options": [
+      "judge",
+      "winner",
+      "presenter",
+      "manager"
+     ],
+     "a": "judge"
+    },
+    {
+     "q": "2. musobaqa",
+     "options": [
+      "competition",
+      "baker",
+      "manager",
+      "judge"
+     ],
+     "a": "competition"
+    },
+    {
+     "q": "3. menejer (rahbar)",
+     "options": [
+      "manager",
+      "judge",
+      "presenter",
+      "winner"
+     ],
+     "a": "manager"
+    },
+    {
+     "q": "4. novvoy",
+     "options": [
+      "presenter",
+      "baker",
+      "birthday cake",
+      "manager"
+     ],
+     "a": "baker"
+    },
+    {
+     "q": "5. boshlovchi (teleboshlovchi)",
+     "options": [
+      "presenter",
+      "winner",
+      "competition",
+      "manager"
+     ],
+     "a": "presenter"
+    },
+    {
+     "q": "6. gʻolib",
+     "options": [
+      "manager",
+      "competition",
+      "baker",
+      "winner"
+     ],
+     "a": "winner"
+    },
+    {
+     "q": "7. tugʻilgan kun torti",
+     "options": [
+      "judge",
+      "presenter",
+      "manager",
+      "birthday cake"
+     ],
+     "a": "birthday cake"
+    }
+   ]
+  },
+  {
+   "id": "v2_2e_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part E · Odamlar (People)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the word.",
+   "instruction_uz": "Rasmga qarang va toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. Who is this?",
+     "options": [
+      "person — people",
+      "child — children",
+      "baby",
+      "woman — women"
+     ],
+     "a": "woman — women",
+     "img": "/static/img/vocab/w2_e02.webp"
+    },
+    {
+     "q": "2. Who is this?",
+     "options": [
+      "person — people",
+      "boy",
+      "child — children",
+      "baby"
+     ],
+     "a": "boy",
+     "img": "/static/img/vocab/w2_e06.webp"
+    },
+    {
+     "q": "3. Who is this?",
+     "options": [
+      "person — people",
+      "man — men",
+      "child — children",
+      "woman — women"
+     ],
+     "a": "man — men",
+     "img": "/static/img/vocab/w2_e01.webp"
+    },
+    {
+     "q": "4. Who is this?",
+     "options": [
+      "baby",
+      "girl",
+      "man — men",
+      "person — people"
+     ],
+     "a": "person — people",
+     "img": "/static/img/vocab/w2_e08.webp"
+    },
+    {
+     "q": "5. Who is this?",
+     "options": [
+      "child — children",
+      "boy",
+      "woman — women",
+      "man — men"
+     ],
+     "a": "child — children",
+     "img": "/static/img/vocab/w2_e03.webp"
+    },
+    {
+     "q": "6. Who is this?",
+     "options": [
+      "girl",
+      "woman — women",
+      "person — people",
+      "man — men"
+     ],
+     "a": "girl",
+     "img": "/static/img/vocab/w2_e05.webp"
+    },
+    {
+     "q": "7. Who is this?",
+     "options": [
+      "friend",
+      "child — children",
+      "baby",
+      "woman — women"
+     ],
+     "a": "friend",
+     "img": "/static/img/vocab/w2_e07.webp"
+    },
+    {
+     "q": "8. Who is this?",
+     "options": [
+      "baby",
+      "person — people",
+      "woman — women",
+      "man — men"
+     ],
+     "a": "baby",
+     "img": "/static/img/vocab/w2_e04.webp"
+    }
+   ]
+  },
+  {
+   "id": "v2_2e_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part E · Odamlar (People)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. person — people",
+     "options": [
+      "doʻst",
+      "odam — odamlar",
+      "oʻgʻil bola",
+      "ayol — ayollar"
+     ],
+     "a": "odam — odamlar"
+    },
+    {
+     "q": "2. boy",
+     "options": [
+      "chaqaloq",
+      "qiz (qizcha)",
+      "oʻgʻil bola",
+      "ayol — ayollar"
+     ],
+     "a": "oʻgʻil bola"
+    },
+    {
+     "q": "3. baby",
+     "options": [
+      "chaqaloq",
+      "bola — bolalar",
+      "qiz (qizcha)",
+      "doʻst"
+     ],
+     "a": "chaqaloq"
+    },
+    {
+     "q": "4. man — men",
+     "options": [
+      "bola — bolalar",
+      "chaqaloq",
+      "qiz (qizcha)",
+      "erkak — erkaklar"
+     ],
+     "a": "erkak — erkaklar"
+    },
+    {
+     "q": "5. girl",
+     "options": [
+      "odam — odamlar",
+      "qiz (qizcha)",
+      "oʻgʻil bola",
+      "bola — bolalar"
+     ],
+     "a": "qiz (qizcha)"
+    },
+    {
+     "q": "6. child — children",
+     "options": [
+      "doʻst",
+      "qiz (qizcha)",
+      "bola — bolalar",
+      "erkak — erkaklar"
+     ],
+     "a": "bola — bolalar"
+    },
+    {
+     "q": "7. friend",
+     "options": [
+      "ayol — ayollar",
+      "oʻgʻil bola",
+      "odam — odamlar",
+      "doʻst"
+     ],
+     "a": "doʻst"
+    },
+    {
+     "q": "8. woman — women",
+     "options": [
+      "doʻst",
+      "ayol — ayollar",
+      "oʻgʻil bola",
+      "qiz (qizcha)"
+     ],
+     "a": "ayol — ayollar"
+    }
+   ]
+  },
+  {
+   "id": "v2_2e_3",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part E · Odamlar (People)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. chaqaloq",
+     "options": [
+      "boy",
+      "man — men",
+      "friend",
+      "baby"
+     ],
+     "a": "baby"
+    },
+    {
+     "q": "2. oʻgʻil bola",
+     "options": [
+      "child — children",
+      "boy",
+      "baby",
+      "friend"
+     ],
+     "a": "boy"
+    },
+    {
+     "q": "3. qiz (qizcha)",
+     "options": [
+      "child — children",
+      "girl",
+      "boy",
+      "person — people"
+     ],
+     "a": "girl"
+    },
+    {
+     "q": "4. bola — bolalar",
+     "options": [
+      "person — people",
+      "woman — women",
+      "child — children",
+      "baby"
+     ],
+     "a": "child — children"
+    },
+    {
+     "q": "5. ayol — ayollar",
+     "options": [
+      "boy",
+      "friend",
+      "woman — women",
+      "person — people"
+     ],
+     "a": "woman — women"
+    },
+    {
+     "q": "6. odam — odamlar",
+     "options": [
+      "person — people",
+      "man — men",
+      "boy",
+      "woman — women"
+     ],
+     "a": "person — people"
+    },
+    {
+     "q": "7. doʻst",
+     "options": [
+      "boy",
+      "woman — women",
+      "friend",
+      "person — people"
+     ],
+     "a": "friend"
+    },
+    {
+     "q": "8. erkak — erkaklar",
+     "options": [
+      "man — men",
+      "girl",
+      "child — children",
+      "baby"
+     ],
+     "a": "man — men"
+    }
+   ]
+  },
+  {
+   "id": "v2_2f_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part F · Sifatlar (Adjectives)",
+   "number": 1,
+   "title": "Ex 1: Picture quiz",
+   "instruction_en": "Look at the picture. Choose the word.",
+   "instruction_uz": "Rasmga qarang va toʻgʻri soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. Which word fits the picture?",
+     "options": [
+      "hot — cold",
+      "tired",
+      "favourite",
+      "friendly"
+     ],
+     "a": "friendly",
+     "img": "/static/img/vocab/w2_f05.webp"
+    },
+    {
+     "q": "2. Which word fits the picture?",
+     "options": [
+      "big — small",
+      "favourite",
+      "hot — cold",
+      "new — old"
+     ],
+     "a": "hot — cold",
+     "img": "/static/img/vocab/w2_f08.webp"
+    },
+    {
+     "q": "3. Which word fits the picture?",
+     "options": [
+      "favourite",
+      "good — bad",
+      "hot — cold",
+      "easy — difficult"
+     ],
+     "a": "good — bad",
+     "img": "/static/img/vocab/w2_f06.webp"
+    },
+    {
+     "q": "4. Which word fits the picture?",
+     "options": [
+      "tired",
+      "friendly",
+      "young — old",
+      "beautiful"
+     ],
+     "a": "beautiful",
+     "img": "/static/img/vocab/w2_f01.webp"
+    },
+    {
+     "q": "5. Which word fits the picture?",
+     "options": [
+      "new — old",
+      "easy — difficult",
+      "good — bad",
+      "happy — sad"
+     ],
+     "a": "happy — sad",
+     "img": "/static/img/vocab/w2_f07.webp"
+    },
+    {
+     "q": "6. Which word fits the picture?",
+     "options": [
+      "tired",
+      "young — old",
+      "new — old",
+      "big — small"
+     ],
+     "a": "big — small",
+     "img": "/static/img/vocab/w2_f02.webp"
+    },
+    {
+     "q": "7. Which word fits the picture?",
+     "options": [
+      "hot — cold",
+      "favourite",
+      "easy — difficult",
+      "good — bad"
+     ],
+     "a": "favourite",
+     "img": "/static/img/vocab/w2_f04.webp"
+    },
+    {
+     "q": "8. Which word fits the picture?",
+     "options": [
+      "hot — cold",
+      "happy — sad",
+      "young — old",
+      "favourite"
+     ],
+     "a": "young — old",
+     "img": "/static/img/vocab/w2_f11.webp"
+    },
+    {
+     "q": "9. Which word fits the picture?",
+     "options": [
+      "big — small",
+      "friendly",
+      "new — old",
+      "easy — difficult"
+     ],
+     "a": "easy — difficult",
+     "img": "/static/img/vocab/w2_f03.webp"
+    },
+    {
+     "q": "10. Which word fits the picture?",
+     "options": [
+      "friendly",
+      "beautiful",
+      "tired",
+      "favourite"
+     ],
+     "a": "tired",
+     "img": "/static/img/vocab/w2_f10.webp"
+    },
+    {
+     "q": "11. Which word fits the picture?",
+     "options": [
+      "tired",
+      "easy — difficult",
+      "favourite",
+      "new — old"
+     ],
+     "a": "new — old",
+     "img": "/static/img/vocab/w2_f09.webp"
+    }
+   ]
+  },
+  {
+   "id": "v2_2f_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part F · Sifatlar (Adjectives)",
+   "number": 2,
+   "title": "Ex 2: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. tired",
+     "options": [
+      "sevimli",
+      "charchagan",
+      "katta — kichik",
+      "yangi — eski"
+     ],
+     "a": "charchagan"
+    },
+    {
+     "q": "2. easy — difficult",
+     "options": [
+      "charchagan",
+      "sevimli",
+      "oson — qiyin",
+      "chiroyli"
+     ],
+     "a": "oson — qiyin"
+    },
+    {
+     "q": "3. hot — cold",
+     "options": [
+      "xursand — xafa",
+      "issiq — sovuq",
+      "chiroyli",
+      "charchagan"
+     ],
+     "a": "issiq — sovuq"
+    },
+    {
+     "q": "4. friendly",
+     "options": [
+      "yangi — eski",
+      "yaxshi — yomon",
+      "issiq — sovuq",
+      "samimiy, mehribon"
+     ],
+     "a": "samimiy, mehribon"
+    },
+    {
+     "q": "5. favourite",
+     "options": [
+      "issiq — sovuq",
+      "sevimli",
+      "yaxshi — yomon",
+      "katta — kichik"
+     ],
+     "a": "sevimli"
+    },
+    {
+     "q": "6. good — bad",
+     "options": [
+      "yaxshi — yomon",
+      "chiroyli",
+      "oson — qiyin",
+      "katta — kichik"
+     ],
+     "a": "yaxshi — yomon"
+    },
+    {
+     "q": "7. happy — sad",
+     "options": [
+      "yaxshi — yomon",
+      "xursand — xafa",
+      "issiq — sovuq",
+      "sevimli"
+     ],
+     "a": "xursand — xafa"
+    },
+    {
+     "q": "8. beautiful",
+     "options": [
+      "xursand — xafa",
+      "samimiy, mehribon",
+      "chiroyli",
+      "oson — qiyin"
+     ],
+     "a": "chiroyli"
+    },
+    {
+     "q": "9. new — old",
+     "options": [
+      "sevimli",
+      "oson — qiyin",
+      "yangi — eski",
+      "yaxshi — yomon"
+     ],
+     "a": "yangi — eski"
+    },
+    {
+     "q": "10. young — old",
+     "options": [
+      "yangi — eski",
+      "yosh — qari",
+      "samimiy, mehribon",
+      "chiroyli"
+     ],
+     "a": "yosh — qari"
+    },
+    {
+     "q": "11. big — small",
+     "options": [
+      "xursand — xafa",
+      "sevimli",
+      "katta — kichik",
+      "chiroyli"
+     ],
+     "a": "katta — kichik"
+    }
+   ]
+  },
+  {
+   "id": "v2_2f_3",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part F · Sifatlar (Adjectives)",
+   "number": 3,
+   "title": "Ex 3: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. katta — kichik",
+     "options": [
+      "young — old",
+      "big — small",
+      "happy — sad",
+      "beautiful"
+     ],
+     "a": "big — small"
+    },
+    {
+     "q": "2. chiroyli",
+     "options": [
+      "happy — sad",
+      "young — old",
+      "beautiful",
+      "new — old"
+     ],
+     "a": "beautiful"
+    },
+    {
+     "q": "3. charchagan",
+     "options": [
+      "young — old",
+      "favourite",
+      "tired",
+      "friendly"
+     ],
+     "a": "tired"
+    },
+    {
+     "q": "4. xursand — xafa",
+     "options": [
+      "beautiful",
+      "young — old",
+      "big — small",
+      "happy — sad"
+     ],
+     "a": "happy — sad"
+    },
+    {
+     "q": "5. issiq — sovuq",
+     "options": [
+      "hot — cold",
+      "friendly",
+      "beautiful",
+      "good — bad"
+     ],
+     "a": "hot — cold"
+    },
+    {
+     "q": "6. yangi — eski",
+     "options": [
+      "beautiful",
+      "hot — cold",
+      "new — old",
+      "tired"
+     ],
+     "a": "new — old"
+    },
+    {
+     "q": "7. oson — qiyin",
+     "options": [
+      "friendly",
+      "new — old",
+      "beautiful",
+      "easy — difficult"
+     ],
+     "a": "easy — difficult"
+    },
+    {
+     "q": "8. yosh — qari",
+     "options": [
+      "good — bad",
+      "young — old",
+      "new — old",
+      "big — small"
+     ],
+     "a": "young — old"
+    },
+    {
+     "q": "9. sevimli",
+     "options": [
+      "favourite",
+      "easy — difficult",
+      "happy — sad",
+      "tired"
+     ],
+     "a": "favourite"
+    },
+    {
+     "q": "10. yaxshi — yomon",
+     "options": [
+      "beautiful",
+      "new — old",
+      "good — bad",
+      "easy — difficult"
+     ],
+     "a": "good — bad"
+    },
+    {
+     "q": "11. samimiy, mehribon",
+     "options": [
+      "friendly",
+      "easy — difficult",
+      "good — bad",
+      "favourite"
+     ],
+     "a": "friendly"
+    }
+   ]
+  },
+  {
+   "id": "v2_bc_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part B-C · Iboralar va shaxsiy maʼlumot",
+   "number": 1,
+   "title": "Ex 1: English → Uzbek",
+   "instruction_en": "Choose the Uzbek meaning.",
+   "instruction_uz": "Oʻzbekcha maʼnoni tanlang.",
+   "questions": [
+    {
+     "q": "1. How are you?",
+     "options": [
+      "ism",
+      "juda yaxshi",
+      "Ahvolingiz qanday?",
+      "takrorlamoq"
+     ],
+     "a": "Ahvolingiz qanday?"
+    },
+    {
+     "q": "2. spell",
+     "options": [
+      "Ahvolingiz qanday?",
+      "harflab aytmoq",
+      "telefon raqami",
+      "takrorlamoq"
+     ],
+     "a": "harflab aytmoq"
+    },
+    {
+     "q": "3. very well",
+     "options": [
+      "harflab aytmoq",
+      "Ahvolingiz qanday?",
+      "familiya",
+      "juda yaxshi (aʼlo)"
+     ],
+     "a": "juda yaxshi (aʼlo)"
+    },
+    {
+     "q": "4. name",
+     "options": [
+      "juda yaxshi",
+      "ism",
+      "familiya",
+      "harflab aytmoq"
+     ],
+     "a": "ism"
+    },
+    {
+     "q": "5. really good",
+     "options": [
+      "familiya",
+      "juda yaxshi",
+      "yomon emas",
+      "takrorlamoq"
+     ],
+     "a": "juda yaxshi"
+    },
+    {
+     "q": "6. not bad",
+     "options": [
+      "juda yaxshi",
+      "juda yaxshi (aʼlo)",
+      "telefon raqami",
+      "yomon emas"
+     ],
+     "a": "yomon emas"
+    },
+    {
+     "q": "7. phone number",
+     "options": [
+      "yomon emas",
+      "telefon raqami",
+      "takrorlamoq",
+      "Ahvolingiz qanday?"
+     ],
+     "a": "telefon raqami"
+    },
+    {
+     "q": "8. repeat",
+     "options": [
+      "juda yaxshi (aʼlo)",
+      "harflab aytmoq",
+      "takrorlamoq",
+      "ism"
+     ],
+     "a": "takrorlamoq"
+    },
+    {
+     "q": "9. surname",
+     "options": [
+      "takrorlamoq",
+      "harflab aytmoq",
+      "telefon raqami",
+      "familiya"
+     ],
+     "a": "familiya"
+    }
+   ]
+  },
+  {
+   "id": "v2_bc_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part B-C · Iboralar va shaxsiy maʼlumot",
+   "number": 2,
+   "title": "Ex 2: Uzbek → English",
+   "instruction_en": "Choose the English word.",
+   "instruction_uz": "Oʻzbekcha maʼnoga mos inglizcha soʻzni tanlang.",
+   "questions": [
+    {
+     "q": "1. telefon raqami",
+     "options": [
+      "very well",
+      "phone number",
+      "spell",
+      "not bad"
+     ],
+     "a": "phone number"
+    },
+    {
+     "q": "2. Ahvolingiz qanday?",
+     "options": [
+      "name",
+      "How are you?",
+      "repeat",
+      "not bad"
+     ],
+     "a": "How are you?"
+    },
+    {
+     "q": "3. ism",
+     "options": [
+      "name",
+      "phone number",
+      "surname",
+      "not bad"
+     ],
+     "a": "name"
+    },
+    {
+     "q": "4. harflab aytmoq",
+     "options": [
+      "surname",
+      "spell",
+      "repeat",
+      "very well"
+     ],
+     "a": "spell"
+    },
+    {
+     "q": "5. yomon emas",
+     "options": [
+      "not bad",
+      "spell",
+      "phone number",
+      "repeat"
+     ],
+     "a": "not bad"
+    },
+    {
+     "q": "6. takrorlamoq",
+     "options": [
+      "repeat",
+      "spell",
+      "very well",
+      "not bad"
+     ],
+     "a": "repeat"
+    },
+    {
+     "q": "7. familiya",
+     "options": [
+      "name",
+      "really good",
+      "surname",
+      "spell"
+     ],
+     "a": "surname"
+    }
+   ]
+  },
+  {
+   "id": "v2_bc_3",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part B-C · Iboralar va shaxsiy maʼlumot",
+   "number": 3,
+   "title": "Ex 3: Which phrase?",
+   "instruction_en": "Choose the correct phrase.",
+   "instruction_uz": "Vaziyatga mos iborani tanlang.",
+   "questions": [
+    {
+     "q": "1. Ertalab odamlarga salom berasiz:",
+     "options": [
+      "Good morning!",
+      "Good night!",
+      "Goodbye!"
+     ],
+     "a": "Good morning!"
+    },
+    {
+     "q": "2. Kechqurun uxlashdan oldin:",
+     "options": [
+      "Good night!",
+      "Good morning!",
+      "Hello!"
+     ],
+     "a": "Good night!"
+    },
+    {
+     "q": "3. Kimdir sizdan ahvolingizni soʻraydi. U nima deydi?",
+     "options": [
+      "How are you?",
+      "What is your name?",
+      "See you!"
+     ],
+     "a": "How are you?"
+    },
+    {
+     "q": "4. Ahvolingiz juda yaxshi. Siz aytasiz:",
+     "options": [
+      "Very well, thank you.",
+      "Good night.",
+      "Goodbye."
+     ],
+     "a": "Very well, thank you."
+    },
+    {
+     "q": "5. Ismingizni soʻrashadi. Siz soʻzni qanday aytasiz?",
+     "options": [
+      "My name is Aziz.",
+      "My phone number is Aziz.",
+      "My surname is Aziz."
+     ],
+     "a": "My name is Aziz."
+    },
+    {
+     "q": "6. Soʻzni harflab aytishni soʻrasangiz:",
+     "options": [
+      "Spell it, please.",
+      "Repeat it, please.",
+      "Goodbye, please."
+     ],
+     "a": "Spell it, please."
+    }
+   ]
+  },
+  {
+   "id": "v2_g_1",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part G · Sonlar (Numbers)",
+   "number": 1,
+   "title": "Ex 1: Words → digits (1-20)",
+   "instruction_en": "Choose the number.",
+   "instruction_uz": "Soʻzga mos raqamni tanlang.",
+   "questions": [
+    {
+     "q": "1. one =",
+     "options": [
+      "30",
+      "90",
+      "15",
+      "1"
+     ],
+     "a": "1"
+    },
+    {
+     "q": "2. fourteen =",
+     "options": [
+      "2",
+      "14",
+      "1",
+      "8"
+     ],
+     "a": "14"
+    },
+    {
+     "q": "3. eight =",
+     "options": [
+      "11",
+      "18",
+      "64",
+      "8"
+     ],
+     "a": "8"
+    },
+    {
+     "q": "4. ten =",
+     "options": [
+      "10",
+      "1",
+      "70",
+      "2"
+     ],
+     "a": "10"
+    },
+    {
+     "q": "5. nineteen =",
+     "options": [
+      "90",
+      "30",
+      "19",
+      "58"
+     ],
+     "a": "19"
+    },
+    {
+     "q": "6. seventeen =",
+     "options": [
+      "73",
+      "7",
+      "14",
+      "17"
+     ],
+     "a": "17"
+    },
+    {
+     "q": "7. two =",
+     "options": [
+      "4",
+      "86",
+      "2",
+      "99"
+     ],
+     "a": "2"
+    },
+    {
+     "q": "8. thirteen =",
+     "options": [
+      "70",
+      "6",
+      "13",
+      "100"
+     ],
+     "a": "13"
+    },
+    {
+     "q": "9. twenty =",
+     "options": [
+      "80",
+      "99",
+      "21",
+      "20"
+     ],
+     "a": "20"
+    },
+    {
+     "q": "10. five =",
+     "options": [
+      "5",
+      "7",
+      "18",
+      "11"
+     ],
+     "a": "5"
+    }
+   ]
+  },
+  {
+   "id": "v2_g_2",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part G · Sonlar (Numbers)",
+   "number": 2,
+   "title": "Ex 2: Words → digits (20-100)",
+   "instruction_en": "Choose the number.",
+   "instruction_uz": "Soʻzga mos raqamni tanlang.",
+   "questions": [
+    {
+     "q": "1. ninety-nine =",
+     "options": [
+      "99",
+      "73",
+      "60",
+      "70"
+     ],
+     "a": "99"
+    },
+    {
+     "q": "2. thirty-two =",
+     "options": [
+      "4",
+      "32",
+      "19",
+      "5"
+     ],
+     "a": "32"
+    },
+    {
+     "q": "3. eighty =",
+     "options": [
+      "2",
+      "47",
+      "32",
+      "80"
+     ],
+     "a": "80"
+    },
+    {
+     "q": "4. fifty-eight =",
+     "options": [
+      "90",
+      "58",
+      "70",
+      "80"
+     ],
+     "a": "58"
+    },
+    {
+     "q": "5. fifty =",
+     "options": [
+      "99",
+      "20",
+      "73",
+      "50"
+     ],
+     "a": "50"
+    },
+    {
+     "q": "6. seventy =",
+     "options": [
+      "70",
+      "21",
+      "25",
+      "8"
+     ],
+     "a": "70"
+    },
+    {
+     "q": "7. eighty-six =",
+     "options": [
+      "8",
+      "13",
+      "86",
+      "10"
+     ],
+     "a": "86"
+    },
+    {
+     "q": "8. forty =",
+     "options": [
+      "40",
+      "70",
+      "3",
+      "2"
+     ],
+     "a": "40"
+    },
+    {
+     "q": "9. one hundred =",
+     "options": [
+      "3",
+      "17",
+      "32",
+      "100"
+     ],
+     "a": "100"
+    },
+    {
+     "q": "10. twenty-one =",
+     "options": [
+      "20",
+      "8",
+      "21",
+      "99"
+     ],
+     "a": "21"
+    }
+   ]
+  },
+  {
+   "id": "v2_g_3",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part G · Sonlar (Numbers)",
+   "number": 3,
+   "title": "Ex 3: Write the number in words",
+   "instruction_en": "Write the number in words.",
+   "instruction_uz": "Raqamni inglizcha yozing.",
+   "questions": [
+    {
+     "q": "1. 12 →",
+     "a": "twelve"
+    },
+    {
+     "q": "2. 3 →",
+     "a": "three"
+    },
+    {
+     "q": "3. 14 →",
+     "a": "fourteen"
+    },
+    {
+     "q": "4. 8 →",
+     "a": "eight"
+    },
+    {
+     "q": "5. 13 →",
+     "a": "thirteen"
+    },
+    {
+     "q": "6. 11 →",
+     "a": "eleven"
+    },
+    {
+     "q": "7. 9 →",
+     "a": "nine"
+    },
+    {
+     "q": "8. 15 →",
+     "a": "fifteen"
+    },
+    {
+     "q": "9. 18 →",
+     "a": "eighteen"
+    },
+    {
+     "q": "10. 10 →",
+     "a": "ten"
+    }
+   ]
+  },
+  {
+   "id": "v2_g_4",
+   "category": "vocabulary",
+   "week": "Week 2",
+   "part": "Part G · Sonlar (Numbers)",
+   "number": 4,
+   "title": "Ex 4: Write the number in words (20-100)",
+   "instruction_en": "Write the number in words.",
+   "instruction_uz": "Raqamni inglizcha yozing.",
+   "questions": [
+    {
+     "q": "1. 60 →",
+     "a": "sixty"
+    },
+    {
+     "q": "2. 32 →",
+     "a": "thirty-two"
+    },
+    {
+     "q": "3. 21 →",
+     "a": "twenty-one"
+    },
+    {
+     "q": "4. 80 →",
+     "a": "eighty"
+    },
+    {
+     "q": "5. 58 →",
+     "a": "fifty-eight"
+    },
+    {
+     "q": "6. 70 →",
+     "a": "seventy"
+    },
+    {
+     "q": "7. 90 →",
+     "a": "ninety"
+    },
+    {
+     "q": "8. 40 →",
+     "a": "forty"
+    },
+    {
+     "q": "9. 73 →",
+     "a": "seventy-three"
+    },
+    {
+     "q": "10. 47 →",
+     "a": "forty-seven"
+    }
+   ]
+  }
+ ]
+}

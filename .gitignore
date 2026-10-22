@@ -1,0 +1,33 @@
+# Secrets and local data must never be committed
+.env
+.env.*
+!.env.example
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite*
+*.log
+*.bak
+*.bak.*
+*.before_plain_patch
+__pycache__/
+*.pyc
+
+# Telegram profile photos downloaded by the bot (personal data of the users)
+avatars/
+
+# Local tooling and tunnel files
+.impeccable/
+current_tunnel_url.txt
+tunnel_out*
+
+# Teaching material taken from the teacher's PDF books (copyrighted).
+# Rebuild it locally from the PDFs with tools/extract_books.py
+books/
+static/img/grammar/
+static/img/vocab/
+static/img/books_manifest.json
+
+# Recorded voice clips (switched off in dragon_chase.js, PLAY_VOICE_LINES = false)
+static/sfx/*.mp3

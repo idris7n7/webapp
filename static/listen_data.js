@@ -1,0 +1,558 @@
+// Listen and Survive: the missions and the glossary of new words (build_listen_data.py).
+const LISTEN_GLOSSARY = [
+ {
+  "id": "ls_straight",
+  "word": "straight",
+  "meaning_uz": "toʻgʻri, oldinga",
+  "example_en": "Go straight.",
+  "example_uz": "Toʻgʻri yuring.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_step",
+  "word": "step",
+  "meaning_uz": "qadam",
+  "example_en": "Take two steps.",
+  "example_uz": "Ikki qadam tashlang.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_turn",
+  "word": "turn",
+  "meaning_uz": "burilmoq",
+  "example_en": "Turn left.",
+  "example_uz": "Chapga buriling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_left",
+  "word": "left",
+  "meaning_uz": "chap",
+  "example_en": "Turn left at the door.",
+  "example_uz": "Eshikda chapga buriling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_right",
+  "word": "right",
+  "meaning_uz": "oʻng",
+  "example_en": "Turn right.",
+  "example_uz": "Oʻngga buriling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_stop",
+  "word": "stop",
+  "meaning_uz": "toʻxtamoq",
+  "example_en": "Stop here!",
+  "example_uz": "Shu yerda toʻxtang!",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_exit",
+  "word": "exit",
+  "meaning_uz": "chiqish joyi",
+  "example_en": "This is the exit.",
+  "example_uz": "Mana chiqish joyi.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "escape"
+ },
+ {
+  "id": "ls_tent",
+  "word": "tent",
+  "meaning_uz": "chodir",
+  "example_en": "I sleep in a tent.",
+  "example_uz": "Men chodirda uxlayman.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_fire",
+  "word": "fire",
+  "meaning_uz": "olov",
+  "example_en": "Make a fire.",
+  "example_uz": "Olov yoqing.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_map",
+  "word": "map",
+  "meaning_uz": "xarita",
+  "example_en": "Take the map.",
+  "example_uz": "Xaritani oling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_rope",
+  "word": "rope",
+  "meaning_uz": "arqon",
+  "example_en": "I have a rope.",
+  "example_uz": "Menda arqon bor.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_torch",
+  "word": "torch",
+  "meaning_uz": "fonar",
+  "example_en": "Take the torch.",
+  "example_uz": "Fonarni oling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_jacket",
+  "word": "jacket",
+  "meaning_uz": "kurtka",
+  "example_en": "I am cold. I take my jacket.",
+  "example_uz": "Men sovuq qotdim. Kurtkamni olaman.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_hungry",
+  "word": "hungry",
+  "meaning_uz": "och",
+  "example_en": "I am hungry.",
+  "example_uz": "Men ochman.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_thirsty",
+  "word": "thirsty",
+  "meaning_uz": "chanqagan",
+  "example_en": "I am thirsty.",
+  "example_uz": "Men chanqadim.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_lost",
+  "word": "lost",
+  "meaning_uz": "adashgan",
+  "example_en": "I am lost.",
+  "example_uz": "Men adashdim.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_rain",
+  "word": "rain",
+  "meaning_uz": "yomgʻir",
+  "example_en": "The rain is cold.",
+  "example_uz": "Yomgʻir sovuq.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_dark",
+  "word": "dark",
+  "meaning_uz": "qorongʻi",
+  "example_en": "It is dark.",
+  "example_uz": "Qorongʻi.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "camp"
+ },
+ {
+  "id": "ls_gate",
+  "word": "gate",
+  "meaning_uz": "chiqish darvozasi (aeroportda)",
+  "example_en": "Go to gate twelve.",
+  "example_uz": "Oʻn ikkinchi darvozaga boring.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_flight",
+  "word": "flight",
+  "meaning_uz": "reys",
+  "example_en": "My flight is at nine.",
+  "example_uz": "Mening reysim soat toʻqqizda.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_ticket",
+  "word": "ticket",
+  "meaning_uz": "chipta",
+  "example_en": "Here is my ticket.",
+  "example_uz": "Mana mening chiptam.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_passport",
+  "word": "passport",
+  "meaning_uz": "pasport",
+  "example_en": "I have my passport.",
+  "example_uz": "Menda pasportim bor.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_boarding",
+  "word": "boarding",
+  "meaning_uz": "samolyotga chiqish",
+  "example_en": "Boarding is now open.",
+  "example_uz": "Samolyotga chiqish boshlandi.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_oclock",
+  "word": "o'clock",
+  "meaning_uz": "soat (aniq vaqt)",
+  "example_en": "It is six o'clock.",
+  "example_uz": "Soat roppa-rosa olti.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_leave",
+  "word": "leave",
+  "meaning_uz": "jo'namoq, ketmoq",
+  "example_en": "The plane leaves at four.",
+  "example_uz": "Samolyot toʻrtda uchadi.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "airport"
+ },
+ {
+  "id": "ls_thief",
+  "word": "thief",
+  "meaning_uz": "oʻgʻri",
+  "example_en": "The thief is a young man.",
+  "example_uz": "Oʻgʻri yosh erkak.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "detective"
+ },
+ {
+  "id": "ls_witness",
+  "word": "witness",
+  "meaning_uz": "guvoh",
+  "example_en": "The witness is a woman.",
+  "example_uz": "Guvoh — ayol.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "detective"
+ },
+ {
+  "id": "ls_clue",
+  "word": "clue",
+  "meaning_uz": "dalil, ishora",
+  "example_en": "This is a clue.",
+  "example_uz": "Bu — dalil.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "detective"
+ },
+ {
+  "id": "ls_police",
+  "word": "police",
+  "meaning_uz": "politsiya",
+  "example_en": "Call the police.",
+  "example_uz": "Politsiyaga qoʻngʻiroq qiling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "detective"
+ },
+ {
+  "id": "ls_open",
+  "word": "open",
+  "meaning_uz": "ochmoq",
+  "example_en": "Open the door.",
+  "example_uz": "Eshikni oching.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_close",
+  "word": "close",
+  "meaning_uz": "yopmoq",
+  "example_en": "Close the window.",
+  "example_uz": "Derazani yoping.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_door",
+  "word": "door",
+  "meaning_uz": "eshik",
+  "example_en": "Open the door.",
+  "example_uz": "Eshikni oching.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_window",
+  "word": "window",
+  "meaning_uz": "deraza",
+  "example_en": "Close the window.",
+  "example_uz": "Derazani yoping.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_light",
+  "word": "light",
+  "meaning_uz": "chiroq, yorugʻlik",
+  "example_en": "Switch on the light.",
+  "example_uz": "Chiroqni yoqing.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_switch_on",
+  "word": "switch on",
+  "meaning_uz": "yoqmoq",
+  "example_en": "Switch on the light.",
+  "example_uz": "Chiroqni yoqing.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_take",
+  "word": "take",
+  "meaning_uz": "olmoq",
+  "example_en": "Take the key.",
+  "example_uz": "Kalitni oling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_give",
+  "word": "give",
+  "meaning_uz": "bermoq",
+  "example_en": "Give me the bag.",
+  "example_uz": "Menga sumkani bering.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_sit_down",
+  "word": "sit down",
+  "meaning_uz": "oʻtirmoq",
+  "example_en": "Sit down, please.",
+  "example_uz": "Iltimos, oʻtiring.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_stand_up",
+  "word": "stand up",
+  "meaning_uz": "turmoq",
+  "example_en": "Stand up.",
+  "example_uz": "Oʻrningizdan turing.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_run",
+  "word": "run",
+  "meaning_uz": "yugurmoq",
+  "example_en": "Run!",
+  "example_uz": "Yuguring!",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ },
+ {
+  "id": "ls_call",
+  "word": "call",
+  "meaning_uz": "qoʻngʻiroq qilmoq",
+  "example_en": "Call me.",
+  "example_uz": "Menga qoʻngʻiroq qiling.",
+  "unit": "LS",
+  "week": 3,
+  "category": "Listen and Survive",
+  "mission": "timed"
+ }
+];
+
+const LISTEN_MISSIONS = [
+ {
+  "id": "escape",
+  "n": 1,
+  "icon": "🏢",
+  "title": "Escape the Building",
+  "uz": "Binodan chiqing",
+  "story": "Binoda yong'in signali yangradi! Ovozli ko'rsatmalarni tinglang va to'g'ri yo'ldan yurib, chiqish joyiga yeting.",
+  "skills": "yo'nalishlar · sonlar · burilishlar",
+  "steps": 5,
+  "words": [
+   "ls_straight",
+   "ls_step",
+   "ls_turn",
+   "ls_left",
+   "ls_right",
+   "ls_stop",
+   "ls_exit"
+  ]
+ },
+ {
+  "id": "camp",
+  "n": 2,
+  "icon": "⛺",
+  "title": "Survival Camp",
+  "uz": "Omon qolish lageri",
+  "story": "Siz o'rmonda lagerdasiz. Ehtiyojingizga qarab to'g'ri narsalarni oling: suv, ovqat, boshpana va xavfsizlik.",
+  "skills": "buyumlar · ehtiyojlar · ketma-ketlik",
+  "steps": 5,
+  "words": [
+   "ls_tent",
+   "ls_fire",
+   "ls_map",
+   "ls_rope",
+   "ls_torch",
+   "ls_jacket",
+   "ls_hungry",
+   "ls_thirsty",
+   "ls_lost",
+   "ls_rain",
+   "ls_dark"
+  ]
+ },
+ {
+  "id": "airport",
+  "n": 3,
+  "icon": "✈️",
+  "title": "The Airport",
+  "uz": "Aeroport",
+  "story": "Reysingizni o'tkazib yubormang! E'lonlarni tinglang: darvoza raqami, mamlakat, vaqt, ism va telefon raqami.",
+  "skills": "sonlar · davlatlar · vaqt · harflab aytish",
+  "steps": 5,
+  "words": [
+   "ls_gate",
+   "ls_flight",
+   "ls_ticket",
+   "ls_passport",
+   "ls_boarding",
+   "ls_oclock",
+   "ls_leave"
+  ]
+ },
+ {
+  "id": "detective",
+  "n": 4,
+  "icon": "🕵️",
+  "title": "The Detective",
+  "uz": "Detektiv",
+  "story": "O'g'ri qochib ketdi! Guvohlarning gaplarini tinglang va gumondorlar orasidan o'g'rini toping.",
+  "skills": "tavsif · His / has · kayfiyat",
+  "steps": 4,
+  "words": [
+   "ls_thief",
+   "ls_witness",
+   "ls_clue",
+   "ls_police"
+  ]
+ },
+ {
+  "id": "timed",
+  "n": 5,
+  "icon": "⏱️",
+  "title": "The Timed Mission",
+  "uz": "Vaqtli missiya",
+  "story": "Vaqt tugayapti! Ketma-ket berilgan ko'rsatmalarni eshiting va ularni to'g'ri tartibda bajaring.",
+  "skills": "buyruqlar · tezlik · xotira",
+  "steps": 5,
+  "words": [
+   "ls_open",
+   "ls_close",
+   "ls_door",
+   "ls_window",
+   "ls_light",
+   "ls_switch_on",
+   "ls_take",
+   "ls_give",
+   "ls_sit_down",
+   "ls_stand_up",
+   "ls_run",
+   "ls_call"
+  ]
+ }
+];

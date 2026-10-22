@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: level-one-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    healthCheckPath: /healthz
+    # SQLite lives on the instance disk, which Render wipes on every deploy unless a persistent
+    # disk is attached. Disks need a paid plan; attach one and enable the three disk lines plus
+    # the DB_PATH variable below so students' data survives redeploys.
+    # disk:
+    #   name: level-one-data
+    #   mountPath: /data
+    #   sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: BOT_TOKEN
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+      - key: TEACHER_IDS
+        sync: false
+      - key: CHANNEL_ID
+        sync: false
+      # - key: DB_PATH
+      #   value: /data/level_one.db
