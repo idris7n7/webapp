@@ -37,3 +37,6 @@ node_modules/
 
 # 3D bundle tooling (rebuild static/l1_3d.js with: cd tools/3d_src; npm install; npm run build)
 tools/3d_src/node_modules/
+
+# Database copies made by the server every few hours
+backups/

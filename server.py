@@ -31,6 +31,7 @@ Quick Start on Server:
 
 import asyncio
 import contextlib
+import gzip
 import csv
 import hashlib
 import ipaddress
@@ -226,10 +227,15 @@ def now_str() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
+_TAG_RE = re.compile(r"</?[A-Za-z!][^>]*>")
+
+
 def clean_text(value, max_len: int) -> str:
-    """str(value) without control characters, trimmed and length-limited."""
+    """str(value) without control characters or HTML tags, trimmed and length-limited."""
     text = "" if value is None else str(value)
     text = "".join(ch for ch in text if ch == "\n" or ch >= " " and ch != "\x7f")
+    # Stored text may later be shown on a page: tags never get in (a second line of defence after escaping on the page).
+    text = _TAG_RE.sub("", text)
     return text.strip()[:max_len]
 
 
@@ -3057,7 +3063,110 @@ async def handle_delete_student(request: web.Request) -> web.Response:
     return web.json_response({"status": "ok", "id": user_id})
 
 
+GZIP_TYPES = {".js", ".css", ".html", ".json", ".svg", ".webmanifest"}
+_GZIP_CACHE: dict = {}  # path -> (mtime_ns, size, gzipped bytes)
+
+
+def _gzipped(path: str, st: os.stat_result) -> bytes:
+    hit = _GZIP_CACHE.get(path)
+    if hit and hit[0] == st.st_mtime_ns and hit[1] == st.st_size:
+        return hit[2]
+    with open(path, "rb") as f:
+        data = gzip.compress(f.read(), 6, mtime=0)
+    _GZIP_CACHE[path] = (st.st_mtime_ns, st.st_size, data)
+    return data
+
+
+async def handle_static(request: web.Request) -> web.StreamResponse:
+    """Serves /static/ files; text files go out gzipped (kept in memory) and every file has an ETag, so a repeat visit is a 304."""
+    rel = request.match_info["tail"]
+    path = os.path.realpath(os.path.join(STATIC_DIR, rel))
+    if os.path.commonpath([path, os.path.realpath(STATIC_DIR)]) != os.path.realpath(STATIC_DIR) or not os.path.isfile(path):
+        raise web.HTTPNotFound()
+    st = os.stat(path)
+    ext = os.path.splitext(path)[1].lower()
+    etag = f'"{st.st_mtime_ns:x}-{st.st_size:x}"'
+    if request.headers.get("If-None-Match") == etag:
+        return web.Response(status=304, headers={"ETag": etag})
+    if ext in GZIP_TYPES and st.st_size > 1024 and "gzip" in request.headers.get("Accept-Encoding", ""):
+        ctype = mimetypes.guess_type(path)[0] or "application/octet-stream"
+        if ext == ".webmanifest":
+            ctype = "application/manifest+json"
+        body = await run_blocking(_gzipped, path, st)
+        resp = web.Response(body=body, content_type=ctype.split(";")[0], charset="utf-8" if ctype.startswith(("text/", "application/javascript", "application/json")) else None)
+        resp.headers["Content-Encoding"] = "gzip"
+        resp.headers["Vary"] = "Accept-Encoding"
+        resp.headers["ETag"] = etag
+        return resp
+    resp = web.FileResponse(path)
+    resp.headers["ETag"] = etag
+    return resp
+
+
+async def handle_service_worker(request: web.Request) -> web.StreamResponse:
+    return web.FileResponse(
+        os.path.join(STATIC_DIR, "sw.js"),
+        headers={"Content-Type": "application/javascript", "Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+    )
+
+
+BACKUP_KEEP = 14
+BACKUP_EVERY_SECONDS = 6 * 3600
+
+
+def backup_dir() -> str:
+    return os.getenv("BACKUP_DIR") or os.path.join(os.path.dirname(os.path.abspath(DB_PATH)), "backups")
+
+
+def make_backup() -> str:
+    """Copies the live database with SQLite's online backup API (safe while the server is writing) and keeps the newest copies."""
+    os.makedirs(backup_dir(), exist_ok=True)
+    dest = os.path.join(backup_dir(), time.strftime("level_one_%Y%m%d_%H%M%S.db"))
+    src = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        dst = sqlite3.connect(dest)
+        try:
+            src.backup(dst)
+        finally:
+            dst.close()
+    finally:
+        src.close()
+    old = sorted(f for f in os.listdir(backup_dir()) if f.startswith("level_one_") and f.endswith(".db"))
+    for name in old[:-BACKUP_KEEP]:
+        try:
+            os.remove(os.path.join(backup_dir(), name))
+        except OSError:
+            pass
+    return dest
+
+
+async def backup_loop() -> None:
+    while True:
+        try:
+            await run_blocking(make_backup)
+        except Exception:
+            logger.exception("Database backup failed")
+        await asyncio.sleep(BACKUP_EVERY_SECONDS)
+
+
 STATIC_EXTENSIONS = {".js", ".css", ".html", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico", ".mp3", ".mp4", ".woff", ".woff2", ".json", ".webmanifest"}
+
+
+# Telegram shows the Mini App inside its own pages, so those may frame it. The page's own inline scripts stay allowed,
+# but nothing may be loaded from or sent to a host that is not listed here.
+CSP = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://telegram.org",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https: wss: ws:",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org https://telegram.org",
+])
 
 
 @web.middleware
@@ -3080,6 +3189,11 @@ async def error_middleware(request: web.Request, handler):
         )
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "same-origin")
+    if not request.path.startswith("/api/"):
+        response.headers.setdefault("Content-Security-Policy", CSP)
+        response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), payment=()")
+    if request.headers.get("X-Forwarded-Proto") == "https" or request.secure:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=15552000")
     if request.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
     elif request.path.startswith("/static/") and request.path.endswith((".js", ".css", ".html")):
@@ -3094,7 +3208,8 @@ def build_web_app() -> web.Application:
     web_app = web.Application(client_max_size=MAX_BODY_BYTES, middlewares=[error_middleware])
     web_app.router.add_get("/", handle_index)
     web_app.router.add_get("/healthz", handle_healthz)
-    web_app.router.add_static("/static", STATIC_DIR)
+    web_app.router.add_get("/static/{tail:.*}", handle_static)
+    web_app.router.add_get("/sw.js", handle_service_worker)
     web_app.router.add_get("/api/state", handle_get_state)
     web_app.router.add_post("/api/submit", handle_post_submit)
     web_app.router.add_post("/api/exercises", handle_post_exercise)
@@ -3338,6 +3453,7 @@ async def watch_webapp_url(tg_app) -> None:
 async def run_all() -> None:
     global TG_APP
     init_db()
+    spawn(backup_loop())
 
     # 1. Start aiohttp Web Server for the Mini App
     runner = web.AppRunner(build_web_app())

@@ -88,7 +88,15 @@
     Theme.bind(bar);
     $("l1BarAvatar").addEventListener("click", openProfile);
     $("l1BarBack").addEventListener("click", () => { Haptic.tap(); const go = backAction(); if (go) go(); setTimeout(syncBackButton, 120); });
-    setInterval(() => { if (!document.hidden) syncBackButton(); }, 400);
+    // The Back button follows what is on screen: re-check when the page changes (once per frame), plus a slow
+    // fallback for games that start without touching the page.
+    let backQueued = false;
+    new MutationObserver(() => {
+      if (backQueued) return;
+      backQueued = true;
+      requestAnimationFrame(() => { backQueued = false; syncBackButton(); });
+    }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    setInterval(() => { if (!document.hidden) syncBackButton(); }, 2000);
     $("l1BarPoints").addEventListener("click", () => Shell.go("rating"));
     $("l1BarStaff").addEventListener("click", () => { const b = $("btnModeToggle"); if (b) b.click(); });
 
@@ -216,10 +224,10 @@
       if (window.L1_Tasks) window.L1_Tasks.renderTeacher();
     }
     if (Date.now() - Shell.lastRefresh > 5000) Shell.refresh();
-    if (isStudentMode()) ensureLevelChosen(); else closeLevelGate();
+    if (isStudentMode()) applyStoredLevel(); else closeLevelGate();
   };
 
-  // ------------------------------------------------------------------ CEFR level gate (before entering the platform)
+  // ------------------------------------------------------------------ CEFR level (A1 until the student picks another one in the profile)
   const CEFR = [
     ["A1", "Beginner"], ["A2", "Elementary"], ["A2+", "Elementary+"],
     ["B1", "Intermediate"], ["B1+", "Intermediate+"], ["B2", "Upper-Int."],
@@ -228,11 +236,14 @@
   const levelKey = (u) => `l1_cefr_level_${u.id || u.name}`;
   function storedLevel(u) { try { return localStorage.getItem(levelKey(u)) || ""; } catch (e) { return ""; } }
   function closeLevelGate() { const g = $("l1LevelGate"); if (g) g.remove(); document.body.style.overflow = ""; }
-  function ensureLevelChosen() {
+  function applyStoredLevel() {
+    const u = user();
+    const saved = u && storedLevel(u);
+    if (saved && u.level !== saved) u.level = saved;
+  }
+  function openLevelPicker() {
     const u = user();
     if (!u) return;
-    const saved = storedLevel(u);
-    if (saved) { if (u.level !== saved) u.level = saved; closeLevelGate(); return; }
     if ($("l1LevelGate")) return;
     if (!$("l1LevelGateCss")) {
       const st = document.createElement("style");
@@ -251,14 +262,16 @@
     g.id = "l1LevelGate";
     g.innerHTML = `<h2>Darajangizni tanlang</h2><p>Ingliz tili CEFR darajangiz (A1 – C2)</p>
       <div class="grid">${CEFR.map(([k, en]) => `<button type="button" data-lvl="${k}"><b>${k}</b><span>${en}</span></button>`).join("")}</div>`;
+    const dismiss = () => { closeLevelGate(); Back.remove(gateBack); };
+    const gateBack = Back.push(dismiss);
     g.addEventListener("click", (e) => {
       const b = e.target.closest("button[data-lvl]");
-      if (!b) return;
+      if (!b) { if (e.target === g) dismiss(); return; }
       const lvl = b.dataset.lvl;
-      try { localStorage.setItem(levelKey(u), lvl); } catch (err) { /* private mode: asked again next time */ }
+      try { localStorage.setItem(levelKey(u), lvl); } catch (err) { /* private mode: the level is kept until the page closes */ }
       u.level = lvl;
       try { Haptic.tap(); } catch (err) { /* optional */ }
-      closeLevelGate();
+      dismiss();
     });
     document.body.appendChild(g);
     document.body.style.overflow = "hidden";
@@ -684,7 +697,8 @@
         <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:12px">Kun ketma-ket</div></div>
       </div>`}
       <div class="mt-4 space-y-2">
-        ${isStudentMode() ? `<button type="button" data-act="progress" class="l1-btn l1-btn-soft w-full">📊 Natijalarim va xatolarim</button>` : ""}
+        ${isStudentMode() ? `<button type="button" data-act="progress" class="l1-btn l1-btn-soft w-full">📊 Natijalarim va xatolarim</button>
+        <button type="button" data-act="level" class="l1-btn l1-btn-soft w-full">🎯 Darajam: ${html(u.level || "A1")} — o'zgartirish</button>` : ""}
         <button type="button" data-act="sound" class="l1-btn l1-btn-soft w-full">${Sound.muted ? "🔇 Ovoz o'chirilgan — yoqish" : "🔊 Ovoz yoqilgan — o'chirish"}</button>
         ${staff ? `<button type="button" data-act="mode" class="l1-btn l1-btn-soft w-full">${state.mode === "teacher" ? "🎓 Talaba ko'rinishi" : "🛠 Boshqaruv paneli"}</button>` : ""}
         <button type="button" data-act="logout" class="l1-btn l1-btn-danger w-full">Chiqish</button>
@@ -698,6 +712,7 @@
       const a = act.dataset.act;
       if (a === "photo") { close(); if (window.L1_Characters) window.L1_Characters.open(); }
       if (a === "progress") { close(); Shell.go("learn"); const b = $("tabBtnMyProgress"); if (b) b.click(); }
+      if (a === "level") { close(); openLevelPicker(); }
       if (a === "sound") { Sound.muted = !Sound.muted; act.textContent = Sound.muted ? "🔇 Ovoz o'chirilgan — yoqish" : "🔊 Ovoz yoqilgan — o'chirish"; }
       if (a === "mode") { close(); const b = $("btnModeToggle"); if (b) b.click(); }
       if (a === "logout" && confirm("Haqiqatan ham tizimdan chiqmoqchimisiz?")) {

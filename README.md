@@ -126,3 +126,11 @@ Both games draw real 3D scenes with Three.js. The code is in `tools/3d_src/` and
 - `listen3d.ts`, `models.ts`, `chars.ts` — Listen and Survive: one 3D scene per mission (burning office, night camp, airport, police line-up, timed workshop). The missions, questions, hearts and stars are unchanged; the player now taps 3D objects instead of emoji tiles.
 - If a device has no WebGL, both games fall back to the old 2D lanes and emoji tiles automatically.
 - Rebuild after changing the sources: `cd tools/3d_src && npm install && npm run build`.
+
+## Speed, offline use and backups
+- **CSS and fonts are built or bundled, never loaded from a CDN.** After adding Tailwind classes to `index.html` or a script, run `npm install` once and then `npm run build` in `tools/tailwind/` (it writes `static/tailwind.css`; bump its `?v=` in `index.html`). Fonts are in `static/fonts/` (`fonts.css`).
+- **The games load on first use.** `static/student_features.js` (`L1_Lazy`) downloads the four games and the 3D engine when a game is opened (or when the browser has been idle for a few seconds). A new game script goes into that list, not into `index.html`.
+- **The server gzips text files** (kept in memory) and sends ETags, so a returning visitor gets `304`s. Pages carry a Content-Security-Policy that only allows this server and `telegram.org`.
+- **`/sw.js` is a service worker** that keeps versioned files, fonts and pictures for offline use. Bump `CACHE` in `static/sw.js` if you ever change its rules. It works only over https or on localhost.
+- **Database backups:** every 6 hours the server copies the database to `backups/` next to it (`BACKUP_DIR` to change, newest 14 kept). Copy that folder off the computer now and then.
+- **Hosting:** the tunnel only works while this computer is on. For an always-on server use `render.yaml` / `Dockerfile` (set `BOT_TOKEN`, `WEBAPP_URL`, `TEACHER_IDS` and a persistent disk for `DB_PATH`).

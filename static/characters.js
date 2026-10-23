@@ -124,8 +124,12 @@
     if (!u || (u.role && u.role !== "student") || u.character || u.photoUrl) return false;
     if (u.status && u.status !== "approved") return false;
     try { if (state.mode === "teacher") return false; } catch (e) {}
-    return true;
+    return !skipped(u);
   }
+  // "Keyinroq" on the first visit: the picture can still be chosen from the profile, the picker just stops popping up.
+  const skipKey = (u) => "l1_char_skipped_" + (u.id || u.name);
+  function skipped(u) { try { return localStorage.getItem(skipKey(u)) === "1"; } catch (e) { return false; } }
+  function skip() { const u = student(); if (u) { try { localStorage.setItem(skipKey(u), "1"); } catch (e) {} } }
 
   function showPicker(opts) {
     if (open) return;
@@ -150,7 +154,7 @@
         <div style="max-width:520px;margin:0 auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}</div>
-            ${change ? `<button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="Yopish">✕</button>` : ""}
+            <button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="${change ? "Yopish" : "Keyinroq"}" title="${change ? "Yopish" : "Keyinroq"}">✕</button>
           </div>
           ${photo}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--l1-card,#fff);border:1px solid var(--l1-line,#e0e7ff);border-radius:999px;padding:4px;margin-bottom:14px">
@@ -168,7 +172,7 @@
       wrap.querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => { gender = b.dataset.g; render(); }));
       wrap.querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => { chosen = b.dataset.id; render(); }));
       const x = wrap.querySelector("[data-close]");
-      if (x) x.addEventListener("click", done);
+      if (x) x.addEventListener("click", () => { if (!change) skip(); done(); });
       wrap.querySelector("#l1CharGo").addEventListener("click", async () => {
         const err = wrap.querySelector("#l1CharErr");
         if (!chosen) { err.textContent = "Avval rasmni tanlang."; return; }
@@ -192,5 +196,5 @@
 
   // "tg" means: show the Telegram photo (no cartoon), so svg("tg") is empty and avatar() falls back to the photo
   window.L1_Characters = { list: CHARACTERS, html, svg: (id) => (BY_ID[id] ? svg(BY_ID[id]) : ""), open: () => showPicker({ change: true }) };
-  setInterval(tick, 700);
+  setInterval(() => { if (!document.hidden) tick(); }, 1500);
 })(window, document);

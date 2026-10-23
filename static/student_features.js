@@ -703,6 +703,31 @@
   // =========================================================================
   // 4. MAIN NAVIGATION CONTROLLER
   // =========================================================================
+  // The four games and the 3D engine are about 900 KB; they load the first time a game is opened (or when the browser is idle).
+  const Lazy = {
+    files: ["millionaire_data.js?v=2", "listen_data.js?v=2", "questions.js?v=3", "millionaire_music.js?v=2", "games_millionaire.js?v=8",
+      "l1_3d.js?v=2", "games_wordrace.js?v=3", "games_listen.js?v=5", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=24"],
+    ready: false,
+    promise: null,
+    games() {
+      if (!this.promise) {
+        this.promise = Promise.all(this.files.map((f) => new Promise((resolve) => {
+          const el = document.createElement("script");
+          el.src = "/static/" + f;
+          el.async = false; // run in this order even though the files download together
+          el.onload = el.onerror = resolve;
+          document.head.appendChild(el);
+        }))).then(() => { this.ready = true; });
+      }
+      return this.promise;
+    },
+  };
+  window.L1_Lazy = Lazy;
+  let inviteLink = false;
+  try { inviteLink = new URLSearchParams(location.search).has("race"); } catch (e) {}
+  if (inviteLink) Lazy.games();
+  else setTimeout(() => (window.requestIdleCallback || setTimeout)(() => Lazy.games()), 6000);
+
   const Nav = {
     currentMode: 'learn', // 'learn' | 'practice' | 'games'
     currentLearnSub: 'grammar', // 'grammar' | 'vocab'
@@ -816,6 +841,7 @@
         { id: 'race', btn: "btnGameSubRace", area: "gameRaceArea", game: window.L1_WordRace },
         { id: 'listen', btn: "btnGameSubListen", area: "gameListenArea", game: window.L1_Listen },
       ];
+      const waiting = !Lazy.ready;
 
       const activeCls = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2";
       const inactiveCls = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center gap-2";
@@ -828,6 +854,10 @@
       });
 
       const current = games.find((g) => g.id === sub);
+      if (waiting) { // the game files are still downloading: draw the tabs now, start the game when they arrive
+        Lazy.games().then(() => { if (this.currentGameSub === sub) this.setGameSub(sub); });
+        return;
+      }
       if (current && current.game) {
         // Timed games wait on a start screen; the others start right away.
         if (typeof current.game.showIntro === "function") current.game.showIntro();

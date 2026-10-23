@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="manifest" href="/static/manifest.webmanifest" />
+  <link rel="icon" href="/static/icon-180.png" />
   <link rel="apple-touch-icon" href="/static/icon-180.png" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,30 +22,14 @@
       } catch (e) {}
     })();
   </script>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script>
-    // Violet-indigo palette from the design reference: every existing indigo-* / blue-* class picks it up.
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            indigo: { 50: "#eef0ff", 100: "#e0e3ff", 200: "#c7ccfc", 300: "#a5acf8", 400: "#818af5", 500: "#6670f1", 600: "#5558ee", 700: "#4647d6", 800: "#3a3bb0", 900: "#2f3088", 950: "#1e1f5a" },
-            blue: { 50: "#eef0ff", 100: "#e0e3ff", 200: "#c7ccfc", 300: "#a5acf8", 400: "#818af5", 500: "#6670f1", 600: "#6670f1", 700: "#5558ee", 800: "#4647d6", 900: "#3a3bb0", 950: "#1e1f5a" }
-          },
-          fontFamily: { sans: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"] }
-        }
-      }
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/fonts.css?v=1">
   <style>
     body {
       font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: #f7f8fe;
       color: #171b3d;
       overflow-x: hidden;
+      touch-action: manipulation; /* no double-tap zoom; pinch zoom stays available */
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -60,6 +45,8 @@
   <link rel="stylesheet" href="/static/millionaire.css?v=5">
   <link rel="stylesheet" href="/static/wordrace.css?v=3">
   <link rel="stylesheet" href="/static/listen.css?v=3">
+  <!-- Tailwind goes last, like the old CDN style tag did, so its utilities keep winning over the app CSS. -->
+  <link rel="stylesheet" href="/static/tailwind.css?v=2">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="/static/l1_core.js?v=22"></script>
   <script src="/static/units_data.js?v=4"></script>
@@ -67,17 +54,7 @@
   <script src="/static/practicing_suite.js?v=3"></script>
   <script src="/static/games_engine.js?v=14"></script>
   <script src="/static/words.js?v=3"></script>
-  <script src="/static/millionaire_data.js?v=2"></script>
-  <script src="/static/listen_data.js?v=2"></script>
-  <script src="/static/questions.js?v=3"></script>
-  <script src="/static/millionaire_music.js?v=2"></script>
-  <script src="/static/games_millionaire.js?v=8"></script>
-  <script src="/static/l1_3d.js?v=1" defer></script>
-  <script src="/static/games_wordrace.js?v=3"></script>
-  <script src="/static/games_listen.js?v=5"></script>
-  <script src="/static/shakespeare_puppet.js?v=1"></script>
-  <script src="/static/dragon_chase.js?v=24"></script>
-  <script src="/static/student_features.js?v=11"></script>
+  <script src="/static/student_features.js?v=12"></script>
   <script src="/static/tree_art.js?v=2"></script>
   <script src="/static/green_map.js?v=7" defer></script>
   <script src="/static/focus.js?v=9" defer></script>
@@ -349,7 +326,7 @@
             <div class="flex items-center gap-2">
               <button id="btnLearnSubGrammar" type="button" onclick="window.L1_Nav.setLearnSub('grammar')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-2">
                 <span>📘</span>
-                <span>Grammatika (4 Bo'lim)</span>
+                <span>Grammatika</span>
               </button>
               <button id="btnLearnSubVocab" type="button" onclick="window.L1_Nav.setLearnSub('vocab')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
                 <span>📗</span>
@@ -373,9 +350,7 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="text-xs uppercase tracking-wider font-extrabold text-indigo-600">Dars Bo'limlari</span>
-                  <span class="text-[12px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full">1- va 2-Hafta</span>
                 </div>
-                <span class="text-xs text-slate-500 font-medium">O'rganish uchun bo'limni tanlang:</span>
               </div>
 
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -383,7 +358,6 @@
                 <button type="button" onclick="selectSection('section_1')" id="btnSection1" class="section-nav-btn p-3 rounded-2xl border text-left transition-all relative overflow-hidden bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm">
                   <div class="flex items-center justify-between">
                     <span class="text-[12px] font-black uppercase tracking-wider text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">1-Hafta · 1-Qism</span>
-                    <span class="text-sm">📘</span>
                   </div>
                   <div class="font-black text-sm text-slate-900 mt-1.5">1-Bo'lim</div>
                   <div class="text-[12px] text-slate-600 font-medium leading-tight mt-0.5">Birlik va koʻplik · Noaniq artikl</div>
@@ -393,7 +367,6 @@
                 <button type="button" onclick="selectSection('section_2')" id="btnSection2" class="section-nav-btn p-3 rounded-2xl border text-left transition-all relative overflow-hidden bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50">
                   <div class="flex items-center justify-between">
                     <span class="text-[12px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">1-Hafta · 2-Qism</span>
-                    <span class="text-sm">📘</span>
                   </div>
                   <div class="font-black text-sm text-slate-900 mt-1.5">2-Bo'lim</div>
                   <div class="text-[12px] text-slate-500 font-medium leading-tight mt-0.5">TO BE · Ot/Sifat · Have/Has</div>
@@ -403,7 +376,6 @@
                 <button type="button" onclick="selectSection('section_3')" id="btnSection3" class="section-nav-btn p-3 rounded-2xl border text-left transition-all relative overflow-hidden bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50">
                   <div class="flex items-center justify-between">
                     <span class="text-[12px] font-black uppercase tracking-wider text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">2-Hafta · 1-Qism</span>
-                    <span class="text-sm">📘</span>
                   </div>
                   <div class="font-black text-sm text-slate-900 mt-1.5">3-Bo'lim</div>
                   <div class="text-[12px] text-slate-500 font-medium leading-tight mt-0.5">Soʻroq shakli · Inkor shakli (NOT)</div>
@@ -413,7 +385,6 @@
                 <button type="button" onclick="selectSection('section_4')" id="btnSection4" class="section-nav-btn p-3 rounded-2xl border text-left transition-all relative overflow-hidden bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50">
                   <div class="flex items-center justify-between">
                     <span class="text-[12px] font-black uppercase tracking-wider text-violet-700 bg-violet-100 px-2 py-0.5 rounded-md">2-Hafta · 2-Qism</span>
-                    <span class="text-sm">📘</span>
                   </div>
                   <div class="font-black text-sm text-slate-900 mt-1.5">4-Bo'lim</div>
                   <div class="text-[12px] text-slate-500 font-medium leading-tight mt-0.5">Kishilik/Egalik · Soʻroq soʻzlar</div>
@@ -3947,10 +3918,16 @@
     });
   </script>
   <script src="/static/icons3d.js?v=2"></script>
-  <script src="/static/app_shell.js?v=43"></script>
+  <script src="/static/app_shell.js?v=44"></script>
   <script src="/static/l1_tasks.js?v=3"></script>
   <script src="/static/shakespeare.js?v=23"></script>
 
-  <script src="/static/characters.js?v=3"></script>
+  <script src="/static/characters.js?v=4"></script>
+  <script>
+    // Offline support: only on https (or localhost), never blocks the page.
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+      window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); });
+    }
+  </script>
 </body>
 </html>

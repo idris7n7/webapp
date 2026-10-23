@@ -1253,6 +1253,59 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(server.points_for(1, False), 25)
         self.assertEqual(server.points_for(3, True), 3)
 
+    # -- performance and safety ---------------------------------------------
+    async def test_text_files_are_gzipped_and_revalidated_with_an_etag(self):
+        resp = await self.client.get("/static/app_shell.js", headers={"Accept-Encoding": "gzip"})
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.headers.get("Content-Encoding"), "gzip")
+        etag = resp.headers["ETag"]
+        again = await self.client.get("/static/app_shell.js", headers={"Accept-Encoding": "gzip", "If-None-Match": etag})
+        self.assertEqual(again.status, 304)
+        plain = await self.client.get("/static/app_shell.js", headers={"Accept-Encoding": "identity"})
+        self.assertIsNone(plain.headers.get("Content-Encoding"))
+        self.assertIn("Level Up", await plain.text())
+
+    async def test_static_files_cannot_be_read_outside_the_static_folder(self):
+        for path in ("/static/../server.py", "/static/%2e%2e/server.py", "/static/..%2fserver.py"):
+            resp = await self.client.get(path)
+            self.assertIn(resp.status, (400, 403, 404), path)
+
+    async def test_pages_carry_a_content_security_policy_and_the_service_worker_is_served(self):
+        resp = await self.client.get("/")
+        csp = resp.headers.get("Content-Security-Policy", "")
+        self.assertIn("object-src 'none'", csp)
+        self.assertIn("frame-ancestors", csp)
+        sw = await self.client.get("/sw.js")
+        self.assertEqual(sw.status, 200)
+        self.assertEqual(sw.headers.get("Service-Worker-Allowed"), "/")
+
+    async def test_stored_text_has_no_html_tags(self):
+        self.assertEqual(server.clean_text("a <b>x</b> <script>alert(1)</script> 3 < 4", 100), "a x alert(1) 3 < 4")
+
+    async def test_a_backup_is_a_working_copy_of_the_database_and_old_ones_are_pruned(self):
+        token, _ = await self.student_token()
+        saved = os.environ.get("BACKUP_DIR")
+        os.environ["BACKUP_DIR"] = os.path.join(self._tmp.name, "bk")
+        try:
+            os.makedirs(server.backup_dir(), exist_ok=True)
+            for i in range(server.BACKUP_KEEP + 3):
+                open(os.path.join(server.backup_dir(), f"level_one_2000010{i:02d}_000000.db"), "w").close()
+            path = server.make_backup()
+            import sqlite3
+            conn = sqlite3.connect(path)
+            with server.get_db() as live:
+                live_count = live.execute("SELECT COUNT(*) FROM students").fetchone()[0]
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM students").fetchone()[0], live_count)
+            conn.close()
+            kept = [f for f in os.listdir(server.backup_dir()) if f.endswith(".db")]
+            self.assertEqual(len(kept), server.BACKUP_KEEP)
+            self.assertIn(os.path.basename(path), kept)
+        finally:
+            if saved is None:
+                os.environ.pop("BACKUP_DIR", None)
+            else:
+                os.environ["BACKUP_DIR"] = saved
+
 
 class ManageCliTests(unittest.TestCase):
     """manage.py talks to the database named by DB_PATH (never the real one in these tests)."""
@@ -1356,9 +1409,10 @@ class DataIntegrityTests(unittest.TestCase):
 
     def test_the_running_shakespeare_has_its_head_and_is_loaded_before_the_game(self):
         self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "shakespeare", "run_head.webp")), "run: python tools/make_runner_head.py")
-        with open(os.path.join(self.APP_DIR, "static", "index.html"), encoding="utf-8") as f:
-            html = f.read()
-        self.assertLess(html.index("/static/shakespeare_puppet.js"), html.index("/static/dragon_chase.js"))
+        # the games load on first use (student_features.js); the puppet must be listed before the game that uses it
+        with open(os.path.join(self.APP_DIR, "static", "student_features.js"), encoding="utf-8") as f:
+            js = f.read()
+        self.assertLess(js.index("shakespeare_puppet.js"), js.index("dragon_chase.js"))
 
     def test_there_are_ten_boys_and_ten_girls_to_choose_from(self):
         with open(os.path.join(self.APP_DIR, "static", "characters.js"), encoding="utf-8") as f:
@@ -1380,6 +1434,48 @@ class DataIntegrityTests(unittest.TestCase):
                                 if px < 12:
                                     small.append(f"{name}:{n} {m.group(0)}")
         self.assertEqual(small, [])
+
+
+class FrontendFilesTests(unittest.TestCase):
+    """The page must not depend on outside CDNs, and must stay small and accessible."""
+
+    APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def html(self):
+        with open(os.path.join(self.APP_DIR, "static", "index.html"), encoding="utf-8") as f:
+            return f.read()
+
+    def test_no_runtime_tailwind_and_no_google_fonts(self):
+        html = self.html()
+        self.assertNotIn("cdn.tailwindcss.com", html)
+        self.assertNotIn("fonts.googleapis.com", html)
+        self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "tailwind.css")))
+        self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "fonts.css")))
+
+    def test_the_page_can_be_zoomed_and_declares_uzbek(self):
+        html = self.html()
+        self.assertIn('<html lang="uz">', html)
+        self.assertNotIn("user-scalable=no", html)
+        self.assertNotIn("maximum-scale", html)
+
+    def test_game_scripts_are_not_loaded_up_front(self):
+        html = self.html()
+        for name in ("l1_3d.js", "dragon_chase.js", "games_millionaire.js", "games_wordrace.js", "games_listen.js"):
+            self.assertNotIn("/static/" + name, html, name)
+
+    def test_every_local_script_and_stylesheet_exists(self):
+        import re
+        for ref in re.findall(r'(?:src|href)="(/static/[^"?]+)', self.html()):
+            self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, ref.lstrip("/").replace("/", os.sep))), ref)
+
+    def test_pictures_are_web_sized(self):
+        for root, _, files in os.walk(os.path.join(self.APP_DIR, "static")):
+            if os.sep + "img" in root:
+                continue
+            for name in files:
+                if name.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                    size = os.path.getsize(os.path.join(root, name))
+                    self.assertLess(size, 400 * 1024, f"{name} is {size // 1024} KB")
 
 
 class HelperTests(unittest.TestCase):
