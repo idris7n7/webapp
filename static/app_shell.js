@@ -431,6 +431,7 @@
 
   // ------------------------------------------------------------------ Home
   const POMO_GOAL = 3; // finished Pomodoros a day
+  const LESSON_GOAL = 1; // lessons learned a day
   const GAME_CARDS = [
     { id: "dragon", ref: "dragon", name: "Ajdarho", tag: "Qoch va javob ber", emoji: "🐉", bg: "linear-gradient(145deg,#14b886 0%,#0a8f9c 100%)" },
     { id: "millionaire", ref: "millionaire", name: "Millioner", tag: "15 ta savol", emoji: "💰", bg: "linear-gradient(145deg,#3b3fd8 0%,#7c3aed 100%)" },
@@ -442,18 +443,26 @@
     <circle cx="32" cy="32" r="26" class="p" style="stroke:${color}" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - Math.min(1, Math.max(0, frac)))).toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
     <b>${frac >= 1 ? "✓" : icon}</b></span>`;
 
-  // Today's three goals: Pomodoros, homework questions, game points (the daily cap).
+  // Lessons the student marked as learned today (index.html writes the time of each into l1_learned_log_v1).
+  function lessonsToday() {
+    try {
+      const log = JSON.parse(localStorage.getItem("l1_learned_log_v1") || "{}");
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      return Object.values(log).filter((at) => at >= start.getTime()).length;
+    } catch (e) { return 0; }
+  }
+
+  // Today's three goals: Pomodoros, lessons and homework questions.
   function dailyGoals() {
-    const me = Shell.data.me || {};
     const f = window.L1_Focus ? window.L1_Focus.summary() : { today: 0 };
     const tasks = activeTasks();
     const total = tasks.reduce((n, a) => n + (a.my ? a.my.total : 0), 0);
     const done = tasks.reduce((n, a) => n + (a.my ? a.my.resolved : 0), 0);
-    const cap = me.gameCap || 50, got = me.gameToday || 0;
+    const lessons = lessonsToday();
     return [
       { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
+      { key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessons / LESSON_GOAL, text: `${Math.min(lessons, LESSON_GOAL)}/${LESSON_GOAL}` },
       { key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: total ? done / total : 1, text: total ? `${done}/${total}` : "Yo'q" },
-      { key: "games", icon: "🎮", color: "#f59e0b", name: "O'yin balli", frac: got / cap, text: `${got}/${cap}` },
     ];
   }
   function goalsHtml() {
@@ -461,6 +470,7 @@
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
   function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalLine"); if (h) h.textContent = goalLine(); }
+  window.addEventListener("l1:lesson-learned", () => { paintGoals(); });
   const goalLine = () => { const n = dailyGoals().filter((g) => g.frac >= 1).length; return n >= 3 ? "Bugungi maqsadlar bajarildi! 🎉" : `Bugun ${n}/3 maqsad bajarildi`; };
 
   // Listen and Survive stars (out of 3 per mission, 5 missions) come from the server; fetched once, then the home is drawn again.
@@ -498,9 +508,6 @@
     const hour = new Date().getHours();
     const hello = hour < 11 ? "Xayrli tong" : hour < 18 ? "Xayrli kun" : "Xayrli kech";
     const first = (u.firstName || (u.name || "").split(" ")[0] || "do'stim");
-    const tasks = activeTasks();
-    const open = tasks.filter((a) => !a.my.done);
-    const nearest = open.slice().sort((a, b) => a.deadline - b.deadline)[0];
     loadListenStars();
 
     el.innerHTML = `<div class="l1-page space-y-4">
@@ -530,14 +537,6 @@
         <div class="hm-games">${gameCardsHtml()}</div>
       </section>
 
-      <div class="hm-quick">
-        <button type="button" data-go="learn" class="hm-q"><span class="hm-q-ico">${window.Icons3D ? Icons3D.html("book", 46) : "📖"}</span>
-          <span><b>Darslar</b><small>Grammatika va lug'at</small></span></button>
-        <button type="button" data-go="tasks" class="hm-q"><span class="hm-q-ico">${window.Icons3D ? Icons3D.html("task", 46) : "📝"}</span>
-          <span><b>Vazifalar</b><small>${open.length ? `${open.length} ta faol${nearest ? ` · ${html(countdown(nearest.deadline, nowTs()))}` : ""}` : "Haftalik mashqlar"}</small></span>
-          ${open.length ? `<i class="hm-q-dot">${open.length}</i>` : ""}</button>
-      </div>
-
       <section class="hm-card">
         <div class="hm-card-head"><h2>Hafta yetakchilari</h2><button type="button" class="hm-more" data-go="rating">Hammasi ›</button></div>
         ${top3.length ? `<div class="hm-top">${top3.map((e) => `
@@ -551,7 +550,7 @@
     el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();
       if (b.dataset.hm === "pomo") window.L1_Focus && window.L1_Focus.open();
-      else Shell.go(b.dataset.hm === "tasks" ? "tasks" : "games");
+      else Shell.go(b.dataset.hm === "lessons" ? "learn" : "tasks");
     }));
     el.querySelectorAll("[data-game]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();

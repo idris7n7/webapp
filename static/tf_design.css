@@ -299,14 +299,6 @@ html[data-theme="dark"] .hm-goal.is-done { background: rgba(34, 197, 94, .16); }
 .hm-game-status { position: relative; z-index: 1; font-size: 13px; font-weight: 700; line-height: 1.3; opacity: .94; }
 .hm-game-go { position: relative; z-index: 1; align-self: flex-start; margin-top: auto; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, .24); }
 
-.hm-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.hm-q { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 22px; text-align: left; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
-.hm-q:active { transform: scale(.98); }
-.hm-q-ico { flex: none; width: 46px; height: 46px; display: grid; place-items: center; }
-.hm-q b { display: block; font-size: 15px; font-weight: 900; color: var(--l1-ink); }
-.hm-q small { display: block; margin-top: 1px; font-size: 12px; font-weight: 700; color: var(--l1-muted); }
-.hm-q-dot { position: absolute; top: 8px; right: 10px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 900; color: #fff; background: #ef4444; }
-
 .hm-top { display: flex; justify-content: center; gap: 8px; align-items: flex-end; }
 .hm-top-i { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1 1 0; max-width: 150px; padding: 10px 4px; border-radius: 18px; background: var(--l1-primary-50); min-width: 0; }
 .hm-top-i.r1 { background: #fff3c4; padding-bottom: 14px; }

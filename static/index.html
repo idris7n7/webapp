@@ -54,7 +54,7 @@
   </style>
 
   <link rel="stylesheet" href="/static/app_theme.css?v=32">
-  <link rel="stylesheet" href="/static/tf_design.css?v=13">
+  <link rel="stylesheet" href="/static/tf_design.css?v=14">
   <link rel="stylesheet" href="/static/focus.css?v=7">
   <link rel="stylesheet" href="/static/green_map.css?v=5">
   <link rel="stylesheet" href="/static/millionaire.css?v=5">
@@ -2256,6 +2256,11 @@
         state.learnedUnits.push(unitId);
         saveStorage("l1_learned_units_v1", state.learnedUnits);
       }
+        // when it happened, for the "Dars" goal of the day on the home screen
+        const log = loadStorage("l1_learned_log_v1", {});
+        log[unitId] = Date.now();
+        saveStorage("l1_learned_log_v1", log);
+        window.dispatchEvent(new CustomEvent("l1:lesson-learned"));
       const unit = UNITS_DATA.find(u => u.id === unitId);
       showToast(`🎉 Barakalla! "${unit ? unit.title : 'Unit'}" darsini o'zlashtirdingiz! Ushbu darsning Mashq qilish bo'limi ochildi.`);
       showTeacherIdrisCelebration(unit ? unit.title : 'Unit');
@@ -3940,7 +3945,7 @@
     });
   </script>
   <script src="/static/icons3d.js?v=2"></script>
-  <script src="/static/app_shell.js?v=39"></script>
+  <script src="/static/app_shell.js?v=40"></script>
   <script src="/static/l1_tasks.js?v=3"></script>
   <script src="/static/shakespeare.js?v=21"></script>
 
