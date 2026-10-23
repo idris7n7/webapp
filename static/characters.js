@@ -124,7 +124,7 @@
     if (!u || (u.role && u.role !== "student") || u.character || u.photoUrl) return false;
     if (u.status && u.status !== "approved") return false;
     try { if (state.mode === "teacher") return false; } catch (e) {}
-    return !skipped(u);
+    return true; // the avatar is required before entering the app
   }
   // "Keyinroq" on the first visit: the picture can still be chosen from the profile, the picker just stops popping up.
   const skipKey = (u) => "l1_char_skipped_" + (u.id || u.name);
@@ -153,8 +153,8 @@
       wrap.innerHTML = `
         <div style="max-width:520px;margin:0 auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}</div>
-            <button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="${change ? "Yopish" : "Keyinroq"}" title="${change ? "Yopish" : "Keyinroq"}">✕</button>
+            <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}${u0.firstName || u0.name ? `<div style="font-size:15px;font-weight:700;color:var(--l1-muted,#64748b);margin-top:2px">${String(u0.firstName || u0.name).replace(/[<>&"]/g, "")}</div>` : ""}</div>
+            ${change ? `<button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="Yopish" title="Yopish">✕</button>` : ""}
           </div>
           ${photo}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--l1-card,#fff);border:1px solid var(--l1-line,#e0e7ff);border-radius:999px;padding:4px;margin-bottom:14px">

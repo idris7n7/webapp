@@ -24,6 +24,11 @@
   // Goes back one step: close an overlay, leave a lesson / exercise, or return to Asosiy from a tab.
   const shown = (id) => { const el = $(id); return !!el && !el.classList.contains("hidden") && el.offsetParent !== null; };
   const press = (id) => () => { const b = $(id); if (b) b.click(); };
+  // True while the student is inside a lesson, exercise, game or sheet: the floating Pomidor then steps aside.
+  function deepView() {
+    return Back.stack.some((h) => h !== Shell.backToHome) || shown("practiceSuiteRunnerArea") || shown("exerciseRunnerView")
+      || shown("lessonReaderView") || shown("unitExercisesListContainer") || shown("dictionaryView") || shown("myProgressView") || !!playingGame();
+  }
   function backAction() {
     syncGameBack();
     if (Back.stack.some((h) => h !== Shell.backToHome)) return () => Back.pop();
@@ -59,6 +64,7 @@
     syncGameBack();
     const b = $("l1BarBack");
     if (b) b.classList.toggle("hidden", !(isStudentMode() && backAction()));
+    document.body.classList.toggle("l1-deep", isStudentMode() && deepView());
   }
 
   // ------------------------------------------------------------------ DOM scaffolding
@@ -76,7 +82,7 @@
       <button type="button" id="l1BarStaff" class="l1-pill hidden">Panel</button>
       ${Theme.buttonHtml("", "l1BarTheme")}
       <span id="l1BarStreak" class="l1-pill hidden"></span>
-      <button type="button" id="l1BarPoints" class="l1-pill"><span class="l1-coin">★</span><span id="l1BarPointsNum">0</span></button>
+      <button type="button" id="l1BarPoints" class="l1-pill" aria-label="Haftalik ballar: 0. Reytingni ochish"><span class="l1-coin">★</span><span id="l1BarPointsNum">0</span></button>
     </div>`;
     document.body.insertBefore(bar, document.body.firstChild);
     // Sign-in screen has no app bar: float the day / night switch in the corner instead.
@@ -132,7 +138,10 @@
     const switcher = $("mainModeSwitcher");
     if (switcher) switcher.classList.toggle("hidden", tab !== "learn");
     if (tab !== "learn" && tab !== "games") LEGACY.forEach((id) => { const el = $(id); if (el) el.classList.add("hidden"); });
-    document.querySelectorAll("#l1BottomNav button").forEach((b) => b.classList.toggle("is-active", b.dataset.tab === tab));
+    document.querySelectorAll("#l1BottomNav button").forEach((b) => {
+      b.classList.toggle("is-active", b.dataset.tab === tab);
+      if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
   }
 
   Shell.go = function (tab, opts) {
@@ -212,7 +221,7 @@
     bar.classList.remove("hidden");
     const staff = typeof isStaffRole === "function" && isStaffRole(u.role);
     $("l1BarStaff").classList.toggle("hidden", !staff);
-    $("l1BarStaff").textContent = state.mode === "teacher" ? "🎓 Talaba" : "🛠 Panel";
+    $("l1BarStaff").textContent = state.mode === "teacher" ? "🎓 Talaba" : "🛠 Panel"; $("l1BarStaff").title = state.mode === "teacher" ? "Talaba ko'rinishiga o'tish" : "Boshqaruv paneliga o'tish";
     renderBar();
     if (isStudentMode()) {
       nav.classList.remove("hidden");
@@ -306,8 +315,14 @@
     const u = user();
     if (!u) return;
     $("l1BarAvatar").innerHTML = avatar(u, 40);
+    const hello = document.querySelector("#l1AppBar .l1-hello");
+    if (hello) {
+      hello.textContent = u.firstName || (u.name || "").split(" ")[0] || "";
+      hello.style.cssText = "font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+    }
     const me = Shell.data.me;
     $("l1BarPointsNum").textContent = me ? me.weekPoints : "0";
+    $("l1BarPoints").setAttribute("aria-label", `Haftalik ballar: ${me ? me.weekPoints : 0}. Reytingni ochish`);
     const streak = $("l1BarStreak");
     if (me && me.streak > 0 && isStudentMode()) {
       streak.classList.remove("hidden");
@@ -515,7 +530,7 @@
     const week = Shell.data.board.week;
     const top3 = week ? week.entries.slice(0, 3).filter((e) => e.points > 0) : [];
     const hour = new Date().getHours();
-    const hello = hour < 11 ? "Xayrli tong" : hour < 18 ? "Xayrli kun" : "Xayrli kech";
+    const hello = "Assalomu alaykum";
     const first = (u.firstName || (u.name || "").split(" ")[0] || "do'stim");
     loadListenStars();
 
@@ -524,7 +539,10 @@
         <div class="hm-hero-text">
           <div class="hm-kicker">${hello},</div>
           <div class="hm-name">${html(first)}!</div>
-          ${me && me.weekPoints ? `<div class="hm-chips"><span>🏅 Haftada ${me.weekRank}-o'rin</span></div>` : ""}
+          <div class="hm-chips">
+            <span>🏅 Hafta: ${me && me.weekPoints ? `${me.weekRank}-o'rin` : "–"}</span>
+            <span>🏆 Oy: ${me && me.monthPoints ? `${me.monthRank}-o'rin` : "–"}</span>
+          </div>
         </div>
         ${Idris.html("greet", 128, "")}
       </section>
@@ -613,7 +631,10 @@
     const data = Shell.data.board[period];
     const meId = user() && user().id;
     const entries = data ? data.entries : [];
-    const [e1, e2, e3] = entries;
+    // Only students with points stand on the podium; everyone else is listed below it.
+    const [e1, e2, e3] = entries.filter((e) => e.points > 0);
+    const onPodium = [e1, e2, e3].filter(Boolean);
+    const rest = entries.filter((e) => !onPodium.includes(e));
     const step = (e, r) => e ? `<div class="lb-step r${r}">
         <div class="lb-av">${r === 1 ? '<span class="lb-crown">👑</span>' : ""}<span class="lb-pos">${r}</span>${avatar(e, r === 1 ? 68 : 56)}</div>
         <div class="lb-name">${html(e.name)}</div>
@@ -621,7 +642,7 @@
         <div class="lb-block">${r}</div></div>` : `<div class="lb-step r${r} is-empty"><div class="lb-block">${r}</div></div>`;
     const mine = entries.find((e) => e.id === meId);
     const row = (e) => `<div class="lb-row ${e.id === meId ? "is-me" : ""}">
-        <span class="lb-rank">${e.rank}</span>
+        <span class="lb-rank">${e.points > 0 ? e.rank : "–"}</span>
         <span class="lb-who">${avatar(e, 30)}<span>${html(e.name)}${e.id === meId ? '<em class="lb-you" style="font-style:normal">SIZ</em>' : ""}</span></span>
         <span class="lb-coins"><i class="lb-coin"></i>${e.points}</span></div>`;
     const timer = data && period === "week" && data.weekEnd ? `<div class="lb-timer">
@@ -633,12 +654,13 @@
       ${!data ? `<div class="l1-skeleton" style="height:220px"></div>` : `
       ${timer}
       <div class="lb-card">
-        <div class="lb-podium">${step(e2, 2)}${step(e1, 1)}${step(e3, 3)}</div>
+        ${onPodium.length ? `<div class="lb-podium">${step(e2, 2)}${step(e1, 1)}${step(e3, 3)}</div>` : ""}
         <div class="lb-head"><span>O'rin</span><span>O'yinchi</span><span>Ball</span></div>
-        ${entries.length > 3 ? entries.slice(3).map(row).join("") : (entries.length ? "" : `<div class="lb-empty">Hali talabalar yo'q.</div>`)}
+        ${rest.length ? rest.map(row).join("") : (entries.length ? "" : `<div class="lb-empty">Hali talabalar yo'q.</div>`)}
+        ${!onPodium.length && entries.length ? `<div class="lb-empty">Hali hech kim ball to'plamagan — vazifa bajaring yoki o'yin o'ynang.</div>` : ""}
       </div>
-      ${mine && user() && state.mode !== "teacher" ? `<div class="lb-me-bar">
-        <span class="lb-me-rank">#${mine.rank}</span>${avatar(mine, 38)}
+      ${mine && entries.indexOf(mine) >= 8 && user() && state.mode !== "teacher" ? `<div class="lb-me-bar">
+        <span class="lb-me-rank">${mine.points > 0 ? "#" + mine.rank : "–"}</span>${avatar(mine, 38)}
         <div class="lb-me-info"><b>${html(mine.name)}</b><span>${mine.points} ball · ${period === "week" ? "bu hafta" : "umumiy"}</span></div>
 </div>` : ""}
       <div class="l1-sub px-2 text-center" style="font-size:12px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
@@ -656,9 +678,11 @@
     const header = () => {
       const m = Shell.data.me;
       const p = Shell.ratingPeriod;
-      if (m) $("l1RatingMe").textContent = p === "week"
-        ? `Siz: ${m.weekRank || "—"}-o'rin · ${m.weekPoints} ball (bu hafta)`
-        : `Siz: ${m.allRank || "—"}-o'rin · ${m.allPoints} ball (umumiy)`;
+      if (m) {
+        const pts = p === "week" ? m.weekPoints : m.allPoints;
+        const rank = p === "week" ? m.weekRank : m.allRank;
+        $("l1RatingMe").textContent = pts > 0 ? `Siz: ${rank || "—"}-o'rin · ${pts} ball (${p === "week" ? "bu hafta" : "umumiy"})` : "Hali ball yo'q — birinchi bo'ling!";
+      }
       renderBar();
     };
     const show = (p) => {
@@ -687,6 +711,7 @@
     const sheet = document.createElement("div");
     sheet.className = "l1-sheet l1-sheet-center";
     sheet.innerHTML = `<div class="l1-grip"></div>
+      <div class="l1-sheet-hero">
       <div class="flex items-center gap-3"><button type="button" data-act="photo" class="l1-avatar-edit" aria-label="Profil rasmini o'zgartirish">${avatar(u, 60)}<span class="l1-avatar-edit-badge" aria-hidden="true">✎</span></button>
         <div class="min-w-0"><div class="text-[18px] font-extrabold truncate">${html(u.name)}</div>
         <div class="l1-sub">${staff ? "O'qituvchi" : "Talaba"} · ${html(u.level || u.className || "A1")}</div>
@@ -696,6 +721,7 @@
         <div class="l1-card p-3"><b class="text-[18px]">${me.allPoints || 0}</b><div class="l1-sub" style="font-size:12px">Umumiy</div></div>
         <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:12px">Kun ketma-ket</div></div>
       </div>`}
+      </div>
       <div class="mt-4 space-y-2">
         ${isStudentMode() ? `<button type="button" data-act="progress" class="l1-btn l1-btn-soft w-full">📊 Natijalarim va xatolarim</button>
         <button type="button" data-act="level" class="l1-btn l1-btn-soft w-full">🎯 Darajam: ${html(u.level || "A1")} — o'zgartirish</button>` : ""}

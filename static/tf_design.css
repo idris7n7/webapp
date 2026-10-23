@@ -127,17 +127,16 @@ main .rounded-3xl { border-radius: 22px; }
 
 /* ---------- Profile sheet: navy top like the picture's profile screen (same content) ---------- */
 .l1-sheet { border-radius: 28px 28px 0 0; background: var(--l1-bg); }
-.l1-sheet:has(> .grid.grid-cols-3) { background: linear-gradient(var(--l1-navy) 0, var(--l1-navy) 184px, var(--l1-bg) 184px); }
 /* Profile: a separate card in the middle of the page instead of a bottom sheet */
 .l1-sheet.l1-sheet-center { top: 50%; bottom: auto; left: 16px; right: 16px; max-width: 420px; border-radius: 28px; padding-top: 22px; transform: translateY(-50%); animation: l1-pop .22s cubic-bezier(.2,.9,.3,1) both; box-shadow: 0 30px 70px -20px rgba(16,26,58,.55); }
 .l1-sheet.l1-sheet-center .l1-grip { display: none; }
 @keyframes l1-pop { from { opacity: 0; transform: translateY(-46%) scale(.95); } to { opacity: 1; transform: translateY(-50%); } }
-.l1-sheet:has(> .grid.grid-cols-3) .l1-grip { background: rgba(255, 255, 255, .3); }
-.l1-sheet:has(> .grid.grid-cols-3) > .flex.items-center { color: #fff; }
-.l1-sheet:has(> .grid.grid-cols-3) > .flex.items-center .l1-sub { color: rgba(255, 255, 255, .72); }
-.l1-sheet:has(> .grid.grid-cols-3) > .grid .l1-card { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); box-shadow: none; color: #fff; }
-.l1-sheet:has(> .grid.grid-cols-3) > .grid .l1-card b { color: #ffc857; }
-.l1-sheet:has(> .grid.grid-cols-3) > .grid .l1-sub { color: rgba(255, 255, 255, .75); }
+.l1-sheet-hero .l1-grip { background: rgba(255, 255, 255, .3); }
+.l1-sheet-hero > .flex.items-center { color: #fff; }
+.l1-sheet-hero > .flex.items-center .l1-sub { color: rgba(255, 255, 255, .72); }
+.l1-sheet-hero > .grid .l1-card { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); box-shadow: none; color: #fff; }
+.l1-sheet-hero > .grid .l1-card b { color: #ffc857; }
+.l1-sheet-hero > .grid .l1-sub { color: rgba(255, 255, 255, .75); }
 
 /* ---------- Sign-in = the welcome screen ---------- */
 #authSection { max-width: 420px; margin: 0 auto; padding: 0 4px; }
@@ -206,7 +205,6 @@ html[data-theme="dark"] .lb-timer b { color: #f2f0ff; }
 html[data-theme="dark"] .lb-step.r2 .lb-block { background: linear-gradient(180deg, #6a7099, #3c4270); }
 html[data-theme="dark"] .lb-row.is-me { background: rgba(139, 143, 248, .16); box-shadow: inset 4px 0 0 var(--l1-primary); }
 html[data-theme="dark"] .l1-sheet { background: var(--l1-bg); }
-html[data-theme="dark"] .l1-sheet:has(> .grid.grid-cols-3) { background: linear-gradient(var(--l1-navy) 0, var(--l1-navy) 184px, var(--l1-bg) 184px); }
 html[data-theme="dark"] #authSection input[type="text"], html[data-theme="dark"] #authSection input[type="password"] { background: #181c3a; border-color: var(--l1-line); box-shadow: none; }
 html[data-theme="dark"] #btnSubmitLogin { background: #4f52e0 !important; }
 html[data-theme="dark"] .tf-auth-art { opacity: .92; }
@@ -234,16 +232,14 @@ html[data-theme="dark"] .bg-amber-300, html[data-theme="dark"] .bg-amber-400, ht
   font-size: 13px; color: #fff; background: var(--l1-primary); border: 2px solid var(--l1-card); }
 
 /* ===== Home (app_shell.js renderHome) ===== */
-.hm-hero { position: relative; display: flex; align-items: flex-end; gap: 4px; min-height: 172px; padding: 18px 6px 0 18px; border-radius: 28px; color: #fff; isolation: isolate;
-  background: linear-gradient(135deg, #5b5cf0 0%, #7a5cf5 52%, #b45cf2 100%); box-shadow: 0 22px 40px -22px rgba(91, 92, 240, .85); }
-.hm-hero::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
-  background: radial-gradient(130px 130px at 86% 10%, rgba(255, 255, 255, .26), transparent 70%), radial-gradient(170px 170px at 6% 112%, rgba(255, 255, 255, .15), transparent 70%); }
+.hm-hero { position: relative; display: flex; align-items: flex-end; gap: 4px; min-height: 172px; padding: 18px 6px 0 18px; border-radius: 28px; color: var(--l1-ink, #0f172a); isolation: isolate;
+  background: var(--l1-card, #fff); border: 1px solid var(--l1-line, #e0e7ff); box-shadow: 0 14px 30px -22px rgba(15, 23, 42, .35); }
 .hm-hero > :last-child { flex: none; margin-top: -30px; }
 .hm-hero-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-bottom: 18px; }
 .hm-kicker { font-size: 14px; font-weight: 700; opacity: .9; }
 .hm-name { font-size: 28px; font-weight: 900; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
 .hm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.hm-chips span { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .22); }
+.hm-chips span { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; background: var(--l1-bg, #eef2ff); color: var(--l1-ink, #0f172a); }
 
 .hm-card { padding: 16px; border-radius: 24px; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
 .hm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
@@ -303,3 +299,8 @@ html[data-theme="dark"] .hm-top-i.r1 { background: rgba(250, 204, 21, .16); }
 .hm-top-i > span:last-child { font-size: 13px; font-weight: 800; color: var(--l1-muted); }
 .hm-medal { font-size: 22px; line-height: 1; }
 @media (prefers-reduced-motion: reduce) { .hm-city-trees i { animation: none; } }
+/* profile card: the navy band is a real block, so it always wraps its content */
+.l1-sheet-hero { margin: -22px -18px 0; padding: 22px 18px 18px; background: var(--l1-navy); color: #fff; border-radius: 28px 28px 0 0; }
+.l1-sheet-hero .l1-sub { color: rgba(255, 255, 255, .78); }
+.l1-sheet-hero .l1-grip { display: none; }
+.l1-sheet-hero .grid .l1-card { padding: 10px 6px; }

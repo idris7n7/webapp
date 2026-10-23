@@ -40,3 +40,4 @@ tools/3d_src/node_modules/
 
 # Database copies made by the server every few hours
 backups/
+*.err

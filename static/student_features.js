@@ -296,7 +296,7 @@
                 <div class="bg-indigo-50/90 rounded-2xl p-3 border border-indigo-200 text-left space-y-1">
                   <div class="flex items-center justify-between">
                     <span class="text-[12px] font-black uppercase tracking-wider text-indigo-600">Misol:</span>
-                    <button type="button" onclick="event.stopPropagation(); window.L1_Flashcards.speakExample();" class="text-xs text-indigo-700 hover:text-indigo-900 font-bold">
+                    <button type="button" aria-label="Misolni eshitish" onclick="event.stopPropagation(); window.L1_Flashcards.speakExample();" class="text-xs text-indigo-700 hover:text-indigo-900 font-bold">
                       🔊
                     </button>
                   </div>

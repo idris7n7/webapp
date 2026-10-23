@@ -386,7 +386,7 @@
         : `<button type="button" class="gm-btn" data-gm="tomato">🍅 Pomidor boshlash</button>`;
       el.innerHTML = `
         <div class="gm-stats"><div><b>${s.cityTrees}</b><span>Shahar</span></div><div><b>${s.planted}</b><span>Sizniki</span></div>
-          <div><b>${s.today}/${s.daily}</b><span>Bugun</span></div>${s.wilted ? `<div class="is-warn"><b>${s.wilted}</b><span>So'lgan</span></div>` : ""}</div>
+          <div><b>${s.today}</b><span>Bugun (kuniga ${s.daily} tagacha)</span></div>${s.wilted ? `<div class="is-warn"><b>${s.wilted}</b><span>So'lgan</span></div>` : ""}</div>
         <div class="gm-actions">${action}${G.isAdmin ? `<button type="button" class="gm-btn is-quiet" data-gm="zone">➕ Hudud</button>` : ""}</div>`;
     }
     // the panel changes height between the modes, so the map has to learn its new size

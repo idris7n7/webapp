@@ -1207,6 +1207,11 @@ def week_start_ts(now=None) -> int:
     return int(monday.timestamp())
 
 
+def month_start_ts(now=None) -> int:
+    local = local_dt(int(now if now is not None else time.time()))
+    return int(local.replace(day=1, hour=0, minute=0, second=0, microsecond=0).timestamp())
+
+
 def day_start_ts(now=None) -> int:
     local = local_dt(int(now if now is not None else time.time()))
     return int(local.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
@@ -1660,6 +1665,10 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
                 (user["id"], week_start),
             )
         }
+    with get_db() as conn:
+        month_points = points_since(conn, month_start_ts(now))
+    month_rank = ranked(students, month_points)
+    me_month = next((e for e in month_rank if e["id"] == user["id"]), None)
     week_rank = ranked(students, week_points)
     all_rank = ranked(students, all_points)
     me_week = next((e for e in week_rank if e["id"] == user["id"]), None)
@@ -1674,6 +1683,8 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
             "weekPoints": week_points.get(user["id"], 0),
             "allPoints": all_points.get(user["id"], 0),
             "weekRank": me_week["rank"] if me_week else None,
+            "monthPoints": month_points.get(user["id"], 0),
+            "monthRank": me_month["rank"] if me_month else None,
             "allRank": me_all["rank"] if me_all else None,
             "streak": streak,
             "students": len(students),

@@ -242,7 +242,7 @@
             ${St.unplanted > 0 ? `<button type="button" class="gv-btn is-green" data-gv="plant">🌱 Ekish: ${St.unplanted}</button>` : ""}
           </div></div>`;
     }
-    const chip = `<span class="gv-chip">Bugun <b>${St.today}/${St.daily}</b></span>`;
+    const chip = `<span class="gv-chip" title="Kuniga ko'pi bilan ${St.daily} ta daraxt ekiladi">Bugun <b>${St.today}</b> ta</span>`;
     sheet.innerHTML = `
       <div class="gv-back" data-gv="close"></div>
       <section class="gv-sheet" role="dialog" aria-label="Pomidor" data-state="${St.status}">

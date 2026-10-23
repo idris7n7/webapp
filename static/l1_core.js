@@ -308,7 +308,7 @@
   };
 
   // ---------------------------------------------------------------- Avatars
-  const AVATAR_COLORS = ["#2f5bea", "#7c3aed", "#0ea5e9", "#16a34a", "#f97316", "#e11d48", "#0f766e", "#9333ea"];
+  const AVATAR_COLORS = ["#2f5bea", "#7c3aed", "#0369a1", "#15803d", "#c2410c", "#e11d48", "#0f766e", "#9333ea"];
   function initials(name) {
     return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?";
   }

@@ -39,25 +39,26 @@
   </style>
 
   <link rel="stylesheet" href="/static/app_theme.css?v=36">
-  <link rel="stylesheet" href="/static/tf_design.css?v=16">
+  <link rel="stylesheet" href="/static/tf_design.css?v=18">
   <link rel="stylesheet" href="/static/focus.css?v=8">
   <link rel="stylesheet" href="/static/green_map.css?v=5">
   <link rel="stylesheet" href="/static/millionaire.css?v=5">
   <link rel="stylesheet" href="/static/wordrace.css?v=3">
   <link rel="stylesheet" href="/static/listen.css?v=3">
+  <link rel="stylesheet" href="/static/polish.css?v=6">
   <!-- Tailwind goes last, like the old CDN style tag did, so its utilities keep winning over the app CSS. -->
-  <link rel="stylesheet" href="/static/tailwind.css?v=2">
+  <link rel="stylesheet" href="/static/tailwind.css?v=5">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/l1_core.js?v=22"></script>
+  <script src="/static/l1_core.js?v=23"></script>
   <script src="/static/units_data.js?v=4"></script>
   <script src="/static/flashcards_data.js?v=5"></script>
   <script src="/static/practicing_suite.js?v=3"></script>
   <script src="/static/games_engine.js?v=14"></script>
   <script src="/static/words.js?v=3"></script>
-  <script src="/static/student_features.js?v=12"></script>
+  <script src="/static/student_features.js?v=13"></script>
   <script src="/static/tree_art.js?v=2"></script>
-  <script src="/static/green_map.js?v=7" defer></script>
-  <script src="/static/focus.js?v=9" defer></script>
+  <script src="/static/green_map.js?v=8" defer></script>
+  <script src="/static/focus.js?v=10" defer></script>
   <script>
     // Shared helpers: HTML escaping + authenticated API access.
     // The server decides who a user is from the session token; nothing stored in the browser is trusted by it.
@@ -159,10 +160,10 @@
   </header>
 
   <!-- Toast Notification Banner -->
-  <div id="toastBanner" class="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 hidden">
+  <div id="toastBanner" class="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 hidden" role="status" aria-live="polite">
     <div id="toastInner" class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center justify-between gap-3 text-sm">
-      <span id="toastText">Saved!</span>
-      <button id="btnCloseToast" type="button" class="text-slate-400 hover:text-white font-bold text-xs px-2 py-1">✕</button>
+      <span id="toastText">Saqlandi!</span>
+      <button id="btnCloseToast" type="button" aria-label="Yopish" class="text-slate-400 hover:text-white font-bold text-xs px-2 py-1">✕</button>
     </div>
   </div>
 
@@ -263,7 +264,7 @@
           <div class="bg-white/90 p-3.5 rounded-xl border border-amber-200 text-xs text-left space-y-1.5 shadow-sm">
             <div><span class="text-slate-500 font-medium">Talaba:</span> <b id="pendingCardName" class="text-slate-900">-</b></div>
             <div><span class="text-slate-500 font-medium">Tanlangan daraja:</span> <b id="pendingCardLevel" class="text-slate-900">-</b></div>
-            <div><span class="text-slate-500 font-medium">Holati:</span> <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Kutilmoqda (Pending)</span></div>
+            <div><span class="text-slate-500 font-medium">Holati:</span> <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Kutilmoqda</span></div>
           </div>
 
           <p class="text-[12px] text-amber-700">
@@ -535,15 +536,15 @@
           <div class="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200 flex items-center gap-2">
             <button id="btnPracticeSubGrammar" type="button" onclick="window.L1_Nav.setPracticeSub('grammar')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-2">
               <span>📘</span>
-              <span>Grammatika Mashqlari (3 ta mashq)</span>
+              <span>Grammatika</span>
             </button>
             <button id="btnPracticeSubVocab" type="button" onclick="window.L1_Nav.setPracticeSub('vocab')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
               <span>📗</span>
-              <span>Lug'at Mashqlari (3 ta mashq)</span>
+              <span>Lug'at</span>
             </button>
             <button id="btnPracticeSubWorkbook" type="button" onclick="window.L1_Nav.setPracticeSub('workbook')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
               <span>📖</span>
-              <span>Mavzu Mashqlari (Workbook)</span>
+              <span>Workbook</span>
             </button>
           </div>
 
@@ -855,7 +856,7 @@
 
             <!-- Optional Word Bank Box -->
             <div id="runnerWordBankBox" class="hidden bg-amber-50/90 border border-amber-200 rounded-xl p-3 space-y-1.5">
-              <div class="text-[12px] font-bold uppercase tracking-wider text-amber-900">📦 Word Box (Tap a word to fill your active answer box):</div>
+              <div class="text-[12px] font-bold uppercase tracking-wider text-amber-900">📦 So'zlar qutisi (javob katagiga qo'yish uchun so'zni bosing):</div>
               <div id="runnerWordBankChips" class="flex flex-wrap gap-1.5"></div>
             </div>
           </div>
@@ -866,14 +867,14 @@
           <!-- Submit & Reset Controls -->
           <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
             <div id="runnerResultSummary" class="text-sm font-semibold text-slate-700">
-              Answer all questions, then click <span class="text-indigo-600 font-bold">Submit &amp; Check Answers</span>.
+              Answer all questions, then click <span class="text-indigo-600 font-bold">Javoblarni tekshirish</span>.
             </div>
             <div class="flex items-center gap-2">
               <button id="btnResetExercise" type="button" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
                 Reset Answers
               </button>
               <button id="btnSubmitExercise" type="button" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
-                ✅ Submit &amp; Check Answers
+                ✅ Javoblarni tekshirish
               </button>
             </div>
           </div>
@@ -911,42 +912,42 @@
       <!-- Teacher KPI Summary Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="text-[12px] font-semibold text-slate-500 uppercase">Registered Students</div>
+          <div class="text-[12px] font-semibold text-slate-500 uppercase">Talabalar</div>
           <div id="kpiTotalStudents" class="text-xl font-extrabold text-slate-900 mt-1">0</div>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="text-[12px] font-semibold text-slate-500 uppercase">Total Exercises</div>
+          <div class="text-[12px] font-semibold text-slate-500 uppercase">Mashqlar</div>
           <div id="kpiTotalExercises" class="text-xl font-extrabold text-indigo-600 mt-1">38</div>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="text-[12px] font-semibold text-slate-500 uppercase">Completed Attempts</div>
+          <div class="text-[12px] font-semibold text-slate-500 uppercase">Bajarilgan urinishlar</div>
           <div id="kpiTotalAttempts" class="text-xl font-extrabold text-emerald-600 mt-1">0</div>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
-          <div class="text-[12px] font-semibold text-slate-500 uppercase">Mistakes Logged</div>
+          <div class="text-[12px] font-semibold text-slate-500 uppercase">Qayd etilgan xatolar</div>
           <div id="kpiTotalMistakes" class="text-xl font-extrabold text-rose-600 mt-1">0</div>
         </div>
       </div>
 
       <!-- Teacher Sub-Navigation -->
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-1.5 flex-wrap">
           <button id="tTabCompletion" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-indigo-600 text-white shadow-sm">
-            ✅ Who Did / Didn't Do
+            ✅ Kim bajardi
           </button>
           <button id="tTabMistakes" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-white text-slate-700 border border-slate-200 hover:bg-slate-100">
-            ❌ Student Mistakes
+            ❌ Talaba xatolari
           </button>
           <button id="tTabRoster" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-white text-slate-700 border border-slate-200 hover:bg-slate-100">
-            👩‍🎓 Class Roster
+            👩‍🎓 Sinf ro'yxati
           </button>
           <button id="tTabAddEx" type="button" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-white text-slate-700 border border-slate-200 hover:bg-slate-100">
-            ➕ Add Future Exercise
+            ➕ Yangi mashq
           </button>
         </div>
 
-        <button id="btnExportCsv" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
-          📥 Export Full Report (CSV)
+        <button id="btnExportCsv" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition">
+          📥 To'liq hisobot (CSV)
         </button>
       </div>
 
@@ -954,8 +955,8 @@
       <div id="tPanelCompletion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">Exercise Completion Tracker</h3>
-            <p class="text-xs text-slate-500">See which students have completed an exercise and which students still haven't done it.</p>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">Mashq bajarilishi</h3>
+            <p class="text-xs text-slate-500">Qaysi talaba mashqni bajargani va qaysilari hali bajarmaganini ko'ring.</p>
           </div>
           <select id="teacherExSelect" class="text-xs sm:text-sm border border-slate-300 rounded-xl px-3 py-2 bg-slate-50 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </select>
@@ -965,7 +966,7 @@
           <!-- Completed Column -->
           <div class="border border-emerald-200 bg-emerald-50/40 rounded-xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800">✅ Completed Exercise</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800">✅ Bajarganlar</span>
               <span id="countDoneBadge" class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">0</span>
             </div>
             <div id="listDoneStudents" class="space-y-2 text-xs"></div>
@@ -974,7 +975,7 @@
           <!-- Not Completed Column -->
           <div class="border border-rose-200 bg-rose-50/40 rounded-xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-rose-800">❌ Not Completed Yet</span>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-rose-800">❌ Hali bajarmaganlar</span>
               <span id="countNotDoneBadge" class="text-xs font-bold bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full">0</span>
             </div>
             <div id="listNotDoneStudents" class="space-y-2 text-xs"></div>
@@ -983,17 +984,17 @@
 
         <!-- Overall Student Matrix Table -->
         <div class="pt-2 border-t border-slate-100 space-y-2">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Overall Class Summary (All 38 Exercises)</h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Sinfning umumiy natijasi</h4>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                  <th class="py-2.5 px-3">Student Name</th>
-                  <th class="py-2.5 px-3">Class</th>
-                  <th class="py-2.5 px-3 text-right">Vocab Done</th>
-                  <th class="py-2.5 px-3 text-right">Grammar Done</th>
-                  <th class="py-2.5 px-3 text-right">Avg Accuracy</th>
-                  <th class="py-2.5 px-3 text-right">Mistakes</th>
+                  <th class="py-2.5 px-3">Talaba ismi</th>
+                  <th class="py-2.5 px-3">Sinf</th>
+                  <th class="py-2.5 px-3 text-right">Lug'at</th>
+                  <th class="py-2.5 px-3 text-right">Grammatika</th>
+                  <th class="py-2.5 px-3 text-right">O'rtacha aniqlik</th>
+                  <th class="py-2.5 px-3 text-right">Xatolar</th>
                 </tr>
               </thead>
               <tbody id="overallStudentTableBody" class="divide-y divide-slate-200"></tbody>
@@ -1006,17 +1007,17 @@
       <div id="tPanelMistakes" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">Student Mistakes Diagnostic Log</h3>
-            <p class="text-xs text-slate-500">Inspect the exact wrong answer each student gave vs. the expected answer.</p>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">Talabalar xatolari</h3>
+            <p class="text-xs text-slate-500">Har bir talaba bergan noto'g'ri javob va to'g'ri javobni solishtiring.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select id="mistakeFilterStudent" class="text-xs border border-slate-300 rounded-xl px-2.5 py-1.5 bg-slate-50 font-medium">
-              <option value="all">All Students</option>
+              <option value="all">Barcha talabalar</option>
             </select>
             <select id="mistakeFilterCategory" class="text-xs border border-slate-300 rounded-xl px-2.5 py-1.5 bg-slate-50 font-medium">
-              <option value="all">All Skills (Vocab + Grammar)</option>
-              <option value="vocabulary">📗 Vocabulary Only</option>
-              <option value="grammar">📘 Grammar Only</option>
+              <option value="all">Barcha turlar (lug'at + grammatika)</option>
+              <option value="vocabulary">📗 Faqat lug'at</option>
+              <option value="grammar">📘 Faqat grammatika</option>
             </select>
           </div>
         </div>
@@ -1027,13 +1028,13 @@
       <!-- Teacher Panel 3: Class Roster Management -->
       <div id="tPanelRoster" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
         <div>
-          <h3 class="text-sm sm:text-base font-bold text-slate-900">Class Roster (Talabalar roʻyxati)</h3>
-          <p class="text-xs text-slate-500">Pre-register your students here so the app immediately tracks who has and hasn't done each exercise.</p>
+          <h3 class="text-sm sm:text-base font-bold text-slate-900">Sinf ro'yxati</h3>
+          <p class="text-xs text-slate-500">Talabalarni shu yerda oldindan qo'shing, ilova har bir mashqni kim bajarganini ko'rsatadi.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <input id="rosterNewName" type="text" placeholder="Student Full Name" class="px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white" />
-          <input id="rosterNewClass" type="text" value="Level 1" placeholder="Class / Group" class="px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white" />
+          <input id="rosterNewName" type="text" placeholder="Talabaning ism-familiyasi" class="px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white" />
+          <input id="rosterNewClass" type="text" value="Level 1" placeholder="Sinf / guruh" class="px-3 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white" />
           <button id="btnAddRosterStudent" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm rounded-lg px-4 py-2 transition">
             + Add Student to Roster
           </button>
@@ -1046,8 +1047,8 @@
       <div id="tPanelAddEx" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">➕ Add New Exercise (Future Weeks &amp; Units)</h3>
-            <p class="text-xs text-slate-500">Add new Vocabulary or Grammar exercises directly from the app. They appear immediately for students.</p>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">➕ Yangi mashq qo'shish</h3>
+            <p class="text-xs text-slate-500">Yangi lug'at yoki grammatika mashqlarini shu yerdan qo'shing. Talabalarda darhol ko'rinadi.</p>
           </div>
           <button id="btnDownloadJsonData" type="button" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-1.5 rounded-lg border border-slate-300">
             💾 Export exercises_data.json
@@ -1056,36 +1057,36 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Skill Category</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Mashq turi</label>
             <select id="newExCategory" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
-              <option value="vocabulary">📗 Vocabulary Workbook</option>
-              <option value="grammar">📘 Grammar Workbook</option>
+              <option value="vocabulary">📗 Lug'at</option>
+              <option value="grammar">📘 Grammatika</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Week / Part Label</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Hafta / qism</label>
             <input id="newExPart" type="text" value="Week 2 · Practice" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Exercise Title</label>
-            <input id="newExTitle" type="text" placeholder="e.g. Ex 16: Family & Possessives" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">Mashq nomi</label>
+            <input id="newExTitle" type="text" placeholder="Masalan: Ex 16: Family & Possessives" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Instruction (English)</label>
-            <input id="newExInstEn" type="text" placeholder="e.g. Choose the correct word or type the translation." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">Ko'rsatma (inglizcha)</label>
+            <input id="newExInstEn" type="text" placeholder="Masalan: Choose the correct word or type the translation." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Instruction (Uzbek)</label>
-            <input id="newExInstUz" type="text" placeholder="e.g. Toʻgʻri soʻzni tanlang yoki tarjimasini yozing." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">Ko'rsatma (o'zbekcha)</label>
+            <input id="newExInstUz" type="text" placeholder="Masalan: Toʻgʻri soʻzni tanlang yoki tarjimasini yozing." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">
-            Questions (One question per line · Format: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-700">Question | opt1, opt2, opt3 (or TEXT) | Correct Answer</code>)
+            Questions (One question per line · Format: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-700">Savol | variant1, variant2, variant3 (yoki TEXT) | To'g'ri javob</code>)
           </label>
           <textarea id="newExQuestionsText" rows="5" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono" placeholder="1. My father is ___ doctor. | a, an, – | a&#10;2. Translate: o'qituvchi → | TEXT | teacher"></textarea>
         </div>
@@ -1605,7 +1606,7 @@
                 “${quote}”
               </div>
               <p class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                Outstanding work! You completed all <strong class="text-indigo-950">${total}</strong> questions with <strong>100% accuracy</strong> and zero mistakes. Shakespeare is cheering for you!
+                Outstanding work! You completed all <strong class="text-indigo-950">${total}</strong> questions with <strong>100% aniqlik</strong> and zero mistakes. Shakespeare is cheering for you!
               </p>
             </div>
           `;
@@ -1636,7 +1637,7 @@
             </button>
             <button id="btnIdrisShuffleQuote" type="button" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5" title="Hear another praise">
               <span>🎲</span>
-              <span>New Praise</span>
+              <span>Yangi maqtov</span>
             </button>
           `;
         } else {
@@ -1647,11 +1648,11 @@
             </button>
             <button id="btnIdrisResponseReview" type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2">
               <span>📝</span>
-              <span>Review Mistakes</span>
+              <span>Xatolarni ko'rish</span>
             </button>
             <button id="btnIdrisShuffleQuote" type="button" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5" title="Hear another quote">
               <span>🎲</span>
-              <span>New Message</span>
+              <span>Yangi xabar</span>
             </button>
           `;
         }
@@ -1792,7 +1793,7 @@
 
     function toggleSpeakTeacherIdris() {
       if (!('speechSynthesis' in window)) {
-        showToast("Audio synthesis is not supported on this browser.");
+        showToast("Bu brauzer ovozni o'qib berishni qo'llab-quvvatlamaydi.");
         return;
       }
 
@@ -1860,7 +1861,7 @@
 
     function speakTeacherIdrisWelcomeDirect() {
       if (!('speechSynthesis' in window)) {
-        showToast("Audio synthesis is not supported on this device.");
+        showToast("Bu qurilma ovozni o'qib berishni qo'llab-quvvatlamaydi.");
         return;
       }
       window.speechSynthesis.cancel();
@@ -2396,7 +2397,7 @@
                             <div class="text-[12px] text-slate-600 font-medium mt-0.5">${ex.uz}</div>
                             ${ex.note ? `<div class="text-[12px] text-indigo-600 font-semibold mt-1 bg-white px-2 py-0.5 rounded-md border border-indigo-100 inline-block">${ex.note}</div>` : ''}
                           </div>
-                          <button type="button" onclick="event.stopPropagation(); speakWord('${ex.en.replace(/'/g, "\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 flex items-center justify-center text-sm shadow-xs transition shrink-0" title="Tinglash">🔊</button>
+                          <button type="button" aria-label="Talaffuzni eshitish" onclick="event.stopPropagation(); speakWord('${ex.en.replace(/'/g, "\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 flex items-center justify-center text-sm shadow-xs transition shrink-0" title="Tinglash">🔊</button>
                         </div>
                       `).join('')}
                     </div>
@@ -2530,7 +2531,7 @@
                                     <div class="font-black text-xs text-slate-900">${w.en}</div>
                                     <div class="text-[12px] text-slate-500">${w.uz}</div>
                                   </div>
-                                  <button type="button" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g, "\'")}')" class="text-xs text-indigo-600 hover:text-indigo-800">🔊</button>
+                                  <button type="button" aria-label="Talaffuzni eshitish" onclick="event.stopPropagation(); speakWord('${w.en.replace(/'/g, "\'")}')" class="text-xs text-indigo-600 hover:text-indigo-800">🔊</button>
                                 </div>
                               `).join('')}
                             </div>
@@ -3103,7 +3104,7 @@
       });
 
       document.getElementById("runnerResultSummary").innerHTML =
-        `Answer all ${ex.questions.length} questions, then click <span class="text-indigo-600 font-bold">Submit &amp; Check Answers</span>.`;
+        `Answer all ${ex.questions.length} questions, then click <span class="text-indigo-600 font-bold">Javoblarni tekshirish</span>.`;
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -3192,7 +3193,7 @@
           ${teacherPraiseCard}
         </div>
       `;
-      showToast(`Submitted! Score: ${score}/${ex.questions.length} (${pct}%)`);
+      showToast(`Yuborildi! Natija: ${score}/${ex.questions.length} (${pct}%)`);
 
       // Shakespeare pops up upon completing the test
       setTimeout(() => {
@@ -3265,7 +3266,7 @@
                   )
                   .join("")}
                </div>`
-            : `<div class="text-xs text-emerald-700 font-semibold">🌟 Perfect score! Zero mistakes.</div>`;
+            : `<div class="text-xs text-emerald-700 font-semibold">🌟 Ajoyib natija! Xatosiz.</div>`;
 
         card.innerHTML = `
           <div class="flex flex-wrap items-center justify-between gap-2">
@@ -3349,7 +3350,7 @@
               <div class="font-bold text-slate-800">${esc(stu.name)}</div>
               <div class="text-[12px] text-slate-500">${esc(stu.className)}</div>
             </div>
-            <span class="text-[12px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded">Not Done</span>
+            <span class="text-[12px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded">Bajarmagan</span>
           `;
           notDoneContainer.appendChild(item);
         }
@@ -3359,10 +3360,10 @@
       document.getElementById("countNotDoneBadge").textContent = notDoneCount;
 
       if (doneCount === 0) {
-        doneContainer.innerHTML = `<div class="text-slate-400 italic py-2">No students have completed this exercise yet.</div>`;
+        doneContainer.innerHTML = `<div class="text-slate-400 italic py-2">Bu mashqni hali hech kim bajarmagan.</div>`;
       }
       if (notDoneCount === 0) {
-        notDoneContainer.innerHTML = `<div class="text-emerald-700 font-semibold py-2">🎉 All registered students have completed this exercise!</div>`;
+        notDoneContainer.innerHTML = `<div class="text-emerald-700 font-semibold py-2">🎉 Barcha talabalar bu mashqni bajargan!</div>`;
       }
     }
 
@@ -3404,7 +3405,7 @@
     function renderTeacherMistakesTab() {
       const stuFilter = document.getElementById("mistakeFilterStudent");
       const prevStu = stuFilter.value || "all";
-      stuFilter.innerHTML = `<option value="all">All Students</option>`;
+      stuFilter.innerHTML = `<option value="all">Barcha talabalar</option>`;
       state.students.forEach(s => {
         const opt = document.createElement("option");
         opt.value = s.id;
@@ -3448,7 +3449,7 @@
       });
 
       if (count === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500 py-6 text-center">No mistakes found for the selected filter!</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-500 py-6 text-center">Tanlangan filtr bo'yicha xato topilmadi!</div>`;
       }
     }
 
@@ -3478,7 +3479,7 @@
           if (isPending) {
             actions += `<button type="button" data-set-status="declined" data-stu-id="${esc(stu.id)}" class="text-xs text-amber-700 hover:text-amber-900 font-semibold px-2 py-1">Rad etish</button>`;
           }
-          actions += `<button type="button" data-del-stu="${esc(stu.id)}" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1">Remove</button>`;
+          actions += `<button type="button" data-del-stu="${esc(stu.id)}" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1">O'chirish</button>`;
         }
         row.innerHTML = `
           <div>
@@ -3531,7 +3532,7 @@
             saveStorage("l1_students_v1", state.students);
             saveStorage("l1_attempts_v1", state.attempts);
             renderTeacherDashboard();
-            showToast("Student removed from roster.");
+            showToast("Talaba ro'yxatdan o'chirildi.");
           } catch (e) {
             showToast("Server bilan bog'lanishda xatolik.");
           }
@@ -3542,7 +3543,7 @@
     // Export CSV Report
     function exportCsvReport() {
       const rows = [
-        ["Student Name", "Class", "Category", "Exercise Title", "Score", "Total", "Timestamp", "Mistake Question", "Student Wrong Answer", "Correct Answer"]
+        ["Talaba ismi", "Sinf", "Tur", "Mashq nomi", "Ball", "Jami", "Vaqt", "Xato savol", "Talabaning javobi", "To'g'ri javob"]
       ];
       state.attempts.forEach(att => {
         const stu = state.students.find(s => s.id === att.studentId);
@@ -3586,7 +3587,7 @@
       const rawLines = document.getElementById("newExQuestionsText").value.trim();
 
       if (!title || !rawLines) {
-        showToast("Please enter an Exercise Title and at least 1 question line.");
+        showToast("Mashq nomini va kamida 1 ta savol qatorini kiriting.");
         return;
       }
 
@@ -3609,7 +3610,7 @@
       });
 
       if (questions.length === 0) {
-        showToast("Format each line as: Question | opt1, opt2 (or TEXT) | Correct Answer");
+        showToast("Har bir qator: Savol | variant1, variant2 (yoki TEXT) | To'g'ri javob");
         return;
       }
 
@@ -3638,7 +3639,7 @@
       document.getElementById("newExQuestionsText").value = "";
       renderTeacherDashboard();
       renderExerciseList();
-      showToast(`Published "${title}" with ${questions.length} questions!`);
+      showToast(`"${title}" mashqi ${questions.length} ta savol bilan nashr etildi!`);
     }
 
     // Wire up all DOM Event Listeners
@@ -3843,7 +3844,7 @@
         const name = document.getElementById("rosterNewName").value.trim();
         const cls = document.getElementById("rosterNewClass").value.trim() || "Level 1 - Group A";
         if (!name) {
-          showToast("Please enter a student name.");
+          showToast("Talaba ismini kiriting.");
           return;
         }
         try {
@@ -3861,7 +3862,7 @@
           saveStorage("l1_students_v1", state.students);
           document.getElementById("rosterNewName").value = "";
           renderTeacherDashboard();
-          showToast(`Added ${name} to class roster!`);
+          showToast(`${name} sinf ro'yxatiga qo'shildi!`);
         } catch (e) {
           showToast("Server bilan bog'lanishda xatolik.");
         }
@@ -3918,11 +3919,11 @@
     });
   </script>
   <script src="/static/icons3d.js?v=2"></script>
-  <script src="/static/app_shell.js?v=44"></script>
+  <script src="/static/app_shell.js?v=53"></script>
   <script src="/static/l1_tasks.js?v=3"></script>
   <script src="/static/shakespeare.js?v=23"></script>
 
-  <script src="/static/characters.js?v=4"></script>
+  <script src="/static/characters.js?v=5"></script>
   <script>
     // Offline support: only on https (or localhost), never blocks the page.
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
