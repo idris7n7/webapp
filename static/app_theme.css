@@ -535,9 +535,6 @@ html[data-theme="dark"] .l1-pomo-steps span.is-done { background: rgba(34, 197, 
    ===================================================================================================== */
 
 /* Teacher Idris reaction card (home + rating) */
-.l1-react-card { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: var(--l1-radius); background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
-.l1-react-card .l1-react-text { font-size: 14px; font-weight: 700; line-height: 1.4; color: var(--l1-ink); }
-.l1-react-card .l1-react-tag { display: block; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px; color: var(--l1-muted); }
 
 /* ---------- Day / night switch ---------- */
 .l1-theme-toggle { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); color: #fff; transition: transform .15s, background .2s; }
@@ -590,7 +587,6 @@ html[data-theme="dark"] .l1-theme-toggle .l1-ico-moon { display: none; }
 .lb-me-bar .lb-me-info { flex: 1; min-width: 0; line-height: 1.25; }
 .lb-me-bar .lb-me-info b { display: block; font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-me-bar .lb-me-info span { font-size: 12px; font-weight: 600; opacity: .8; }
-.lb-me-bar .lb-me-go { height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 800; font-size: 13.5px; background: var(--lb-green); color: #fff; flex: none; box-shadow: 0 8px 16px -8px rgba(107, 176, 74, .9); }
 
 /* Cards that used inline light colours in JS */
 .l1-hero-card { background: linear-gradient(135deg, var(--l1-card) 0%, var(--l1-primary-50) 100%); }
@@ -713,9 +709,7 @@ html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::pl
 .l1-theme-toggle-plain { box-shadow: 0 6px 16px -8px rgba(37, 87, 214, .5); }
 
 /* Contrast fixes (white text on light buttons, rank badges) */
-.lb-me-bar .lb-me-go { background: var(--lb-green-d); }
 .lb-step.r1 .lb-pos, .lb-step.r2 .lb-pos { color: #1f2430; }
-html[data-theme="dark"] .lb-me-bar .lb-me-go { background: #3f7f27; }
 
 /* >>> generated dark overrides (gen_dark_overrides.py) */
 html[data-theme="dark"] .bg-orange-50, html[data-theme="dark"] .hover\:bg-orange-50:hover { background-color: rgba(249,115,22, .14) !important; }

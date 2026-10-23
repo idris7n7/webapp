@@ -88,7 +88,7 @@
     Theme.bind(bar);
     $("l1BarAvatar").addEventListener("click", openProfile);
     $("l1BarBack").addEventListener("click", () => { Haptic.tap(); const go = backAction(); if (go) go(); setTimeout(syncBackButton, 120); });
-    setInterval(syncBackButton, 400);
+    setInterval(() => { if (!document.hidden) syncBackButton(); }, 400);
     $("l1BarPoints").addEventListener("click", () => Shell.go("rating"));
     $("l1BarStaff").addEventListener("click", () => { const b = $("btnModeToggle"); if (b) b.click(); });
 
@@ -622,16 +622,15 @@
       <div class="lb-card">
         <div class="lb-podium">${step(e2, 2)}${step(e1, 1)}${step(e3, 3)}</div>
         <div class="lb-head"><span>O'rin</span><span>O'yinchi</span><span>Ball</span></div>
-        ${entries.length > 3 ? entries.slice(3).map(row).join("") : `<div class="lb-empty">${entries.length ? "Qolgan ishtirokchilar shu yerda ko'rinadi." : "Hali talabalar yo'q."}</div>`}
+        ${entries.length > 3 ? entries.slice(3).map(row).join("") : (entries.length ? "" : `<div class="lb-empty">Hali talabalar yo'q.</div>`)}
       </div>
       ${mine && user() && state.mode !== "teacher" ? `<div class="lb-me-bar">
         <span class="lb-me-rank">#${mine.rank}</span>${avatar(mine, 38)}
         <div class="lb-me-info"><b>${html(mine.name)}</b><span>${mine.points} ball · ${period === "week" ? "bu hafta" : "umumiy"}</span></div>
-        <button type="button" class="lb-me-go" data-go="games">O'ynash</button></div>` : ""}
+</div>` : ""}
       <div class="l1-sub px-2 text-center" style="font-size:12px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
     </div>`;
     el.querySelectorAll("[data-period]").forEach((b) => b.addEventListener("click", () => onPeriod(b.dataset.period)));
-    el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => { Haptic.tap(); Shell.go(b.dataset.go); }));
   };
 
   function renderRating() {
@@ -639,20 +638,8 @@
     if (!el || Shell.tab !== "rating") return;
     el.innerHTML = `<div class="l1-page space-y-4"><div class="px-1"><div class="l1-h1">Reyting</div>
       <div class="l1-sub" id="l1RatingMe">Eng faol talabalar</div></div>
-      <div id="l1RatingReact"></div><div id="l1RatingBox"></div></div>`;
+      <div id="l1RatingBox"></div></div>`;
     const box = $("l1RatingBox");
-    // The mascot reacts to the student's own score: surprised at the top, comforting near the bottom.
-    const react = () => {
-      const m = Shell.data.me;
-      const slot = $("l1RatingReact");
-      if (!slot || !m) return;
-      const p = Shell.ratingPeriod;
-      const board = Shell.data.board[p];
-      const r = Idris.forScore(p === "week" ? m.weekPoints : m.allPoints, p === "week" ? m.weekRank : m.allRank, board ? board.entries.length : 0);
-      slot.innerHTML = `<div class="l1-react-card">${Idris.html("trophy", 84)}
-        <div class="min-w-0"><span class="l1-react-tag">${r.mood === "comfort" ? "Xafa bo'lmang" : r.mood === "surprised" ? "Voy!" : "Barakalla"}</span>
-        <div class="l1-react-text">${html(r.text)}</div></div></div>`;
-    };
     const header = () => {
       const m = Shell.data.me;
       const p = Shell.ratingPeriod;
@@ -660,7 +647,6 @@
         ? `Siz: ${m.weekRank || "—"}-o'rin · ${m.weekPoints} ball (bu hafta)`
         : `Siz: ${m.allRank || "—"}-o'rin · ${m.allPoints} ball (umumiy)`;
       renderBar();
-      react();
     };
     const show = (p) => {
       Shell.ratingPeriod = p;

@@ -113,7 +113,6 @@ main .rounded-3xl { border-radius: 22px; }
 .lb-timer small { color: #6b7194; }
 .lb-step.r2 .lb-block { background: linear-gradient(180deg, #8a90b3, #5c6285); }
 .lb-me-bar { background: var(--l1-navy); }
-.lb-me-bar .lb-me-go { background: var(--l1-primary); box-shadow: 0 8px 16px -8px rgba(85, 88, 238, .9); }
 .lb-row.is-me { background: rgba(85, 88, 238, .08); box-shadow: inset 4px 0 0 var(--l1-primary); }
 .lb-you { background: var(--l1-primary); }
 .lb-coin { background: radial-gradient(circle at 35% 30%, #ffe9a8, #ffc23d 55%, #e39a00); }
