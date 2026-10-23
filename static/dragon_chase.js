@@ -1,4 +1,4 @@
-// "Idris va Ajdarho" — 60+ FPS side-view 3D Pixar chase game on a 2D canvas.
+// "Shakespeare va Ajdarho" — 60+ FPS side-view 3D Pixar chase game on a 2D canvas.
 // Teacher Idris runs to the Level Up school across a side-scrolling world while a hungry dragon
 // with a checkered bib — a fork in one hand, a knife in the other — flies after him.
 // Both characters use continuous 60+ FPS skeletal articulation of their 3D Pixar sprite parts.
@@ -17,10 +17,12 @@
   const ANSWER_SECONDS = 7; // time allowed for each question (picture questions need a little reading time)
   const SCREAMS = ["YORDAM!", "VOYDOD!", "YORDAM BERING!", "VOYDOD, YORDAM!"];
 
-  const IDRIS_SHEET_SRC = "/static/idris/idris_chase_sheet.webp?v=4";
+  const IDRIS_SHEET_SRC = "/static/shakespeare/game_run.webp";
+  const IDRIS_SPRINT_SRC = "/static/shakespeare/game_sprint.webp";
   const DRAGON_SHEET_SRC = "/static/idris/dragon_chase_sheet.webp?v=4";
-  const IDRIS_WAVE_SRC = "/static/idris/idris_wave.webp";
-  const IDRIS_POINT_SRC = "/static/idris/idris_pointing.webp";
+  const IDRIS_WAVE_SRC = "/static/shakespeare/game_run.webp";
+  const IDRIS_POINT_SRC = "/static/shakespeare/game_point.webp";
+  const RUNNER_HEAD_SRC = "/static/shakespeare/run_head.webp"; // the head of the running puppet (static/shakespeare_puppet.js)
   const SHOUT_FONT = '"Luckiest Guy", "Fredoka", system-ui, sans-serif';
   const SPEECH_FONT = '"Plus Jakarta Sans", "Fredoka", system-ui, sans-serif';
 
@@ -347,13 +349,19 @@
       }
       this.loading = (async () => {
         try {
-          const [idrisImg, dragonImg, waveImg, pointImg] = await Promise.all([
+          const [idrisImg, dragonImg, waveImg, pointImg, sprintImg, headImg] = await Promise.all([
+            // (idrisImg = the runner picture)
             loadImage(IDRIS_SHEET_SRC),
             loadImage(DRAGON_SHEET_SRC),
             loadImage(IDRIS_WAVE_SRC).catch(() => null),
             loadImage(IDRIS_POINT_SRC).catch(() => null),
+            loadImage(IDRIS_SPRINT_SRC).catch(() => null),
+            loadImage(RUNNER_HEAD_SRC).catch(() => null),
           ]);
+          // the running Shakespeare is a puppet; without its head picture the still picture is used instead
+          try { this.puppet = headImg && window.L1_ShakespearePuppet ? window.L1_ShakespearePuppet.build(headImg) : null; } catch (e) { this.puppet = null; }
           this.idrisSheet = idrisImg;
+          this.sprintImg = sprintImg || idrisImg;
           this.dragonSheet = dragonImg;
           this.waveImg = waveImg;
           this.pointImg = pointImg || waveImg;
@@ -536,7 +544,7 @@
     start() {
       this.idle = false;
       this.reset();
-      this.banner("QOCH, IDRIS!", "good");
+      this.banner("QOCH, SHEKSPIR!", "good");
     },
 
     right() {
@@ -1529,10 +1537,10 @@
     },
 
     drawIdris(ctx, idrisX, groundY, scale) {
-      const img = this.idrisSheet;
-      if (!img) return;
-
-      const P = IDRIS_PARTS;
+      const pup = this.puppet;
+      if (!pup) return this.drawIdrisStill(ctx, idrisX, groundY, scale);
+      const P = pup.parts, H = pup.heads;
+      const part = window.L1_ShakespearePuppet.drawPart;
       const ph = this.phase;
       const sprinting = this.boostT >= 0 || (this.winT >= 0 && this.arriveT < 0);
       const stumbling = this.tripT >= 0 && this.tripT < 1.15;
@@ -1556,7 +1564,7 @@
       }
 
       const size = Math.round(172 * scale);
-      const k = size / CELL;
+      const k = size / 360;
 
       // Ground contact shadow
       ctx.globalAlpha = 1;
@@ -1571,7 +1579,7 @@
       );
       ctx.fill();
 
-      // Biomechanical 60 FPS joint kinematics in 360x360 design units
+      // Joint angles, in 360x360 design units: the legs swing from the hips, bend at the knees and flex at the ankles
       const legStride = sprinting ? 1.04 : 0.92;
       const legAngles = (s, isNear) => {
         let hipA = Math.sin(s) * legStride - 0.18 + 0.12 * Math.cos(2 * s);
@@ -1607,16 +1615,15 @@
         return [shA, shA - bend];
       };
 
-      const baseY = groundY + 14 * scale + bob;
+      const baseY = groundY + 13 * scale + bob;
       ctx.save();
       ctx.translate(idrisX, baseY);
 
-      // Origin in 360x360 space is shifted so hip center (170, 208) is the pivot of torso tilt
+      // Origin in 360x360 space is shifted so the hip centre (170, 208) is the pivot of the body's lean
       const ox = -180 * k;
       const oy = -360 * k;
       ctx.translate(ox, oy);
 
-      // Helper to rotate upper body around hip (170, 208)
       const cosT = Math.cos(torsoLean);
       const sinT = Math.sin(torsoLean);
       const hipPivotX = 170;
@@ -1630,98 +1637,102 @@
         ];
       };
 
-      // 1. Far arm (behind torso)
+      // 1. Far arm (behind the body)
       const [fShA, fElA] = armAngles(ph, false);
-      const shFar = bodyPt(224, 118);
+      const shFar = bodyPt(201, 122);
       const fShWorld = fShA + torsoLean;
       const fElWorld = fElA + torsoLean;
       const elFarX = shFar[0] - Math.sin(fShWorld) * 46;
       const elFarY = shFar[1] + Math.cos(fShWorld) * 46;
-      drawAtlasPart(ctx, img, P.uarm_dark, shFar[0], shFar[1], k, fShWorld);
-      drawAtlasPart(
-        ctx,
-        img,
-        stumbling ? P.farm_open_dark : P.farm_dark,
-        elFarX,
-        elFarY,
-        k,
-        fElWorld
-      );
+      part(ctx, P.uarm_dark, shFar[0], shFar[1], k, fShWorld);
+      part(ctx, stumbling ? P.farm_open_dark : P.farm_fist_dark, elFarX, elFarY, k, fElWorld);
 
-      // 2. Pelvis bridge & Far leg (behind near leg)
-      drawAtlasPart(ctx, img, P.pelvis, 170, 208, k, torsoLean * 0.5);
+      // 2. Breeches between the legs, then the far leg (behind the near leg)
+      part(ctx, P.pelvis, 170, 207, k, torsoLean * 0.5);
       const [fhA, fkA, faA] = legAngles(ph + Math.PI, false);
-      const hipFarX = 180;
+      const hipFarX = 181;
       const hipFarY = 206;
       const kneeFarX = hipFarX - Math.sin(fhA) * 58;
       const kneeFarY = hipFarY + Math.cos(fhA) * 58;
       const ankleFarX = kneeFarX - Math.sin(fkA) * 80;
       const ankleFarY = kneeFarY + Math.cos(fkA) * 80;
-      drawAtlasPart(ctx, img, P.thigh_dark, hipFarX, hipFarY, k, fhA);
-      drawAtlasPart(ctx, img, P.shoe_dark, ankleFarX, ankleFarY, k, faA);
-      drawAtlasPart(ctx, img, P.shin_dark, kneeFarX, kneeFarY, k, fkA);
+      part(ctx, P.thigh_dark, hipFarX, hipFarY, k, fhA);
+      part(ctx, P.shoe_dark, ankleFarX, ankleFarY, k, faA);
+      part(ctx, P.shin_dark, kneeFarX, kneeFarY, k, fkA);
 
       // 3. Near leg
       const [nhA, nkA, naA] = legAngles(ph, true);
-      const hipNearX = 170;
+      const hipNearX = 159;
       const hipNearY = 208;
       const kneeNearX = hipNearX - Math.sin(nhA) * 58;
       const kneeNearY = hipNearY + Math.cos(nhA) * 58;
       const ankleNearX = kneeNearX - Math.sin(nkA) * 80;
       const ankleNearY = kneeNearY + Math.cos(nkA) * 80;
-      drawAtlasPart(ctx, img, P.thigh, hipNearX, hipNearY, k, nhA);
-      drawAtlasPart(ctx, img, P.shoe, ankleNearX, ankleNearY, k, naA);
-      drawAtlasPart(ctx, img, P.shin, kneeNearX, kneeNearY, k, nkA);
+      part(ctx, P.thigh, hipNearX, hipNearY, k, nhA);
+      part(ctx, P.shoe, ankleNearX, ankleNearY, k, naA);
+      part(ctx, P.shin, kneeNearX, kneeNearY, k, nkA);
 
-      // 4. Torso (pivoted at hip 170, 208)
-      drawAtlasPart(ctx, img, P.torso, hipPivotX, hipPivotY, k, torsoLean);
+      // 4. The doublet (pivoted at the hip)
+      part(ctx, P.torso, hipPivotX, hipPivotY, k, torsoLean);
 
-      // 5. 3D Pixar Head (single opaque head, zero double-ghost overlap!)
-      const look = stumbling ? 0 : this.lookAmount();
-      const useGlance = look > 0.35;
-      const headKey = useGlance ? "glance" : this.mood;
-      const hd = P[headKey] || P.happy;
-      const neckPt = bodyPt(
-        226.8 + (useGlance ? -4 : 0),
-        100 + (useGlance ? 4 : 0)
-      );
-      const headNod =
-        torsoLean * 0.65 +
-        Math.sin(ph * 2) * 0.032 +
-        (useGlance ? -0.06 : 0);
-      // Slight horizontal turn compression right as the head turns to glance back
-      const turnSquash =
-        look > 0 && look < 0.65
-          ? 1 - 0.14 * Math.sin((look / 0.65) * Math.PI)
-          : 1;
-      // (the head is painted after the near arm so a swinging fist can never cover the face)
-      const paintHead = () =>
-        drawAtlasPart(ctx, img, hd, neckPt[0], neckPt[1], k, headNod, turnSquash, 1);
-
-      // 6. Near arm (in front of torso)
+      // 5. Near arm (in front of the body)
       const [nShA, nElA] = armAngles(ph + Math.PI, true);
-      const shNear = bodyPt(164, 110);
+      const shNear = bodyPt(139, 122);
       const nShWorld = nShA + torsoLean;
       const nElWorld = nElA + torsoLean;
       const elNearX = shNear[0] - Math.sin(nShWorld) * 46;
       const elNearY = shNear[1] + Math.cos(nShWorld) * 46;
-      drawAtlasPart(ctx, img, P.uarm, shNear[0], shNear[1], k, nShWorld);
-      drawAtlasPart(
-        ctx,
-        img,
-        stumbling ? P.farm_open : P.farm_fist,
-        elNearX,
-        elNearY,
-        k,
-        nElWorld
-      );
-      paintHead();
+      part(ctx, P.uarm, shNear[0], shNear[1], k, nShWorld);
+      part(ctx, stumbling ? P.farm_open : P.farm_fist, elNearX, elNearY, k, nElWorld);
+
+      // 6. The head, painted last so a swinging fist can never cover the face
+      const look = stumbling ? 0 : this.lookAmount();
+      const useGlance = look > 0.35;
+      const hd = H[useGlance ? "glance" : this.mood] || H.happy;
+      const neckPt = bodyPt(170 + (useGlance ? -3 : 0), 108 + (useGlance ? 2 : 0));
+      const headNod = torsoLean * 0.65 + Math.sin(ph * 2) * 0.032 + (useGlance ? -0.07 : 0);
+      // the head narrows as it turns to glance back over the shoulder
+      const turnSquash = look > 0 && look < 0.65 ? 1 - 0.14 * Math.sin((look / 0.65) * Math.PI) : 1;
+      part(ctx, hd, neckPt[0], neckPt[1], k, headNod, turnSquash, 1);
 
       ctx.restore();
 
       // Track head position in world space for sweat & tear droplets
       this.headX = idrisX + ox + neckPt[0] * k;
-      this.headY = baseY + oy + (neckPt[1] - 48) * k;
+      this.headY = baseY + oy + (neckPt[1] - 46) * k;
+    },
+
+    drawIdrisStill(ctx, idrisX, groundY, scale) {
+      // The runner is the still Shakespeare cut-out (static/shakespeare/game_*.webp), no running animation.
+      const sprinting = this.boostT >= 0 || (this.winT >= 0 && this.arriveT < 0);
+      const img = sprinting && this.sprintImg ? this.sprintImg : this.idrisSheet;
+      if (!img) return;
+
+      const ph = this.phase;
+      const stumbling = this.tripT >= 0 && this.tripT < 1.15;
+      const lean = 0;
+      const bob = 0;
+
+      const h = Math.round(150 * scale);
+      const w = h * (img.naturalWidth / img.naturalHeight);
+
+      // Ground contact shadow
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(15, 23, 42, 0.26)";
+      ctx.beginPath();
+      ctx.ellipse(idrisX, groundY + 1, (stumbling ? 36 : 28 + Math.cos(ph * 2) * 3) * scale, 7.5 * scale, 0, 0, TAU);
+      ctx.fill();
+
+      const baseY = groundY + 10 * scale + bob;
+      ctx.save();
+      ctx.translate(idrisX, baseY);
+      ctx.rotate(lean);
+      ctx.drawImage(img, -w / 2, -h, w, h);
+      ctx.restore();
+
+      // Head position in world space for sweat & tear droplets
+      this.headX = idrisX + Math.sin(lean) * h * 0.8;
+      this.headY = baseY - Math.cos(lean) * h * 0.85;
     },
 
     // -------------------------------------------------------------- Hungry Dragon (60+ FPS 3D Pixar Skeletal Puppet + Knocked-Out State)
@@ -2488,9 +2499,9 @@
       this.correctCount = 0;
       this.renderHud(-1);
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-      set("dragonQCategory", "Idris va Ajdarho");
+      set("dragonQCategory", "Shakespeare va Ajdarho");
       set("dragonQNumber", "");
-      set("dragonQText", "Ajdarho Idris ustozni quvmoqda! To'g'ri javob bering — ustoz maktabga yetib boradi.");
+      set("dragonQText", "Ajdarho Shakespeareni quvmoqda! To'g'ri javob bering — Shakespeare maktabga yetib boradi.");
       const box = document.getElementById("dragonOptionsContainer");
       if (box) {
         box.innerHTML = '<button type="button" class="l1-btn l1-btn-primary w-full col-span-2" id="dragonStart">▶ Boshlash</button>';
@@ -2670,20 +2681,11 @@
       );
       if (title) {
         title.textContent = won
-          ? "G’alaba! Idris ustoz darsni boshladi!"
-          : "Ajdarho Idris ustozni yeb qo’ydi!";
+          ? "G’alaba! Shakespeare darsni boshladi!"
+          : "Ajdarho Shakespeareni yeb qo’ydi!";
       }
       if (body) {
         body.innerHTML = `<div class="space-y-3 text-center">
-          <div class="flex justify-center">${
-            l
-              ? l.Idris.html(
-                  won ? "celebrate" : "pointing",
-                  150,
-                  won ? "is-party" : "is-no"
-                )
-              : ""
-          }</div>
           <p class="text-sm text-slate-700 font-semibold">${
             won
               ? "Ajdarho maktab devoriga urilib, chang ichida tilini chiqarib yiqildi — Idris ustoz esa sinfda: “Bolalar, darsni boshlaymiz!” deb darsni boshladi!"
@@ -2724,5 +2726,6 @@
   };
 
   DragonGame.scene = Chase;
+  DragonGame.chase = Chase; // the scene, for checking single frames by hand
   window.L1_DragonGame = DragonGame;
 })(window);

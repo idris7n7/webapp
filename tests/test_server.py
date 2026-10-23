@@ -1354,6 +1354,12 @@ class DataIntegrityTests(unittest.TestCase):
         verdicts = {zones.judge((z["b"][0] + z["b"][2]) / 2, (z["b"][1] + z["b"][3]) / 2) for z in zones.green}
         self.assertIn("ok", verdicts)
 
+    def test_the_running_shakespeare_has_its_head_and_is_loaded_before_the_game(self):
+        self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "shakespeare", "run_head.webp")), "run: python tools/make_runner_head.py")
+        with open(os.path.join(self.APP_DIR, "static", "index.html"), encoding="utf-8") as f:
+            html = f.read()
+        self.assertLess(html.index("/static/shakespeare_puppet.js"), html.index("/static/dragon_chase.js"))
+
     def test_there_are_ten_boys_and_ten_girls_to_choose_from(self):
         with open(os.path.join(self.APP_DIR, "static", "characters.js"), encoding="utf-8") as f:
             js = f.read()

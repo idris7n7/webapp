@@ -32,7 +32,7 @@
     ws: null, code: "", you: "", lobby: null, offset: 0, closing: false, retries: 0,
     mine: [], uploadedFor: "", startSent: false,
     q: null, answers: [], snap: null, disp: {}, startAt: 0, track: 1200, results: null, awards: null,
-    raf: 0, lastFrame: 0, roadX: 0, qTimer: 0, mates: null,
+    raf: 0, lastFrame: 0, roadX: 0, qTimer: 0, mates: null, r3d: null, hero3d: null, rankKey: "",
   };
 
   const toast = (m) => { if (typeof window.showToast === "function") window.showToast(m); };
@@ -140,6 +140,7 @@
     cancelAnimationFrame(S.raf); S.raf = 0;
     clearInterval(S.qTimer);
     Engine.stop();
+    kill3d();
     if (clearCode) S.code = "";
   }
 
@@ -212,6 +213,7 @@
       if (feed) { feed.className = "wr-feed is-bad"; feed.textContent = `${m.timeout ? "⏱ Vaqt tugadi" : "✗ Xato"} — to'g'ri javob: ${m.a}`; }
     }
     if (lane) { lane.classList.remove("is-good", "is-bad"); void lane.offsetWidth; lane.classList.add(m.ok ? "is-good" : "is-bad"); }
+    if (S.r3d) { if (m.ok) S.r3d.good(); else S.r3d.bad(); }
     clearTimeout(S.feedT);
     S.feedT = setTimeout(() => { const f = $("wrFeed"); if (f) { f.className = "wr-feed"; f.textContent = "Tezroq javob bersangiz, mashina tezroq ketadi!"; } }, 2200);
   }
@@ -240,12 +242,33 @@
     ({ menu: renderMenu, connecting: renderConnecting, lobby: renderLobby, end: renderEnd }[S.view] || (() => {}))();
   }
 
-  function stage(html) { area().innerHTML = `<div class="wr-stage">${html}</div>`; return area().firstChild; }
+  // ---- the 3D track (static/l1_3d.js, built from tools/3d_src). Without WebGL the old 2D lanes are drawn instead.
+  const has3d = () => !!(window.L1_3D && window.L1_3D.available());
+  function kill3d() { if (S.r3d) { try { S.r3d.destroy(); } catch (e) {} S.r3d = null; } if (S.hero3d) { try { S.hero3d.destroy(); } catch (e) {} S.hero3d = null; } S.rankKey = ""; }
+  function racers3d() {
+    const snap = S.snap, list = [];
+    const src = snap ? snap.players : (S.lobby ? S.lobby.players.map((p) => ({ id: p.id, slot: p.slot, pos: 0, v: 0, done: false })) : []);
+    for (const p of src) {
+      const m = meta(p.id) || {};
+      list.push({ id: p.id, slot: p.slot, name: m.name || "…", color: COLORS[p.slot], pos: S.disp[p.id] == null ? p.pos : S.disp[p.id], v: p.v, done: !!p.done });
+    }
+    return list;
+  }
+  function updateRank(list) {
+    const el = $("wrRank"); if (!el) return;
+    const order = [...list].sort((a, b) => b.pos - a.pos);
+    const key = order.map((r) => r.id + Math.round((r.pos / S.track) * 100)).join();
+    if (key === S.rankKey) return;
+    S.rankKey = key;
+    el.innerHTML = order.map((r, i) => `<div class="${r.id === S.you ? "is-me" : ""}"><span>${i + 1}</span><i style="background:${r.color}"></i><b>${esc(r.name)}</b><em>${Math.min(100, Math.round((r.pos / S.track) * 100))}%</em></div>`).join("");
+  }
+
+  function stage(html) { kill3d(); area().innerHTML = `<div class="wr-stage">${html}</div>`; return area().firstChild; }
 
   function renderMenu() {
     const c = W() ? W().counts() : { mastered: 0, review: 0, learning: 0, new: 0 };
     stage(`
-      <div class="wr-title"><span style="font-size:30px">🏎️</span><div>Word Race<small>Inglizcha so'zlar poygasi</small></div></div>
+      ${has3d() ? `<div class="wr-3d wr-hero" id="wrHero"><div class="wr-hero-title">Word Race<small>Inglizcha so'zlar poygasi</small></div></div>` : `<div class="wr-title"><span style="font-size:30px">🏎️</span><div>Word Race<small>Inglizcha so'zlar poygasi</small></div></div>`}
       <div><div class="wr-h" style="margin-bottom:6px">1. Poyga turi</div>
         <div class="wr-modes">${MODES.map((m) => `<button type="button" class="wr-chip ${S.mode === m.id ? "is-on" : ""}" data-wr="mode" data-v="${m.id}">${m.icon} ${m.name}<small>${m.desc}</small></button>`).join("")}</div></div>
       <div><div class="wr-h" style="margin-bottom:6px">2. Botlar qanchalik kuchli?</div>
@@ -258,6 +281,8 @@
       <div class="wr-note">📘 Lug'atingiz: ⭐ ${c.mastered || 0} o'zlashtirilgan · 🔁 ${c.review || 0} takrorlash kerak · 🆕 ${c.new || 0} yangi. Poyga avval xato qilgan so'zlaringizni so'raydi.</div>`);
     const input = $("wrCode");
     if (input) input.addEventListener("keydown", (e) => { if (e.key === "Enter") joinFromInput(); });
+    const hero = $("wrHero");
+    if (hero) S.hero3d = window.L1_3D.race(hero, { track: S.track, preview: true });
   }
 
   function renderConnecting() { stage(`<div class="wr-title">🏎️ Ulanmoqda…</div><div class="wr-note">Xona: ${esc(S.code)}</div>`); }
@@ -334,10 +359,10 @@
     stage(`
       <div class="wr-bar"><button type="button" class="wr-x" data-wr="leave" aria-label="Chiqish">✕</button>
         <div class="wr-h">${(MODES.find((m) => m.id === L.mode) || {}).icon || ""} ${(MODES.find((m) => m.id === L.mode) || {}).name || "Poyga"}</div><span style="width:36px"></span></div>
-      <div class="wr-track" id="wrTrack">${players.map((p) => `
+      ${has3d() ? `<div class="wr-3d" id="wr3d"><div class="wr-rank" id="wrRank"></div></div>` : `<div class="wr-track" id="wrTrack">${players.map((p) => `
         <div class="wr-lane ${p.id === S.you ? "is-me" : ""}" data-id="${esc(p.id)}" style="--c:${COLORS[p.slot]}">
           <span class="wr-name">${esc(p.name)}${p.id === S.you ? " (siz)" : ""}${p.bot ? " 🤖" : ""}</span><span class="wr-flag"></span>
-          <div class="wr-car" style="--p:0">${carSvg(COLORS[p.slot])}<span class="wr-fire"></span></div></div>`).join("")}</div>
+          <div class="wr-car" style="--p:0">${carSvg(COLORS[p.slot])}<span class="wr-fire"></span></div></div>`).join("")}</div>`}
       <div class="wr-hud">
         <div class="wr-gauge"><svg viewBox="0 0 92 56"><path d="M6 50 A40 40 0 0 1 86 50" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="8" stroke-linecap="round"/>
           <path d="M6 50 A40 40 0 0 1 86 50" fill="none" stroke="url(#wrg)" stroke-width="8" stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126" id="wrArc"/>
@@ -348,6 +373,8 @@
       <div class="wr-qtime"><i id="wrQtime"></i></div>
       <div id="wrQarea"></div>
       <div class="wr-count" id="wrCount" hidden></div>`);
+    const box = $("wr3d");
+    if (box) { S.r3d = window.L1_3D.race(box, { track: S.track }); if (!S.r3d) { box.remove(); } }
     if (S.q) renderQuestion();
   }
 
@@ -392,14 +419,21 @@
       if (count.textContent !== label) { count.textContent = label; count.classList.toggle("is-go", left <= 0); if (left > 0) sfx.beep(false); }
     } else if (count && !count.hidden) count.hidden = true;
     const snap = S.snap;
-    if (!snap) return;
+    const feed3d = () => {
+      if (!S.r3d) return;
+      const list = racers3d();
+      S.r3d.update(list, S.you, { countdown: S.view === "countdown" ? Math.max(0, Math.ceil(S.startAt - now)) : 0, running: S.view === "race" });
+      updateRank(list);
+    };
+    if (!snap) { feed3d(); return; }
     const ahead = Math.min(0.4, Math.max(0, now - snap.now));
     let myV = 0, myOk = 0, myBad = 0;
     for (const p of snap.players) {
-      const lane = document.querySelector(`.wr-lane[data-id="${p.id}"]`); if (!lane) continue;
       const target = Math.min(S.track, p.pos + (p.done ? 0 : p.v * ahead));
       const cur = S.disp[p.id] == null ? target : S.disp[p.id];
       S.disp[p.id] = cur + (target - cur) * Math.min(1, dt * 9);
+      if (p.id === S.you) { myV = p.v; myOk = p.ok; myBad = p.bad; }
+      const lane = document.querySelector(`.wr-lane[data-id="${p.id}"]`); if (!lane) continue;
       const car = lane.querySelector(".wr-car");
       car.style.setProperty("--p", (S.disp[p.id] / S.track).toFixed(4));
       car.style.setProperty("--spin", Math.max(0.15, p.v / 18).toFixed(2));
@@ -408,6 +442,7 @@
       lane.style.backgroundPositionX = `${-(S.roadX * (0.4 + p.v / 40)) % 40}px`;
       if (p.id === S.you) { myV = p.v; myOk = p.ok; myBad = p.bad; }
     }
+    feed3d();
     S.roadX += dt * 60;
     const arc = $("wrArc"), kmh = $("wrKmh"), sc = $("wrScore");
     if (arc) arc.setAttribute("stroke-dashoffset", (126 * (1 - Math.min(1, myV / MAX_SPEED))).toFixed(1));

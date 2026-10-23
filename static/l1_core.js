@@ -1,5 +1,5 @@
 // Level Up core helpers shared by the app shell, weekly tasks and games:
-// Telegram Mini App integration, haptics, sounds, Teacher Idris (3D cut-out), avatars and effects.
+// Telegram Mini App integration, haptics, sounds, Shakespeare mascot, avatars and effects.
 (function (window) {
   "use strict";
   const tg = window.Telegram && window.Telegram.WebApp;
@@ -201,291 +201,47 @@
     finish() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, "sine", 0.22, i * 0.11, 0.12)); },
   };
 
-  // ---------------------------------------------------------------- Teacher Idris
+  // ---------------------------------------------------------------- Shakespeare (the mascot; the old name `Idris` stays as the code API)
+  // Six still pictures (static/shakespeare/*.png, white background); each app section / mood picks the one that fits.
+  const ALT = {
+    "shakespeare-greeting": "Shakespeare smiling and waving hello", "shakespeare-celebrate": "Shakespeare celebrating with both fists raised",
+    "shakespeare-writing": "Shakespeare writing with a quill at a desk beside a lamp", "shakespeare-reading": "Shakespeare holding an open book and turning a page",
+    "shakespeare-thinking": "Shakespeare wearing glasses with his hand on his chin", "shakespeare-football": "Shakespeare smiling and holding a black and white football in both hands",
+  };
+  const SHK = (n) => ({ w: 1, src: "shakespeare-" + n, url: "/static/shakespeare/shakespeare-" + n + ".webp", alt: ALT["shakespeare-" + n] });
   const POSES = {
-    wave: "/static/idris/idris_wave.webp",
-    pointing: "/static/idris/idris_pointing.webp",
-    thumbsup: "/static/idris/idris_thumbsup.webp",
-    celebrate: "/static/idris/idris_celebrate.webp",
+    wave: "/static/shakespeare/shakespeare-greeting.webp",
+    pointing: "/static/shakespeare/shakespeare-thinking.webp",
+    thumbsup: "/static/shakespeare/shakespeare-celebrate.webp",
+    celebrate: "/static/shakespeare/shakespeare-celebrate.webp",
   };
   // Moods used by the score reactions map onto the poses.
   const MOOD_POSE = { surprised: "celebrate", praise: "thumbsup", comfort: "wave" };
+  //   greet = Asosiy (hello)  book = Vazifalar (reading)  glasses = O'rganish (thinking)  desk = Mashq qilish (writing)
+  //   ball = O'yinlar (football)  trophy = Reyting (celebrating)  wave / pointing / thumbsup / celebrate = task runner and games
+  const PHOTO_SCENES = {
+    greet: SHK("greeting"), book: SHK("reading"), glasses: SHK("thinking"), desk: SHK("writing"), ball: SHK("football"), trophy: SHK("celebrate"),
+    wave: SHK("greeting"), pointing: SHK("thinking"), thumbsup: SHK("celebrate"), celebrate: SHK("celebrate"),
+  };
   Object.values(POSES).forEach((src) => { const i = new Image(); i.src = src; });
 
-
-  // ---------------------------------------------------------------- Teacher Idris rig (canvas)
-  // Every Idris is the same picture drawn on a canvas every frame, so he is never a still photo:
-  //   1. life      - he breathes and sways a little (the whole picture, turned about its floor, so no seams)
-  //   2. blinking  - a skin-coloured lid sliding over each eye (colour sampled from the picture itself)
-  //   3. the part  - the hand / arm / ball that belongs to the situation, cut out along a polygon and turned about its
-  //                  joint; the strip it uncovers is filled from the jacket / paper next to it (patches)
-  //   4. reactions - a hop (happy / party) or a head shake (no) for a moment, and a cross-fade between poses
-  // Coordinates are each picture's own pixels. `eyes` = [x, y, rx, ry, tilt] of the lid ellipse over each eye.
-  //   greet = Asosiy (hand waves at the wrist)       book = Vazifalar (lifts and turns the page)
-  //   glasses = O'rganish (strokes his jaw)          desk = Mashq qilish (writes)
-  //   ball = O'yinlar (the ball spins on his finger)  trophy = Reyting (both arms pump with joy)
-  //   wave / pointing / thumbsup / celebrate = the poses used by the task runner and the games
-  const wave = (t, f) => Math.sin(t * f);
-  const PHOTO_SCENES = {
-    greet: {
-      w: 0.85, src: "scene_greet_body", hand: "scene_greet_hand", eyes: [[326, 208, 27, 17, 0.06], [431, 200, 27, 17, 0.06]],
-      parts: [{ layer: "hand", pivot: [88, 405], move: (t, k) => ({ rot: (0.05 + 0.22 * wave(t, 7)) * k }) }],
-    },
-    book: {
-      w: 0.89, src: "scene_book", eyes: [[333, 208, 27, 17, 0.05], [428, 200, 27, 17, 0.05]],
-      parts: [{ // the hand and the page it holds, turned about the wrist
-        poly: [[205, 706], [250, 615], [330, 575], [390, 550], [470, 572], [542, 598], [566, 640], [560, 702], [500, 716], [420, 714], [330, 716]],
-        pivot: [554, 664],
-        move: (t, k) => { const u = (t / 3.2) % 1; return { rot: 0.075 * Math.sin(Math.PI * Math.min(1, u / 0.7)) ** 2 * k }; },
-        patches: [{ poly: [[200, 660], [600, 660], [600, 740], [200, 740]], dx: 0, dy: 26 }],
-      }],
-    },
-    glasses: {
-      w: 0.76, src: "scene_glasses", // no lids: the glasses frames sit over the eyes
-      parts: [{ // hand on the chin + forearm, turned about the elbow so the fingers run along the jaw
-        poly: [[246, 346], [302, 336], [352, 358], [376, 390], [372, 432], [352, 468], [322, 528], [282, 570], [214, 646], [160, 724], [138, 796], [52, 806], [42, 740], [112, 636], [166, 540], [178, 468], [184, 400], [214, 358]],
-        pivot: [95, 780],
-        move: (t, k) => ({ rot: -0.055 * (0.5 - 0.5 * Math.cos(t * 3.1)) * k }),
-        patches: [
-          { poly: [[290, 330], [390, 330], [390, 396], [290, 396]], dx: 52, dy: 0 }, // jaw skin beside the fingertips
-          { poly: [[140, 396], [390, 396], [390, 810], [140, 810]], dx: 0, dy: 150 }, // turtleneck (same black, further down)
-        ],
-      }],
-    },
-    desk: {
-      w: 1.33, src: "scene_desk", eyes: [[407, 189, 27, 16, 0.05], [495, 184, 27, 16, 0.05]],
-      parts: [{ // writing hand with the pen, turned about the wrist
-        poly: [[256, 640], [262, 598], [300, 578], [332, 572], [358, 590], [402, 640], [436, 700], [428, 714], [330, 714], [272, 707], [254, 690]],
-        pivot: [262, 672],
-        move: (t, k) => ({ rot: (0.03 * wave(t, 9) + 0.012 * wave(t, 23)) * k, dx: 5 * wave(t, 1.5) * k }),
-        patches: [
-          { poly: [[240, 560], [450, 560], [450, 690], [240, 690]], dx: 120, dy: -60 }, // jacket (clear of the chair and the pen)
-          { poly: [[240, 690], [330, 690], [330, 730], [240, 730]], dx: -150, dy: 0 }, // desk wood
-          { poly: [[330, 690], [450, 690], [450, 730], [330, 730]], dx: 0, dy: 14 }, // paper
-        ],
-      }],
-    },
-    ball: {
-      w: 1.0, src: "scene_ball", eyes: [[409, 215, 28, 18, 0], [508, 213, 28, 18, 0]],
-      parts: [{ circle: [150, 171, 128], pivot: [150, 171], move: (t, k) => ({ rot: t * 9 * (0.6 + 0.4 * k) }) }],
-    },
-    trophy: {
-      w: 1.12, src: "scene_cheer", eyes: [[406, 213, 28, 18, 0], [502, 210, 28, 18, 0]],
-      // each arm: piece = what moves (reaches a little into the jacket so the shoulder seam stays covered);
-      // hole = what is taken out of the body (the arm itself, over the transparent background)
-      parts: [
-        {
-          poly: [[-20, -20], [245, -20], [245, 330], [302, 388], [268, 470], [252, 555], [-20, 625]],
-          hole: [[-20, -20], [245, -20], [245, 330], [278, 380], [245, 470], [228, 560], [-20, 625]],
-          pivot: [262, 470],
-          move: (t, k) => ({ rot: -0.11 * (0.5 + 0.5 * wave(t, 6.2)) * k }),
-        },
-        {
-          poly: [[600, -20], [920, -20], [920, 720], [690, 692], [672, 570], [645, 440], [600, 330]],
-          hole: [[624, -20], [920, -20], [920, 720], [712, 692], [696, 570], [668, 440], [624, 330]],
-          pivot: [650, 520],
-          move: (t, k) => ({ rot: 0.11 * (0.5 - 0.5 * wave(t, 6.2)) * k }),
-        },
-      ],
-      life: { bounce: 5 },
-    },
-    // ---- poses (the old stills) ----
-    wave: {
-      w: 1, src: "idris_wave", eyes: [[240, 160, 26, 17, 0.1], [317, 155, 26, 17, 0.1]],
-      parts: [{ // the raised hand, waving about the wrist (its sleeve cuff overlaps the still jacket)
-        poly: [[0, 165], [178, 165], [178, 312], [140, 352], [114, 392], [96, 400], [34, 400], [0, 384]],
-        hole: [[0, 165], [178, 165], [178, 312], [140, 352], [114, 386], [96, 388], [34, 388], [0, 380]],
-        pivot: [66, 390],
-        move: (t, k) => ({ rot: (0.06 + 0.14 * wave(t, 6.5)) * k }),
-      }],
-    },
-    pointing: {
-      w: 1, src: "idris_pointing", eyes: [[243, 188, 26, 17, 0.04], [335, 184, 26, 17, 0.04]],
-      parts: [{ // the raised finger wags about its knuckle
-        poly: [[72, 206], [118, 206], [122, 270], [128, 338], [70, 340], [78, 280]],
-        hole: [[72, 206], [118, 206], [122, 270], [124, 305], [76, 305], [78, 280]],
-        pivot: [98, 322],
-        move: (t, k) => ({ rot: (0.02 + 0.09 * Math.sin(t * 5) * (0.5 + 0.5 * Math.sin(t * 1.1))) * k }),
-      }],
-    },
-    thumbsup: { w: 1, src: "idris_thumbsup", eyes: [[243, 188, 26, 17, 0.04], [335, 184, 26, 17, 0.04]], parts: [], life: { bounce: 1.5 } },
-    celebrate: { w: 1, src: "idris_celebrate", eyes: [[262, 190, 27, 18, 0.05], [350, 185, 27, 18, 0.05]], parts: [], life: { bounce: 5 } },
-  };
-  const PIMG = {}, PFAIL = {};
-  const preload = (n) => {
-    if (PIMG[n]) return;
-    PIMG[n] = new Image();
-    PIMG[n].onerror = () => { PFAIL[n] = true; };
-    PIMG[n].src = `/static/idris/${n}.webp`;
-  };
-  Object.values(PHOTO_SCENES).forEach((s) => [s.src, s.hand].filter(Boolean).forEach(preload));
-  const pReady = (s) => [s.src, s.hand].filter(Boolean).every((n) => PIMG[n].complete && PIMG[n].naturalWidth);
-  const pFailed = (s) => [s.src, s.hand].filter(Boolean).some((n) => PFAIL[n]);
-
-  // 0 = open, 1 = shut. A quick blink every few seconds (two uneven rhythms so it never looks mechanical).
-  const blinkAt = (t) => {
-    const one = (x, P, d) => { const u = ((x % P) + P) % P; return u < d ? Math.sin((u / d) * Math.PI) : 0; };
-    return Math.max(one(t, 3.9, 0.17), one(t + 1.7, 5.3, 0.17));
-  };
-  // The lid is real skin: the cheek just under the eye is copied up over it (soft-edged), so tone and shading match.
-  function lids(ctx, s, closure) {
-    if (!s.eyes || closure < 0.04) return;
-    const img = PIMG[s.src];
-    s.eyes.forEach(([x, y, rx, ry, tilt]) => {
-      const edge = -ry - 2 + (ry * 2 + 4) * Math.min(1, closure * 1.25); // where the lid has got to, in the eye's frame
-      [[1.16, 0.3], [1.07, 0.55], [1, 1]].forEach(([grow, alpha]) => {
-        ctx.save();
-        ctx.translate(x, y); ctx.rotate(tilt || 0);
-        ctx.beginPath(); ctx.ellipse(0, 0, (rx + 1) * grow, (ry + 1) * grow, 0, 0, Math.PI * 2); ctx.clip();
-        ctx.beginPath(); ctx.rect(-rx * 2, -ry * 2, rx * 4, edge + ry * 2 + (grow > 1 ? 1 : 0)); ctx.clip();
-        ctx.rotate(-(tilt || 0)); ctx.translate(-x, -y); // back to the picture's pixels
-        ctx.globalAlpha *= alpha;
-        ctx.drawImage(img, 0, -ry * 2.2);
-        ctx.restore();
-      });
-      if (closure > 0.5) { // the lash line along the closed lid
-        ctx.save();
-        ctx.translate(x, y); ctx.rotate(tilt || 0);
-        ctx.globalAlpha *= Math.min(1, (closure - 0.5) * 3);
-        ctx.strokeStyle = "rgba(52, 26, 18, .85)"; ctx.lineWidth = Math.max(2.4, ry * 0.2); ctx.lineCap = "round";
-        const ly = Math.min(edge, ry * 0.25) - ry * 0.1;
-        ctx.beginPath(); ctx.moveTo(-rx * 0.85, ly - ry * 0.1); ctx.quadraticCurveTo(0, ly + ry * 0.55, rx * 0.85, ly - ry * 0.1); ctx.stroke();
-        ctx.restore();
-      }
-    });
-  }  function clipShape(ctx, p) {
-    ctx.beginPath();
-    if (p.circle) ctx.arc(p.circle[0], p.circle[1], p.circle[2], 0, Math.PI * 2);
-    else (p.hole || p.poly).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-    ctx.closePath();
-  }
-  // Draws one picture, in its own pixels, into the current transform.
-  function drawPicture(ctx, s, tt, k, still) {
-    const img = PIMG[s.src], iw = img.naturalWidth, ih = img.naturalHeight;
-    // 1. the still body, without the moving parts' holes
-    ctx.save();
-    ctx.beginPath(); ctx.rect(-50, -50, iw + 100, ih + 100);
-    s.parts.forEach((p) => { if (p.hole) { p.hole.slice().reverse().forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); } });
-    ctx.clip("evenodd");
-    ctx.drawImage(img, 0, 0);
-    ctx.restore();
-    s.parts.forEach((p) => {
-      // 2. cover what the part leaves behind with the material next to it
-      (p.patches || []).forEach((pt) => {
-        ctx.save(); clipShape(ctx, p); ctx.clip();
-        ctx.beginPath(); pt.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.clip();
-        ctx.drawImage(img, -pt.dx, -pt.dy);
-        ctx.restore();
-      });
-      // 3. the moving part, turned about its joint
-      const m = still ? {} : p.move(tt, k);
-      ctx.save();
-      ctx.translate(p.pivot[0] + (m.dx || 0), p.pivot[1] + (m.dy || 0)); ctx.rotate(m.rot || 0); ctx.translate(-p.pivot[0], -p.pivot[1]);
-      if (p.layer) ctx.drawImage(PIMG[s.hand], 0, 0);
-      else {
-        ctx.beginPath();
-        if (p.circle) ctx.arc(p.circle[0], p.circle[1], p.circle[2], 0, Math.PI * 2);
-        else p.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-        ctx.closePath(); ctx.clip();
-        ctx.drawImage(img, 0, 0);
-      }
-      ctx.restore();
-    });
-    // 4. eyes
-    if (!still) lids(ctx, s, blinkAt(tt));
-  }
-  // One scene into the canvas box: contain, bottom-centred (the picture sits on the card's floor), with the life motion
-  // and the reaction applied to the whole picture about its floor.
-  function drawScene(ctx, W, H, dpr, s, tt, k, mood, alpha, still) {
-    const img = PIMG[s.src], iw = img.naturalWidth, ih = img.naturalHeight;
-    const sc = Math.min(W / iw, H / ih);
-    let rot = 0, sx = 1, sy = 1, hop = 0;
-    if (!still) {
-      const life = s.life || {};
-      rot = Math.sin(tt * 1.3) * 0.006;
-      sy = 1 + Math.sin(tt * 1.9) * 0.006; sx = 1 - Math.sin(tt * 1.9) * 0.002;
-      if (life.bounce) { const b = Math.abs(Math.sin(tt * 3.2)); hop = b * life.bounce; sy += (1 - b) * 0.004; }
-      if (mood && mood.age < 1.2) {
-        const a = mood.age;
-        if (mood.kind === "no") rot += Math.sin(a * 24) * 0.06 * Math.max(0, 1 - a / 0.8);
-        else if (mood.kind === "party") { hop += Math.abs(Math.sin(a * Math.PI * 2.2)) * 16 * (1 - a / 1.2); sy += Math.sin(a * 14) * 0.012 * (1 - a / 1.2); }
-        else if (a < 0.7) { hop += Math.sin((a / 0.7) * Math.PI) * 12; sy += Math.sin((a / 0.7) * Math.PI) * 0.015; rot += Math.sin(a * 16) * 0.012; }
-      }
-    }
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.translate(W / 2, H); ctx.translate(0, -hop * (H / 160)); ctx.rotate(rot); ctx.scale(sx, sy); ctx.translate(-W / 2, -H);
-    ctx.translate((W - iw * sc) / 2, H - ih * sc); ctx.scale(sc, sc);
-    const k2 = mood && mood.kind !== "no" && mood.age < 1.2 ? k : 1;
-    drawPicture(ctx, s, tt, k2, still);
-    ctx.restore();
-  }
-  function paintPhoto(c, t, now) {
-    const box = c.parentNode, W = box.clientWidth, H = box.clientHeight;
-    const s = PHOTO_SCENES[box.dataset.photoScene];
-    if (!s || !W || !H) return;
-    if (pFailed(s)) { fallbackImg(box, s); return; }
-    if (!pReady(s)) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-    if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
-    const ctx = c.getContext("2d");
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, c.width, c.height);
-    if (box.classList.contains("is-party") && !box.dataset.moodAt) { box.dataset.moodAt = String(now); box.dataset.mood = "party"; }
-    const at = +box.dataset.moodAt || 0, age = at ? (now - at) / 1000 : 9;
-    const mood = at ? { kind: box.dataset.mood || "happy", age } : null;
-    const k = 1 + (age < 1.2 ? 0.8 * (1 - age / 1.2) : 0);
-    const tt = reduceMotion ? 0 : t + (+box.dataset.t0 || 0);
-    const prev = PHOTO_SCENES[box.dataset.prevScene], fade = Math.min(1, (now - (+box.dataset.fadeAt || 0)) / 240);
-    drawScene(ctx, W, H, dpr, s, tt, k, mood, 1, reduceMotion);
-    if (prev && fade < 1 && pReady(prev)) drawScene(ctx, W, H, dpr, prev, tt, 1, null, 1 - fade, reduceMotion); // the old pose fades out on top
-    else if (prev && fade >= 1) delete box.dataset.prevScene;
-  }
-  // The picture could not load: show a plain image so he never vanishes.
-  function fallbackImg(box, s) {
-    if (box.dataset.fallback) return;
-    box.dataset.fallback = "1";
-    const src = POSES[box.dataset.photoScene] || POSES.wave;
-    box.innerHTML = `<img src="${src}" alt="Teacher Idris" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:bottom center">`;
-  }
-  const reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  // One loop for every Idris on the page: only the ones in view are painted, nothing runs in a hidden tab.
-  const inView = (c) => {
-    if (!c.offsetParent) return false;
-    const r = c.getBoundingClientRect();
-    return r.bottom > 0 && r.top < (window.innerHeight || 800) && r.right > 0 && r.left < (window.innerWidth || 600);
-  };
-  function photoLoop(now) {
-    if (!document.hidden) {
-      const t = now / 1000;
-      document.querySelectorAll(".idris-photo canvas").forEach((c) => { if (inView(c)) paintPhoto(c, t, now); });
-    }
-    if (reduceMotion) setTimeout(() => requestAnimationFrame(photoLoop), 400);
-    else requestAnimationFrame(photoLoop);
-  }
-  requestAnimationFrame(photoLoop);
-  const photoSceneHtml = (name, size, extraClass) => `<div class="idris idris-photo ${extraClass || ""}" data-photo-scene="${name}" data-t0="${(Math.random() * 6).toFixed(2)}" style="--idris-size:${size || 150}px;--sc-w:${PHOTO_SCENES[name].w}">
-        <canvas role="img" aria-label="Teacher Idris"></canvas></div>`;
+  const photoSceneHtml = (name, size, extraClass) => `<div class="idris idris-photo ${extraClass || ""}" data-photo-scene="${name}" style="--idris-size:${size || 150}px"><img src="${PHOTO_SCENES[name].url}" alt="${PHOTO_SCENES[name].alt}" width="${size || 150}" height="${size || 150}" draggable="false"></div>`;
   const Idris = {
     POSES,
-    // Markup for a Teacher Idris figure; `pose` is a pose name, a scene name or a mood; size in px.
+    // Markup for a Shakespeare figure; `pose` is a pose name, a scene name or a mood; size in px.
     html(pose, size, extraClass) {
       const name = PHOTO_SCENES[pose] ? pose : MOOD_POSE[pose] || "wave";
       return photoSceneHtml(name, size, extraClass);
     },
     // Changes pose (a cross-fade) and plays a reaction: "happy" | "no" | "party" | null.
-    react(el, pose, mood) {
+    react(el, pose) { // changes the picture only; no animation
       if (!el || !el.dataset.photoScene) return;
-      const now = performance.now();
       if (pose && POSES[pose] && POSES[el.dataset.photoScene] && PHOTO_SCENES[pose] && el.dataset.photoScene !== pose) {
-        el.dataset.prevScene = el.dataset.photoScene; // only the poses swap; the situation scenes keep their activity
         el.dataset.photoScene = pose;
-        el.dataset.fadeAt = String(now);
-        el.style.setProperty("--sc-w", PHOTO_SCENES[pose].w);
+        const img = el.querySelector("img");
+        if (img) { img.src = PHOTO_SCENES[pose].url; img.alt = PHOTO_SCENES[pose].alt; }
       }
-      if (mood) { el.dataset.mood = mood; el.dataset.moodAt = String(now); }
-    },    // Which mood and what to say for a score: `rank` and `points` of the student, `total` students on the board.
+    },   // Which mood and what to say for a score: `rank` and `points` of the student, `total` students on the board.
     forScore(points, rank, total) {
       if (!points) return { mood: "comfort", text: "Hali ball yo'q — hechqisi yo'q! Bitta mashq bilan boshlang, men yoningizdaman." };
       if (rank === 1) return { mood: "surprised", text: "Voy! Siz birinchi o'rindasiz! Ishonmayapman!" };

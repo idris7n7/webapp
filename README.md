@@ -119,3 +119,10 @@ otherwise the data disappears on every redeploy. The Dockerfile expects a volume
 - **Client IP for rate limits** is taken from `CF-Connecting-IP` / `X-Forwarded-For` only when the request comes from this machine or a private network (tunnel, Render, Docker); direct callers cannot forge it. Add other proxies in `TRUSTED_PROXIES`.
 - **/static/** serves only real site file types; backup files are refused. Old backups now live in `_old_backups` outside the app folder.
 
+
+## 3D graphics (Word Race and Listen and Survive)
+Both games draw real 3D scenes with Three.js. The code is in `tools/3d_src/` and is bundled into `static/l1_3d.js` (loaded by `index.html`).
+- `race3d.ts` — Word Race: a race track with kerbs, grandstand, billboards, start lights, chase camera, speed lines and boost effects. `games_wordrace.js` feeds it the cars' positions and speeds from the server.
+- `listen3d.ts`, `models.ts`, `chars.ts` — Listen and Survive: one 3D scene per mission (burning office, night camp, airport, police line-up, timed workshop). The missions, questions, hearts and stars are unchanged; the player now taps 3D objects instead of emoji tiles.
+- If a device has no WebGL, both games fall back to the old 2D lanes and emoji tiles automatically.
+- Rebuild after changing the sources: `cd tools/3d_src && npm install && npm run build`.

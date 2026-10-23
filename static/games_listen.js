@@ -77,7 +77,7 @@
   // ------------------------------------------------------------------ state
   const S = {
     view: "hub", diff: "normal", progress: {}, mission: null, steps: [], i: 0, hearts: 3, replays: 0, results: [], flagged: new Set(),
-    startedAt: 0, token: 0, speaking: false, locked: false, sel: [], captions: false, move: null, timer: 0, timerEnd: 0, sound: true,
+    startedAt: 0, token: 0, speaking: false, locked: false, sel: [], captions: false, move: null, timer: 0, timerEnd: 0, sound: true, scene3d: null,
   };
   const D = () => DIFFS[S.diff];
   const area = () => $("gameListenArea");
@@ -343,7 +343,10 @@
   const GEN = { escape: genEscape, camp: genCamp, airport: genAirport, detective: genDetective, timed: genTimed };
 
   // ------------------------------------------------------------------ rendering
-  function stage(html) { area().innerHTML = `<div class="ls-stage">${html}</div>`; }
+  // ---- the 3D mission scenes (static/l1_3d.js, built from tools/3d_src). Without WebGL the old emoji tiles are used.
+  const has3d = () => !!(window.L1_3D && window.L1_3D.available());
+  function kill3d() { if (S.scene3d) { try { S.scene3d.destroy(); } catch (e) {} S.scene3d = null; } }
+  function stage(html) { kill3d(); area().innerHTML = `<div class="ls-stage">${html}</div>`; }
   const starsHtml = (n) => `<span class="ls-stars" aria-label="${n} yulduz">${"★".repeat(n)}<s>${"★".repeat(3 - n)}</s></span>`;
   const heartsHtml = () => `<span class="ls-hearts" id="lsHearts">${"❤️".repeat(S.hearts)}<s>${"🖤".repeat(3 - S.hearts)}</s></span>`;
 
@@ -396,8 +399,14 @@
       <div class="ls-cap" id="lsCap" hidden></div>
       <div class="ls-prompt" id="lsPrompt"></div>
       <div class="ls-time" id="lsTimeBox" hidden><i id="lsTime"></i></div>
+      ${has3d() ? `<div class="ls-3d" id="ls3d" data-m="${esc(m.id)}"></div>` : ""}
       <div id="lsScene"></div>
       <div class="ls-fb" id="lsFb" hidden></div>`);
+    const box = $("ls3d");
+    if (box) {
+      S.scene3d = window.L1_3D.listen(box, m.id, { labels: D().labels, onPick: (id) => tapTile(id) });
+      if (!S.scene3d) box.remove();
+    }
   }
 
   const tileHtml = (t, st) => `<button type="button" class="ls-tile" data-ls="tile" data-id="${esc(t.id)}">
@@ -406,24 +415,25 @@
   function sceneHtml(st) {
     if (st.type === "move") {
       const cells = [];
-      for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) cells.push(`<div class="ls-cell" data-x="${x}" data-y="${y}"></div>`);
-      return `<div class="ls-grid" id="lsGrid">${cells.join("")}</div>
+      if (!S.scene3d) for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) cells.push(`<div class="ls-cell" data-x="${x}" data-y="${y}"></div>`);
+      return `${S.scene3d ? "" : `<div class="ls-grid" id="lsGrid">${cells.join("")}</div>`}
         <div class="ls-moves" style="margin-top:10px"><button type="button" data-ls="mv" data-v="L">↶ Chapga</button><button type="button" data-ls="mv" data-v="F">⬆ Oldinga</button><button type="button" data-ls="mv" data-v="R">↷ O'ngga</button></div>
         <div class="ls-actions" style="margin-top:8px"><button type="button" class="ls-btn is-quiet" data-ls="mvreset">↺ Boshidan</button><button type="button" class="ls-btn" data-ls="mvdone">✓ Tayyor</button></div>`;
     }
     if (st.type === "type") {
       return `<div class="ls-typed"><input id="lsInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="${st.kind === "text" ? "text" : "numeric"}" placeholder="…"><button type="button" class="ls-btn" data-ls="submit">OK</button></div>`;
     }
+    if (S.scene3d && (st.type === "suspect" || st.type === "pick")) return "";   // the objects are in the 3D scene
     if (st.type === "suspect") {
       return `<div class="ls-tiles">${st.cards.map((c) => `<button type="button" class="ls-tile ls-suspect" data-ls="tile" data-id="${esc(c.id)}"><span class="e">${c.e}</span><span class="extra">${c.extra}</span></button>`).join("")}</div>`;
     }
     const cols = st.tiles.length === 4 ? "is-two" : "";
-    return `<div class="ls-tiles ${cols}">${st.tiles.map((t) => tileHtml(t, st)).join("")}</div>
+    return `${S.scene3d ? "" : `<div class="ls-tiles ${cols}">${st.tiles.map((t) => tileHtml(t, st)).join("")}</div>`}
       ${st.type === "order" ? `<div class="ls-actions" style="margin-top:8px"><button type="button" class="ls-btn is-quiet" data-ls="undo">↩ Bekor</button><button type="button" class="ls-btn" data-ls="submit" id="lsGo" disabled>✓ Tayyor</button></div>` : ""}`;
   }
 
   // ------------------------------------------------------------------ the step loop
-  function setSpeaking(on) { const a = $("lsAudio"); if (a) a.classList.toggle("is-speaking", on); const t = $("lsAudioTitle"); if (t) t.textContent = on ? "Eshiting…" : "Tinglang"; }
+  function setSpeaking(on) { if (S.scene3d) S.scene3d.setSpeaking(on); const a = $("lsAudio"); if (a) a.classList.toggle("is-speaking", on); const t = $("lsAudioTitle"); if (t) t.textContent = on ? "Eshiting…" : "Tinglang"; }
   function updateAudioSub() {
     const sub = $("lsAudioSub"); if (!sub) return;
     sub.textContent = D().replays === Infinity ? "Takrorlash: cheksiz" : `Takrorlash: ${S.replays} ta qoldi`;
@@ -434,6 +444,7 @@
     S.locked = false; S.sel = []; S.replays = D().replays; S.move = st.type === "move" ? { ...st.start, cmds: [], trail: [{ x: st.start.x, y: st.start.y }] } : null;
     clearInterval(S.timer); S.timer = 0;
     $("lsScene").innerHTML = sceneHtml(st);
+    if (S.scene3d) { S.scene3d.setStep(st); S.scene3d.setTimer(1, st.limit || 0); }
     $("lsPrompt").textContent = st.prompt;
     $("lsProg").style.width = `${(S.i / S.steps.length) * 100}%`;
     $("lsFb").hidden = true;
@@ -477,7 +488,7 @@
     S.timerEnd = Date.now() + st.limit * 1000;
     const bar = $("lsTime");
     if (bar) { bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth; bar.style.transition = `width ${st.limit}s linear`; bar.style.width = "0%"; }
-    S.timer = setInterval(() => { if (Date.now() >= S.timerEnd) { clearInterval(S.timer); S.timer = 0; if (!S.locked) resolveStep(false, "Vaqt tugadi!"); } }, 150);
+    S.timer = setInterval(() => { if (S.scene3d) { const left = Math.max(0, S.timerEnd - Date.now()) / 1000; S.scene3d.setTimer(left / st.limit, left); } if (Date.now() >= S.timerEnd) { clearInterval(S.timer); S.timer = 0; if (!S.locked) resolveStep(false, "Vaqt tugadi!"); } }, 150);
   }
 
   // ---- answers
@@ -512,6 +523,13 @@
     const h = $("lsHearts"); if (h) h.outerHTML = heartsHtml();
     document.querySelectorAll("#lsScene button, #lsScene input").forEach((b) => (b.disabled = true));
     // colour the answer
+    if (S.scene3d) {
+      S.scene3d.flash(ok ? "good" : "bad");
+      if (st.type === "pick" || st.type === "suspect" || st.type === "order") {
+        const right = st.type === "suspect" ? [st.answer] : st.answer;
+        S.scene3d.mark(right, S.sel.filter((id) => !right.includes(id)));
+      }
+    }
     if (st.type === "pick" || st.type === "suspect") {
       const right = st.type === "suspect" ? [st.answer] : st.answer;
       document.querySelectorAll("#lsScene .ls-tile").forEach((t) => { if (right.includes(t.dataset.id)) t.classList.add("is-right"); else if (t.classList.contains("is-sel")) t.classList.add("is-wrong"); });
@@ -541,8 +559,13 @@
   }
 
   // ---- the map (Escape the Building)
-  function drawMove(reveal) {
+  function drawMove(reveal, instant) {
     const st = S.steps[S.i], m = S.move;
+    if (S.scene3d) {
+      S.scene3d.setMove({ x: m.x, y: m.y, h: m.h, trail: m.trail }, instant);
+      if (reveal) S.scene3d.reveal(st.path, st.expected);
+      return;
+    }
     document.querySelectorAll("#lsGrid .ls-cell").forEach((c) => {
       const x = +c.dataset.x, y = +c.dataset.y;
       c.className = "ls-cell";
@@ -568,16 +591,18 @@
     sfx.tap();
     drawMove();
   }
-  function moveReset() { if (S.locked) return; const st = S.steps[S.i]; S.move = { ...st.start, cmds: [], trail: [{ x: st.start.x, y: st.start.y }] }; drawMove(); }
+  function moveReset() { if (S.locked) return; const st = S.steps[S.i]; S.move = { ...st.start, cmds: [], trail: [{ x: st.start.x, y: st.start.y }] }; drawMove(false, true); }
 
   // ---- tiles
   function tapTile(id) {
     if (S.locked) return;
     const st = S.steps[S.i];
     sfx.tap();
+    if (!["order", "pick", "suspect"].includes(st.type)) return;   // clicks on the 3D scene only matter for choosing things
     if (st.type === "order") {
       const at = S.sel.indexOf(id);
       if (at >= 0) S.sel.splice(at, 1); else S.sel.push(id);
+      if (S.scene3d) S.scene3d.setSelected(S.sel, true);
       document.querySelectorAll("#lsScene .ls-tile").forEach((t) => {
         const k = S.sel.indexOf(t.dataset.id);
         t.classList.toggle("is-sel", k >= 0);
@@ -588,6 +613,7 @@
       return;
     }
     S.sel = [id];
+    if (S.scene3d) S.scene3d.setSelected(S.sel, false);
     document.querySelectorAll("#lsScene .ls-tile").forEach((t) => t.classList.toggle("is-sel", t.dataset.id === id));
     resolveStep(check(st));
   }

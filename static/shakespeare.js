@@ -25,9 +25,16 @@
       ["Daftaring ochiq, telefoning yopiq bo'lsa, ustoz ham, Shekspir ham xursand!", null, null],
       ["Uy vazifasi shu qadar uzun ediki, men uni hatto «Hamlet»dan ham uzunroq deb o'yladim.", null, null],
     ],
+    games: [
+      ["O'yin — eng yaxshi dars! Men «Globus» teatrida butun shaharni o'ynatganman. Qani, tanla!", null, null],
+      ["Ball uchun o'ynayapsanmi yoki shon-sharaf uchun? Men ikkalasi uchun ham!", null, null],
+      ["Yutsang — komediya, yutqazsang ham komediya: kulib, qayta o'yna!", null, null],
+      ["O'yin: «Bo'lish yoki bo'lmaslik» emas, «yutish yoki yana urinish»!", null, null],
+      ["Diqqat bilan javob ber — to'p ham, ball ham sening tomonda bo'lsin!", null, null],
+    ],
   };
 
-  // ---- Drawn Shakespeare: one body, a pose per situation (same pose names as Teacher Idris) ----
+  // ---- Drawn Shakespeare: one body, a pose per situation (same pose names as the mascot code) ----
   const SKIN = "#f6c58f", SKIN_LINE = "#c98a4b", HAIR = "#4a2a17", SLEEVE = "#1e5f8a";
 
   // Open hand, wrist at (0,0), fingers up.
@@ -126,12 +133,12 @@
     </svg>`;
   }
 
-  // Same floating, glowing figure as Teacher Idris (.idris styles in app_theme.css).
+  // Same figure frame as the mascot (.idris styles in app_theme.css).
   const figHtml = (pose, size, extra) => `<div class="idris shk ${extra || ""}" data-pose="${pose}" style="--idris-size:${size}px"><div class="idris-fig">${svg(pose)}</div></div>`;
-  // One picture for every situation: the Teacher Idris photo (wave pose). No Shakespeare drawing is shown.
+  // One picture for every situation: the Shakespeare picture (greeting pose).
   const portraitHtml = (size, pose) => (window.L1 && window.L1.Idris ? window.L1.Idris.html(pose || "wave", size) : "");
-  // Each section shows Idris in its own situation (see SCENES in l1_core.js).
-  const MODE_POSE = { learn: "glasses", practice: "desk" };
+  // Each section shows Shakespeare in its own situation (see SCENES in l1_core.js).
+  const MODE_POSE = { learn: "glasses", practice: "desk", games: "ball" };
 
   // Swap pose and play a reaction ("happy" | "no" | "party"), like Idris.react.
   function react(el, pose, mood) {
@@ -247,7 +254,7 @@
     return box;
   }
   function mount() {
-    [["learnContainer", "learn"], ["practiceContainer", "practice"]].forEach(([id, mode]) => {
+    [["learnContainer", "learn"], ["practiceContainer", "practice"], ["gamesContainer", "games"]].forEach(([id, mode]) => {
       const el = document.getElementById(id);
       if (el && !el.querySelector("[data-shakespeare]")) {
         const card = build(mode);
@@ -255,7 +262,7 @@
         // Study and Practice: the Idris quote card sits at the very top, like on the Vazifalar page.
         card.classList.remove("mt-4");
         el.insertBefore(card, el.firstChild);
-        el.appendChild(buildStats(mode));
+        if (mode !== "games") el.appendChild(buildStats(mode));
       }
     });
   }

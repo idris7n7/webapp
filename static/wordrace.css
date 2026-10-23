@@ -115,3 +115,17 @@
 
 @media (max-width: 380px) { .wr-qtext { font-size: 17px; } .wr-opt .t { font-size: 13px; } .wr-code b { font-size: 36px; } }
 @media (prefers-reduced-motion: reduce) { .wr-wheel { animation: none; } .wr-lane.is-good, .wr-lane.is-bad { animation: none; } }
+
+/* 3D track (l1_3d.js) */
+.wr-3d { position: relative; height: min(46vh, 340px); min-height: 220px; border-radius: 18px; overflow: hidden; background: #9fc3ee; border: 1px solid rgba(255, 255, 255, .12); touch-action: manipulation; }
+.wr-3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.wr-hero { height: 190px; min-height: 160px; }
+.wr-hero-title { position: absolute; left: 14px; top: 12px; z-index: 2; font-size: 26px; font-weight: 900; letter-spacing: -.01em; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, .55); pointer-events: none; }
+.wr-hero-title small { display: block; font-size: 12px; font-weight: 700; opacity: .9; letter-spacing: 0; }
+.wr-rank { position: absolute; left: 8px; top: 8px; z-index: 2; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; border-radius: 12px; background: rgba(8, 14, 28, .62); backdrop-filter: blur(6px); pointer-events: none; }
+.wr-rank div { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #e2e8f0; min-width: 116px; }
+.wr-rank div.is-me { color: #67e8f9; }
+.wr-rank span { width: 12px; text-align: center; color: #94a3b8; }
+.wr-rank i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.wr-rank b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.wr-rank em { font-style: normal; font-variant-numeric: tabular-nums; color: #94a3b8; }

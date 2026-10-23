@@ -177,7 +177,7 @@ main .rounded-3xl { border-radius: var(--l1-radius); }
 #studentView > .flex.items-center.gap-2:first-child, #btnLogout { display: none !important; }
 #l1LegacyHeader { display: none !important; }
 
-/* ---------- Teacher Idris (3D cut-out) ---------- */
+/* ---------- Shakespeare mascot ---------- */
 .idris {
   position: relative; display: inline-block; perspective: 700px; flex: none;
   --idris-size: 150px; width: var(--idris-size); height: calc(var(--idris-size) * 1.12);
@@ -254,9 +254,9 @@ html[data-theme="dark"] .l1-pomo-steps span.is-done { background: rgba(34, 197, 
   100% { transform: scale(1) rotateY(0); }
 }
 /* Photo scenes (canvas drawn by l1_core.js PHOTO_SCENES): the picture stays put, only a body part moves */
-.idris-photo { width: calc(var(--idris-size) * var(--sc-w, 1)); perspective: none; }
-.idris-photo::after { display: none; }
-.idris-photo canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.idris-photo { width: var(--idris-size); height: var(--idris-size); aspect-ratio: 1; perspective: none; background: none; box-shadow: none; filter: none; }
+.idris-photo::before, .idris-photo::after { display: none; } /* cut-out picture: no halo, no floor shadow */
+.idris-photo img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; object-position: bottom center; background: none; box-shadow: none; filter: none; -webkit-user-drag: none; user-select: none; }
 .idris-bubble {
   position: relative; background: #fff; color: var(--l1-ink); border-radius: 18px; padding: 10px 13px;
   font-size: 13px; font-weight: 700; line-height: 1.35; box-shadow: var(--l1-shadow); border: 1px solid var(--l1-line);
@@ -453,7 +453,7 @@ html[data-theme="dark"] .l1-pomo-steps span.is-done { background: rgba(34, 197, 
 .dc-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 99px; background: linear-gradient(90deg, #ffd34d, #4ade80); transition: width .6s cubic-bezier(.2, .9, .3, 1.2); }
 .dc-face {
   position: absolute; top: 50%; left: 0; width: 24px; height: 24px; border-radius: 50%; transform: translate(-50%, -50%);
-  background: #dfe8ff url(/static/idris/idris_wave.webp) 50% 10% / 260% auto no-repeat; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+  background: #dfe8ff url(/static/shakespeare/face.webp) 50% 50% / cover no-repeat; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
   transition: left .6s cubic-bezier(.2, .9, .3, 1.2);
 }
 .dc-lives { gap: 3px; }

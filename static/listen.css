@@ -118,3 +118,10 @@
 
 @media (max-width: 380px) { .ls-tile .e { font-size: 28px; } .ls-tile { min-height: 76px; } }
 @media (prefers-reduced-motion: reduce) { .ls-audio.is-speaking .ls-play, .ls-audio.is-speaking .ls-wave i { animation: none; } }
+
+/* 3D mission scenes (l1_3d.js) */
+.ls-3d { position: relative; height: clamp(250px, 46vh, 380px); border-radius: 18px; overflow: hidden; background: #0b1519; border: 1px solid rgba(110, 231, 183, .3); box-shadow: inset 0 0 40px rgba(0, 0, 0, .35); touch-action: manipulation; }
+.ls-3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ls-3d[data-m="detective"] { height: clamp(190px, 31vh, 300px); }
+.ls-3d[data-m="airport"] { height: clamp(230px, 38vh, 340px); }
+.ls-3d[data-m="camp"], .ls-3d[data-m="timed"] { height: clamp(250px, 42vh, 360px); }
