@@ -9,13 +9,22 @@ database and the Telegram bot. It runs on a VPS, Render, Railway, DigitalOcean, 
 - `static/index.html` + `static/*.js` — the Mini App frontend (units, flashcards, practice suites, teacher dashboard).
 - `race_engine.py` — the server-side rules of **Word Race** (track, speeds, bots, answer checking).
 - `exercises_data.json` — the workbook exercises (teachers can add more from the dashboard; those are stored in the database). Students find them under **Mashq qilish → Mavzu Mashqlari**: per unit once its lesson is learned, plus **Qo'shimcha mashqlar** (vocabulary, final tests, teacher-made) which are always open.
-- `static/*_data.js`, `asaka_spots.json`, `static/asaka_boundary.json` — generated content (units, flashcards, Millioner questions, Listen and Survive missions, the Asaka map). Do not edit by hand; change the script in `tools/` and run it again.
+- `green_city.py` — the planting rules of **Yashil shahar** (where a tree may stand, the 2 m distance).
+- `static/*_data.js`, `static/green_zones.json` — generated content (units, flashcards, Millioner questions, Listen and Survive missions, the green ground of the map). Do not edit by hand; change the script in `tools/` and run it again.
 - `tools/` — the scripts that generate that content (`python tools/<name>.py`, from the app folder). `extract_books.py` needs the teacher's PDF books and `pip install pymupdf pillow`.
 - `tests/` — automated tests (`python -m unittest discover -s tests -v`).
 - `Dockerfile`, `.dockerignore`, `Procfile`, `render.yaml`, `.env.example` — deployment.
 
 ## Games
-**Dragon chase** (answer to run away from the dragon), **Millioner**, **Word Race** (against bots or up to 4 friends, over a WebSocket; invites go through the Telegram bot), **Listen and Survive** (5 listening missions, the browser reads the English with its own speech voice), a **Pomodoro focus timer** and the **Asaka map** where finished sessions plant a tree. All games share one vocabulary memory (Leitner boxes) and earn at most 50 points a day.
+**Dragon chase** (answer to run away from the dragon), **Millioner** (a TV-studio quiz; its music and sounds are generated in the browser, nothing is recorded or copied), **Word Race** (against bots or up to 4 friends, over a WebSocket; invites go through the Telegram bot) and **Listen and Survive** (5 listening missions, the browser reads the English with its own speech voice). All games share one vocabulary memory (Leitner boxes) and earn at most 50 points a day.
+
+## Pomodoro and Yashil shahar
+A small tomato floats over every screen. One finished 25-minute Pomodoro earns **one tree**, which the student plants on the shared map **Yashil shahar**:
+- A pause stops the clock; all pauses of one Pomodoro together may last 10 minutes.
+- Trees may stand only on green ground (parks, school yards, grass, woods from OpenStreetMap, and areas an administrator draws on the map), never inside a building or on a road, and **never closer than 2 m to another tree**. The server decides (`green_city.py`); two requests for the same spot cannot both pass.
+- Giving a Pomodoro up wilts the student's own latest planted tree (nothing wilts when none is planted). A wilted tree comes back for one earned tree.
+- After 10, 25 and 50 finished Pomodoros a student unlocks a rare tree kind (only the picture differs).
+- Build the green ground with `python tools/build_green_zones.py` (needs internet).
 
 ## What is not in this repository
 Kept out on purpose (see `.gitignore`): `.env` (bot token), the SQLite database and the Telegram avatars (students' data),
@@ -25,7 +34,7 @@ grammar page viewer and the flashcard photos / "What is this?" picture questions
 and run `python tools/extract_books.py` then `python tools/add_card_images.py`.
 
 ## Credits
-- Map: [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2-Clause, in `static/vendor/leaflet`) with © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors tiles; `asaka_spots.json` and `asaka_boundary.json` are derived from OpenStreetMap data (ODbL).
+- Map: [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2-Clause, in `static/vendor/leaflet`) with © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors tiles; `static/green_zones.json` is derived from OpenStreetMap data (ODbL).
 
 ## Weekly assignments, points and rating
 - **Teacher panel → "📅 Haftalik vazifalar"**: pick exercises, set a start time and a **deadline**, publish.

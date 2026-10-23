@@ -118,6 +118,7 @@
   // ------------------------------------------------------------------ navigation
   function setPageVisibility() {
     const tab = Shell.tab;
+    document.body.dataset.l1Tab = tab; // lets the floating tomato shrink while a game is open
     ["home", "tasks", "rating"].forEach((t) => {
       const el = $("l1" + t[0].toUpperCase() + t.slice(1));
       if (el) el.classList.toggle("hidden", t !== tab);
@@ -358,7 +359,7 @@
         </div>
         <div class="text-right flex-none">
           <div class="text-[18px] font-extrabold text-[color:var(--l1-primary)]">${a.my.points}</div>
-          <div class="l1-sub" style="font-size:11px">ball</div>
+          <div class="l1-sub" style="font-size:12px">ball</div>
         </div>
       </div>
       <div class="flex items-center justify-between text-[12px] font-bold text-[color:var(--l1-muted)]">
@@ -394,47 +395,34 @@
     root.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => { Haptic.tap(); Shell.go(b.dataset.go); }));
   }
 
-  // ------------------------------------------------------------------ Pomodoro (on Asosiy)
-  // The tomato opens the full-screen focus mode (static/focus.js): 25 min lesson → 5 min rest → 25 min lesson, and every
-  // finished lesson plants a tree at a real place in Asaka. This card only starts it and shows how the shared forest is doing.
+  // ------------------------------------------------------------------ Yashil shahar card (on Asosiy)
+  // The floating tomato (static/focus.js) is on every screen; this card starts the same Pomodoro and opens the
+  // Yashil shahar map (static/green_map.js), where every finished Pomodoro's tree is planted.
   const Pomo = (() => {
-    const PLAN = [{ kind: "focus", min: 25 }, { kind: "rest", min: 5 }, { kind: "focus", min: 25 }];
-    const R = 52, CIRC = 2 * Math.PI * R;
-    const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { total: 0, today: 0, daily: 12 });
+    const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { city: 0, mine: 0, unplanted: 0, today: 0, daily: 12, status: "idle", left: 1500000 });
+    const art = (kind, stage) => (window.L1_TreeArt ? window.L1_TreeArt.svg(kind, stage, false) : "");
     function html() {
       const f = stats();
-      return `<div class="l1-card l1-pomo-card p-4 flex items-center gap-4" id="l1Pomo" data-kind="idle">
-        <button type="button" class="l1-pomo" data-pomo="start" aria-label="Pomidor taymer: boshlash">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle cx="60" cy="60" r="${R}" class="l1-pomo-track"/>
-            <circle cx="60" cy="60" r="${R}" class="l1-pomo-ring" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${CIRC.toFixed(1)}" transform="rotate(-90 60 60)"/>
-            <g class="l1-pomo-fruit"><g transform="translate(60 63) scale(1.34) translate(-60 -63)">
-              <path d="M60 36c-17 0-30 11-30 27s13 27 30 27 30-11 30-27-13-27-30-27Z" class="l1-pomo-body"/>
-              <ellipse cx="47" cy="52" rx="7" ry="4.5" fill="#fff" opacity=".35" transform="rotate(-30 47 52)"/>
-              <path d="M60 41c-3-4-9-6-14-4 4 1 7 3 9 6-5 0-9 2-11 6 5-2 10-2 14 0-1 4 0 8 2 10 1-3 3-6 6-8 3 2 5 5 6 8 2-2 3-6 2-10 4-2 9-2 14 0-2-4-6-6-11-6 2-3 5-5 9-6-5-2-11 0-14 4Z" fill="#3aa655"/>
-              <path d="M60 41c0-4 1-7 4-9" stroke="#2c7a3f" stroke-width="3" fill="none" stroke-linecap="round"/>
-            </g></g>
-          </svg>
-          <span class="l1-pomo-time" id="l1PomoTime">25:00</span>
-        </button>
-        <div class="min-w-0 flex-1">
-          <div class="text-[10px] font-black uppercase tracking-wider" style="color:var(--l1-muted)">Pomidor usuli</div>
-          <div class="l1-h2 mt-0.5" id="l1PomoTitle">Bir soatlik dars rejasi</div>
-          <div class="l1-sub mt-0.5" style="font-size:12.5px" id="l1PomoHint">25 daqiqa dars, 5 daqiqa dam, yana 25 daqiqa dars. Har bir dars uchun Asakaga bitta daraxt ekasiz. Boshlash uchun pomidorni bosing.</div>
-          <div class="l1-pomo-steps mt-2">${PLAN.map((p) => `<span class="">${p.kind === "rest" ? "☕" : "🍅"} ${p.min}</span>`).join("")}</div>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <button type="button" class="l1-pomo-btn" data-pomo="map">🌳 Asaka bog'i: ${f.total} ta daraxt</button>
-            ${f.today ? `<span class="l1-pomo-btn is-quiet" style="pointer-events:none">Bugun ${f.today}/${f.daily}</span>` : ""}
+      const running = f.status !== "idle";
+      const mm = Math.floor(f.left / 60000), ss = Math.floor((f.left % 60000) / 1000);
+      return `<section class="hm-city" id="l1Pomo">
+        <div class="hm-city-trees" aria-hidden="true"><i>${art("pine", 3)}</i><i>${art("cherry", 3)}</i><i class="is-big">${art("oak", 3)}</i><i>${art("apple", 3)}</i><i>${art("plane", 3)}</i></div>
+        <div class="hm-city-body">
+          <div><div class="hm-city-title">Yashil shahar</div>
+            <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b>${f.unplanted ? ` · <span class="hm-city-new">${f.unplanted} ta ekilmagan</span>` : ""}</div></div>
+          <div class="hm-city-btns">
+            <button type="button" class="hm-btn is-white" data-pomo="start">🍅 ${running ? `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : "Pomidor"}</button>
+            <button type="button" class="hm-btn is-glass" data-pomo="${f.unplanted ? "plant" : "map"}">${f.unplanted ? "🌱 Ekish" : "🗺️ Xarita"}</button>
           </div>
-        </div>
-      </div>`;
+        </div></section>`;
     }
-    function paint() { const card = $("l1Pomo"); if (card) card.outerHTML = html(); }
+    function paint() { const card = $("l1Pomo"); if (card) card.outerHTML = html(); paintGoals(); }
     document.addEventListener("click", (ev) => {
       const b = ev.target.closest("[data-pomo]");
       if (!b || !window.L1_Focus) return;
       Haptic.tap();
       if (b.dataset.pomo === "start") window.L1_Focus.open();
+      else if (b.dataset.pomo === "plant") window.L1_Green && window.L1_Green.open({ plant: true });
       else if (b.dataset.pomo === "map") window.L1_Focus.openMap();
     });
     window.addEventListener("l1:focus-summary", paint);
@@ -442,61 +430,134 @@
   })();
 
   // ------------------------------------------------------------------ Home
+  const POMO_GOAL = 3; // finished Pomodoros a day
+  const GAME_CARDS = [
+    { id: "dragon", ref: "dragon", name: "Ajdarho", tag: "Qoch va javob ber", emoji: "🐉", bg: "linear-gradient(145deg,#14b886 0%,#0a8f9c 100%)" },
+    { id: "millionaire", ref: "millionaire", name: "Millioner", tag: "15 ta savol", emoji: "💰", bg: "linear-gradient(145deg,#3b3fd8 0%,#7c3aed 100%)" },
+    { id: "race", ref: "wordrace", name: "Word Race", tag: "Do'stlar bilan poyga", emoji: "🏁", bg: "linear-gradient(145deg,#ff8a3d 0%,#ef4444 100%)" },
+    { id: "listen", ref: "listen", name: "Listen and Survive", tag: "Tingla va omon qol", emoji: "🎧", bg: "linear-gradient(145deg,#0ea5e9 0%,#2563eb 100%)" },
+  ];
+  const RING_C = 2 * Math.PI * 26;
+  const ringHtml = (frac, color, icon) => `<span class="hm-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="t"/>
+    <circle cx="32" cy="32" r="26" class="p" style="stroke:${color}" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - Math.min(1, Math.max(0, frac)))).toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
+    <b>${frac >= 1 ? "✓" : icon}</b></span>`;
+
+  // Today's three goals: Pomodoros, homework questions, game points (the daily cap).
+  function dailyGoals() {
+    const me = Shell.data.me || {};
+    const f = window.L1_Focus ? window.L1_Focus.summary() : { today: 0 };
+    const tasks = activeTasks();
+    const total = tasks.reduce((n, a) => n + (a.my ? a.my.total : 0), 0);
+    const done = tasks.reduce((n, a) => n + (a.my ? a.my.resolved : 0), 0);
+    const cap = me.gameCap || 50, got = me.gameToday || 0;
+    return [
+      { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
+      { key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: total ? done / total : 1, text: total ? `${done}/${total}` : "Yo'q" },
+      { key: "games", icon: "🎮", color: "#f59e0b", name: "O'yin balli", frac: got / cap, text: `${got}/${cap}` },
+    ];
+  }
+  function goalsHtml() {
+    return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon)}
+      <b>${g.text}</b><span>${g.name}</span></button>`).join("");
+  }
+  function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalLine"); if (h) h.textContent = goalLine(); }
+  const goalLine = () => { const n = dailyGoals().filter((g) => g.frac >= 1).length; return n >= 3 ? "Bugungi maqsadlar bajarildi! 🎉" : `Bugun ${n}/3 maqsad bajarildi`; };
+
+  // Listen and Survive stars (out of 3 per mission, 5 missions) come from the server; fetched once, then the home is drawn again.
+  function loadListenStars() {
+    if (Shell.data.listen !== undefined || !window.l1GetToken()) return;
+    Shell.data.listen = null;
+    api("/api/listen/progress").then((d) => {
+      const m = (d && d.missions) || {};
+      Shell.data.listen = Object.values(m).reduce((n, v) => n + ((v && v.stars) || 0), 0);
+      if (Shell.tab === "home") renderHome();
+    }).catch(() => { Shell.data.listen = 0; });
+  }
+
+  function gameCardsHtml() {
+    const me = Shell.data.me || {};
+    const week = me.gameWeek || {};
+    return GAME_CARDS.map((g) => {
+      const pts = week[g.ref] || 0;
+      let status = pts ? `Bu hafta +${pts} ball` : g.tag;
+      if (g.id === "listen" && Shell.data.listen) status = `⭐ ${Shell.data.listen}/15 yulduz`;
+      return `<button type="button" class="hm-game" data-game="${g.id}" style="background:${g.bg}">
+        <span class="hm-game-emoji" aria-hidden="true">${g.emoji}</span>
+        <span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span>
+        <span class="hm-game-go">O'ynash ›</span></button>`;
+    }).join("");
+  }
+
   function renderHome() {
     const el = $("l1Home");
     if (!el || Shell.tab !== "home") return;
     const u = user() || {};
     const me = Shell.data.me;
     const week = Shell.data.board.week;
-    const top3 = week ? week.entries.slice(0, 3) : [];
-    const homeMood = Idris.forScore(me ? me.weekPoints : 0, me && me.weekRank, week ? week.entries.length : 0);
+    const top3 = week ? week.entries.slice(0, 3).filter((e) => e.points > 0) : [];
+    const hour = new Date().getHours();
+    const hello = hour < 11 ? "Xayrli tong" : hour < 18 ? "Xayrli kun" : "Xayrli kech";
+    const first = (u.firstName || (u.name || "").split(" ")[0] || "do'stim");
+    const tasks = activeTasks();
+    const open = tasks.filter((a) => !a.my.done);
+    const nearest = open.slice().sort((a, b) => a.deadline - b.deadline)[0];
+    loadListenStars();
 
     el.innerHTML = `<div class="l1-page space-y-4">
-      <div class="l1-card l1-hero-card p-4 pr-2 flex items-end gap-2 overflow-visible">
-        <div class="flex-1 min-w-0 pb-2 space-y-2">
-          <div class="l1-h1">Assalomu alaykum, jigar!</div>
-          <div class="l1-sub" style="font-size:13.5px">Keling, bir soatgina dars qilaylik. Quyidagi pomidorning ustiga bosing.</div>
-          <div class="flex flex-wrap gap-1.5 pt-1">
-            <span class="l1-chip l1-chip-amber">★ ${me ? me.weekPoints : 0} ball</span>
-            ${me && me.weekPoints ? `<span class="l1-chip l1-chip-blue">🏅 ${me.weekRank}-o'rin</span>` : ""}
-            ${me && me.streak ? `<span class="l1-chip l1-chip-red">🔥 ${me.streak} kun</span>` : ""}
+      <section class="hm-hero">
+        <div class="hm-hero-text">
+          <div class="hm-kicker">${hello},</div>
+          <div class="hm-name">${html(first)}!</div>
+          <div class="hm-line" id="hmGoalLine">${goalLine()}</div>
+          <div class="hm-chips">
+            <span>★ ${me ? me.weekPoints : 0} ball</span>
+            ${me && me.weekPoints ? `<span>🏅 ${me.weekRank}-o'rin</span>` : ""}
+            <span>🔥 ${me ? me.streak : 0} kun</span>
           </div>
         </div>
-        ${Idris.html("greet", 118, "")}
-      </div>
+        ${Idris.html("greet", 128, "")}
+      </section>
+
+      <section class="hm-card">
+        <div class="hm-card-head"><h2>Bugungi maqsadlar</h2></div>
+        <div class="hm-goals" id="hmGoals">${goalsHtml()}</div>
+      </section>
 
       ${Pomo.html()}
 
-      <div class="grid grid-cols-2 gap-3">
-        ${[["learn", "book", "Darslar", "Grammatika va lug'at", "linear-gradient(145deg,#6B63F5 0%,#4F46E5 100%)", "#fff", "79,70,229"], ["tasks", "task", "Vazifalar", "Haftalik mashqlar", "linear-gradient(145deg,#4D86FF 0%,#2F6BFF 100%)", "#fff", "47,107,255"], ["games", "game", "O'yinlar", "Kuniga 50 ballgacha", "linear-gradient(145deg,#1AA0DD 0%,#0284C7 100%)", "#fff", "2,132,199"], ["rating", "trophy", "Reyting", "Hafta va umumiy", "linear-gradient(145deg,#FFCB2E 0%,#F5B700 100%)", "#422006", "245,183,0"]]
-          .map(([t, i, a, b, bg, fg, rgb]) => { return `<button type="button" data-go="${t}" class="l1-card-blue l1-tile p-4 text-left active:scale-[.98] transition" style="background:${bg};color:${fg};box-shadow:0 20px 40px -18px rgba(${rgb},.75)">
-            <div class="relative z-[1] flex flex-col gap-3" style="min-height:104px">
-              <div class="flex items-center justify-between">
-                <span class="l1-3d-wrap">${window.Icons3D ? Icons3D.html(i, 50) : ""}</span>
-                <span class="font-black opacity-80">↗</span>
-              </div>
-              <div><div class="font-extrabold text-[16px] leading-tight">${a}</div><div class="text-[11.5px] font-semibold opacity-85 mt-0.5">${b}</div></div>
-            </div></button>`; }).join("")}
+      <section>
+        <div class="hm-card-head px-1"><h2>O'yinlar</h2><button type="button" class="hm-more" data-go="games">Hammasi ›</button></div>
+        <div class="hm-games">${gameCardsHtml()}</div>
+      </section>
+
+      <div class="hm-quick">
+        <button type="button" data-go="learn" class="hm-q"><span class="hm-q-ico">${window.Icons3D ? Icons3D.html("book", 46) : "📖"}</span>
+          <span><b>Darslar</b><small>Grammatika va lug'at</small></span></button>
+        <button type="button" data-go="tasks" class="hm-q"><span class="hm-q-ico">${window.Icons3D ? Icons3D.html("task", 46) : "📝"}</span>
+          <span><b>Vazifalar</b><small>${open.length ? `${open.length} ta faol${nearest ? ` · ${html(countdown(nearest.deadline, nowTs()))}` : ""}` : "Haftalik mashqlar"}</small></span>
+          ${open.length ? `<i class="hm-q-dot">${open.length}</i>` : ""}</button>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="l1-stat l1-card-blue"><div class="relative z-[1]"><b>${me ? me.weekPoints : 0}</b><span style="color:#dfe7ff">Haftalik ball</span></div></div>
-        <div class="l1-stat l1-card"><b style="color:var(--l1-primary)">${me ? me.allPoints : 0}</b><span>Umumiy ball</span></div>
-      </div>
-
-      <div class="l1-card p-4 space-y-2">
-        <div class="flex items-center justify-between"><div class="l1-h2">Hafta yetakchilari</div>
-          <button type="button" class="text-[12.5px] font-extrabold text-[color:var(--l1-primary)]" data-go="rating">Hammasi →</button></div>
-        ${top3.length && top3[0].points > 0 ? top3.map((e) => `
-          <div class="l1-row ${me && e.id === me.id ? "is-me" : ""}" style="padding:7px 4px">
-            <span class="l1-rank">${["🥇", "🥈", "🥉"][e.rank - 1] || e.rank}</span>${avatar(e, 36)}
-            <span class="flex-1 min-w-0 font-bold text-[14px] truncate">${html(e.name)}</span>
-            <span class="font-extrabold text-[14px] text-[color:var(--l1-primary)]">${e.points}</span>
-          </div>`).join("") : `<div class="l1-sub py-2">Bu hafta hali hech kim ball to'plamadi — birinchi bo'ling!</div>`}
-      </div>
-
+      <section class="hm-card">
+        <div class="hm-card-head"><h2>Hafta yetakchilari</h2><button type="button" class="hm-more" data-go="rating">Hammasi ›</button></div>
+        ${top3.length ? `<div class="hm-top">${top3.map((e) => `
+          <div class="hm-top-i r${e.rank}${me && e.id === me.id ? " is-me" : ""}">
+            <span class="hm-medal">${["🥇", "🥈", "🥉"][e.rank - 1] || e.rank}</span>${avatar(e, e.rank === 1 ? 60 : 52)}
+            <b>${html((e.name || "").split(" ")[0])}</b><span>${e.points} ball</span></div>`).join("")}</div>`
+          : `<div class="l1-sub py-2">Bu hafta hali hech kim ball to'plamadi — birinchi bo'ling!</div>`}
+      </section>
     </div>`;
     wireTaskButtons(el);
+    el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
+      Haptic.tap();
+      if (b.dataset.hm === "pomo") window.L1_Focus && window.L1_Focus.open();
+      else Shell.go(b.dataset.hm === "tasks" ? "tasks" : "games");
+    }));
+    el.querySelectorAll("[data-game]").forEach((b) => b.addEventListener("click", () => {
+      Haptic.tap();
+      Shell.go("games");
+      if (window.L1_Nav) window.L1_Nav.setGameSub(b.dataset.game);
+    }));
   }
 
   // ------------------------------------------------------------------ Tasks
@@ -514,9 +575,9 @@
       <div class="l1-card l1-note-card p-3 flex items-center gap-3">
         ${Idris.html("book", 78)}
         <div class="min-w-0 flex-1">
-          <div class="text-[10px] font-black uppercase tracking-wider" style="color:var(--l1-muted)">Shekspir aytadi</div>
+          <div class="text-[12px] font-black uppercase tracking-wider" style="color:var(--l1-muted)">Shekspir aytadi</div>
           <div class="text-[13.5px] font-bold leading-snug mt-0.5" id="l1ShkHw">${html(shkQuote("homework"))}</div>
-          <button type="button" id="l1ShkHwNext" class="mt-1 text-[11.5px] font-extrabold text-[color:var(--l1-primary)]">😄 Yana bir ibora</button>
+          <button type="button" id="l1ShkHwNext" class="mt-1 text-[12px] font-extrabold text-[color:var(--l1-primary)]">😄 Yana bir ibora</button>
         </div>
       </div>
       <div class="l1-card p-4 flex items-center gap-3">
@@ -596,7 +657,7 @@
         <span class="lb-me-rank">#${mine.rank}</span>${avatar(mine, 38)}
         <div class="lb-me-info"><b>${html(mine.name)}</b><span>${mine.points} ball · ${period === "week" ? "bu hafta" : "umumiy"}</span></div>
         <button type="button" class="lb-me-go" data-go="games">O'ynash</button></div>` : ""}
-      <div class="l1-sub px-2 text-center" style="font-size:11.5px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
+      <div class="l1-sub px-2 text-center" style="font-size:12px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
     </div>`;
     el.querySelectorAll("[data-period]").forEach((b) => b.addEventListener("click", () => onPeriod(b.dataset.period)));
     el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => { Haptic.tap(); Shell.go(b.dataset.go); }));
@@ -656,13 +717,14 @@
     const sheet = document.createElement("div");
     sheet.className = "l1-sheet l1-sheet-center";
     sheet.innerHTML = `<div class="l1-grip"></div>
-      <div class="flex items-center gap-3">${avatar(u, 60)}
+      <div class="flex items-center gap-3"><button type="button" data-act="photo" class="l1-avatar-edit" aria-label="Profil rasmini o'zgartirish">${avatar(u, 60)}<span class="l1-avatar-edit-badge" aria-hidden="true">✎</span></button>
         <div class="min-w-0"><div class="text-[18px] font-extrabold truncate">${html(u.name)}</div>
-        <div class="l1-sub">${staff ? "O'qituvchi" : "Talaba"} · ${html(u.level || u.className || "A1")}</div></div></div>
+        <div class="l1-sub">${staff ? "O'qituvchi" : "Talaba"} · ${html(u.level || u.className || "A1")}</div>
+        <button type="button" data-act="photo" class="l1-pomo-btn mt-1" style="padding:4px 10px">Rasmni o'zgartirish</button></div></div>
       ${staff && state.mode === "teacher" ? "" : `<div class="grid grid-cols-3 gap-2 mt-4 text-center">
-        <div class="l1-card p-3"><b class="text-[18px]">${me.weekPoints || 0}</b><div class="l1-sub" style="font-size:11px">Haftalik</div></div>
-        <div class="l1-card p-3"><b class="text-[18px]">${me.allPoints || 0}</b><div class="l1-sub" style="font-size:11px">Umumiy</div></div>
-        <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:11px">Kun ketma-ket</div></div>
+        <div class="l1-card p-3"><b class="text-[18px]">${me.weekPoints || 0}</b><div class="l1-sub" style="font-size:12px">Haftalik</div></div>
+        <div class="l1-card p-3"><b class="text-[18px]">${me.allPoints || 0}</b><div class="l1-sub" style="font-size:12px">Umumiy</div></div>
+        <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:12px">Kun ketma-ket</div></div>
       </div>`}
       <div class="mt-4 space-y-2">
         ${isStudentMode() ? `<button type="button" data-act="progress" class="l1-btn l1-btn-soft w-full">📊 Natijalarim va xatolarim</button>` : ""}
@@ -677,6 +739,7 @@
       const act = ev.target.closest("[data-act]");
       if (!act) return;
       const a = act.dataset.act;
+      if (a === "photo") { close(); if (window.L1_Characters) window.L1_Characters.open(); }
       if (a === "progress") { close(); Shell.go("learn"); const b = $("tabBtnMyProgress"); if (b) b.click(); }
       if (a === "sound") { Sound.muted = !Sound.muted; act.textContent = Sound.muted ? "🔇 Ovoz o'chirilgan — yoqish" : "🔊 Ovoz yoqilgan — o'chirish"; }
       if (a === "mode") { close(); const b = $("btnModeToggle"); if (b) b.click(); }

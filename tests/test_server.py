@@ -16,7 +16,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from aiohttp.test_utils import TestClient, TestServer  # noqa: E402
 
+import green_city  # noqa: E402
 import server  # noqa: E402
+
+# A small park for the Yashil shahar tests: grass with a building and a road in it, and nothing but the OSM-like format of the real file.
+GREEN_LAT, GREEN_LON = 40.6003, 72.2010  # inside the park, clear of the building and the road
+M = 1 / 111320  # one metre, in degrees of latitude
+TEST_ZONES = {
+    "v": 1,
+    "green": [{"b": [40.6, 72.2, 40.601, 72.202], "r": [[[40.6, 72.2], [40.6, 72.202], [40.601, 72.202], [40.601, 72.2]]]}],
+    "block": [{"b": [40.6004, 72.2004, 40.6005, 72.2006], "r": [[[40.6004, 72.2004], [40.6004, 72.2006], [40.6005, 72.2006], [40.6005, 72.2004]]]}],
+    "roads": [{"b": [40.6008, 72.2, 40.6008, 72.202], "p": [[40.6008, 72.2], [40.6008, 72.202]], "w": 3.5}],
+}
 
 TEST_BOT_TOKEN = "123456:TEST_TOKEN_FOR_UNIT_TESTS"
 ADMIN_TG_ID = 111
@@ -43,6 +54,10 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         server.ALLOW_SELF_REGISTRATION = True
         self._saved_gap, server.GAME_MIN_SECONDS = server.GAME_MIN_SECONDS, 0
         server.DB_PATH = os.path.join(self._tmp.name, "test.db")
+        zones_path = os.path.join(self._tmp.name, "green_zones.json")
+        with open(zones_path, "w", encoding="utf-8") as f:
+            json.dump(TEST_ZONES, f)
+        self._saved_zones, server.GREEN_ZONES = server.GREEN_ZONES, green_city.Zones(zones_path)
         server.BOT_TOKEN = TEST_BOT_TOKEN
         server.TEACHER_IDS = {ADMIN_TG_ID}
         server.RATE_LIMITER.reset()
@@ -54,6 +69,7 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         await self.client.close()
         server.DB_PATH, server.BOT_TOKEN, server.TEACHER_IDS, server.ALLOW_SELF_REGISTRATION = self._saved
         server.GAME_MIN_SECONDS = self._saved_gap
+        server.GREEN_ZONES = self._saved_zones
         self._tmp.cleanup()
 
     # -- helpers ---------------------------------------------------------
@@ -864,90 +880,275 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         _, mine = await self.call("GET", "/api/words", vali)
         self.assertEqual(mine["words"], {})
 
-    # -- pomodoro focus blocks and the Asaka forest ------------------------
-    def backdate_focus(self, session_id, seconds):
+    # -- pomodoro focus blocks and Yashil shahar ----------------------------
+    def db_exec(self, sql, args=()):
         import sqlite3
         conn = sqlite3.connect(server.DB_PATH)
-        conn.execute("UPDATE focus_sessions SET started_at = started_at - ? WHERE id = ?", (seconds, session_id))
+        conn.execute(sql, args)
         conn.commit()
         conn.close()
 
-    async def plant(self, token, expect=200):
+    def backdate_focus(self, session_id, seconds):
+        self.db_exec("UPDATE focus_sessions SET started_at = started_at - ? WHERE id = ?", (seconds, session_id))
+
+    async def earn(self, token):
+        """One finished Pomodoro: the student now holds one tree to plant."""
         status, s = await self.call("POST", "/api/focus/start", token, {})
-        if status != 200:
-            return status, s
+        self.assertEqual(status, 200, s)
         self.backdate_focus(s["id"], server.FOCUS_SECONDS + 5)
         status, r = await self.call("POST", "/api/focus/finish", token, {"id": s["id"]})
+        self.assertEqual(status, 200, r)
+        return r
+
+    async def plant(self, token, lat=GREEN_LAT, lon=GREEN_LON, kind=None, expect=200):
+        body = {"lat": lat, "lon": lon}
+        if kind:
+            body["kind"] = kind
+        status, r = await self.call("POST", "/api/green/plant", token, body)
         self.assertEqual(status, expect, r)
-        return status, r
+        return r
 
     async def test_a_tree_needs_the_full_focus_time_on_the_servers_clock(self):
         token, _ = await self.student_token()
         status, s = await self.call("POST", "/api/focus/start", token, {})
-        self.assertEqual((status, s["seconds"]), (200, server.FOCUS_SECONDS))
+        self.assertEqual((status, s["seconds"], s["remaining"]), (200, server.FOCUS_SECONDS, server.FOCUS_SECONDS))
         status, r = await self.call("POST", "/api/focus/finish", token, {"id": s["id"]})
         self.assertEqual(status, 409)  # the phone's clock does not count
         self.backdate_focus(s["id"], server.FOCUS_SECONDS)
         status, r = await self.call("POST", "/api/focus/finish", token, {"id": s["id"]})
         self.assertEqual(status, 200, r)
-        tree = r["tree"]
-        self.assertEqual((r["awarded"], r["already"], r["todayTrees"]), (server.FOCUS_POINTS_PER_TREE, False, 1))
-        self.assertTrue(40.55 < tree["lat"] < 40.76 and 72.09 < tree["lon"] < 72.37, tree)  # inside Asaka district
-        self.assertTrue(tree["spot"])
+        self.assertEqual((r["awarded"], r["already"], r["todayTrees"], r["unplanted"]), (server.FOCUS_POINTS_PER_TREE, False, 1, 1))
         status, again = await self.call("POST", "/api/focus/finish", token, {"id": s["id"]})
-        self.assertEqual((status, again["already"], again["awarded"], again["tree"]["id"]), (200, True, 0, tree["id"]))
+        self.assertEqual((status, again["already"], again["awarded"], again["unplanted"]), (200, True, 0, 1))  # one tree per block
         _, lb = await self.call("GET", "/api/leaderboard?period=all", token)
         self.assertEqual(lb["me"]["allPoints"], server.FOCUS_POINTS_PER_TREE)
 
-    async def test_leaving_early_or_starting_over_plants_nothing(self):
+    async def test_pausing_stops_the_clock_but_only_for_ten_minutes(self):
+        token, _ = await self.student_token()
+        _, s = await self.call("POST", "/api/focus/start", token, {})
+        now = int(time.time())
+        self.assertEqual(server.FOCUS_PAUSE_SECONDS, 600)
+        # a block that began 1000 s ago and has been paused for the last 400 s: the clock froze at 600 s
+        self.db_exec("UPDATE focus_sessions SET started_at = ?, paused_at = ? WHERE id = ?", (now - 1000, now - 400, s["id"]))
+        _, state = await self.call("GET", "/api/focus/state", token)
+        a = state["active"]
+        self.assertTrue(a["paused"])
+        self.assertAlmostEqual(a["remaining"], server.FOCUS_SECONDS - 600, delta=2)
+        self.assertAlmostEqual(a["pauseLeft"], 200, delta=2)
+        status, _ = await self.call("POST", "/api/focus/finish", token, {"id": s["id"]})
+        self.assertEqual(status, 409)  # a paused block is not finished
+        status, a = await self.call("POST", "/api/focus/resume", token, {"id": s["id"]})
+        self.assertEqual((status, a["paused"]), (200, False))
+        self.assertAlmostEqual(a["remaining"], server.FOCUS_SECONDS - 600, delta=2)  # 1000 s - 400 s paused
+        # pausing again spends what is left of the budget; once it is gone the clock runs on by itself
+        status, a = await self.call("POST", "/api/focus/pause", token, {"id": s["id"]})
+        self.assertEqual((status, a["paused"]), (200, True))
+        self.db_exec("UPDATE focus_sessions SET paused_at = ? WHERE id = ?", (int(time.time()) - 900, s["id"]))
+        _, state = await self.call("GET", "/api/focus/state", token)
+        self.assertEqual((state["active"]["paused"], state["active"]["pauseLeft"]), (False, 0))
+        status, _ = await self.call("POST", "/api/focus/pause", token, {"id": s["id"]})
+        self.assertEqual(status, 409)
+
+    async def test_starting_a_second_block_returns_the_running_one(self):
         token, _ = await self.student_token()
         _, a = await self.call("POST", "/api/focus/start", token, {})
-        await self.call("POST", "/api/focus/cancel", token, {"id": a["id"]})
-        self.backdate_focus(a["id"], server.FOCUS_SECONDS + 5)
-        status, _ = await self.call("POST", "/api/focus/finish", token, {"id": a["id"]})
-        self.assertEqual(status, 409)
-        _, b = await self.call("POST", "/api/focus/start", token, {})
-        _, c = await self.call("POST", "/api/focus/start", token, {})  # a new block cancels the one before
-        self.backdate_focus(b["id"], server.FOCUS_SECONDS + 5)
-        status, _ = await self.call("POST", "/api/focus/finish", token, {"id": b["id"]})
-        self.assertEqual(status, 409)
+        status, b = await self.call("POST", "/api/focus/start", token, {})
+        self.assertEqual((status, b["active"]["id"]), (409, a["id"]))
         _, state = await self.call("GET", "/api/focus/state", token)
-        self.assertEqual((state["active"]["id"], state["todayTrees"]), (c["id"], 0))
+        self.assertEqual((state["active"]["id"], state["todayTrees"]), (a["id"], 0))
 
-    async def test_nobody_can_plant_with_someone_elses_block(self):
+    async def test_giving_up_wilts_the_latest_planted_tree_and_nothing_else(self):
+        token, _ = await self.student_token()
+        # nothing planted yet: giving up costs nothing and no tree is invented
+        _, a = await self.call("POST", "/api/focus/start", token, {})
+        status, r = await self.call("POST", "/api/focus/cancel", token, {"id": a["id"]})
+        self.assertEqual((status, r["wiltedTree"]), (200, None))
+        await self.earn(token)
+        await self.earn(token)
+        first = (await self.plant(token, GREEN_LAT, GREEN_LON))["tree"]
+        second = (await self.plant(token, GREEN_LAT + 10 * M, GREEN_LON))["tree"]
+        # a pause never wilts
+        _, b = await self.call("POST", "/api/focus/start", token, {})
+        await self.call("POST", "/api/focus/pause", token, {"id": b["id"]})
+        _, city = await self.call("GET", "/api/green", token)
+        self.assertEqual({t["state"] for t in city["trees"]}, {"planted"})
+        await self.call("POST", "/api/focus/resume", token, {"id": b["id"]})
+        status, r = await self.call("POST", "/api/focus/cancel", token, {"id": b["id"]})
+        self.assertEqual((status, r["wiltedTree"]["id"], r["wiltedTree"]["state"]), (200, second["id"], "wilted"))  # the latest one
+        _, city = await self.call("GET", "/api/green", token)
+        self.assertEqual({t["id"]: t["state"] for t in city["trees"]}, {first["id"]: "planted", second["id"]: "wilted"})
+        self.assertEqual((city["planted"], city["wilted"], city["cityTrees"], city["cityWilted"]), (1, 1, 1, 1))
+        status, _ = await self.call("POST", "/api/focus/cancel", token, {"id": b["id"]})  # the block is already over
+        self.assertEqual(status, 200)
+        _, city = await self.call("GET", "/api/green", token)
+        self.assertEqual(city["wilted"], 1)  # giving up the same block twice wilts nothing more
+
+    async def test_a_finished_block_cannot_be_given_up(self):
+        token, _ = await self.student_token()
+        await self.earn(token)
+        await self.plant(token)
+        _, b = await self.call("POST", "/api/focus/start", token, {})
+        self.backdate_focus(b["id"], server.FOCUS_SECONDS + 5)
+        status, _ = await self.call("POST", "/api/focus/cancel", token, {"id": b["id"]})
+        self.assertEqual(status, 409)  # the time is up: finish it and earn the tree instead
+
+    async def test_a_wilted_tree_is_restored_for_one_earned_tree(self):
         ali, _ = await self.student_token("Ali", "Valiyev")
         vali, _ = await self.student_token("Vali", "Aliyev")
-        _, s = await self.call("POST", "/api/focus/start", ali, {})
-        self.backdate_focus(s["id"], server.FOCUS_SECONDS + 5)
-        status, _ = await self.call("POST", "/api/focus/finish", vali, {"id": s["id"]})
-        self.assertEqual(status, 404)
+        await self.earn(ali)
+        tree = (await self.plant(ali))["tree"]
+        _, b = await self.call("POST", "/api/focus/start", ali, {})
+        await self.call("POST", "/api/focus/cancel", ali, {"id": b["id"]})
+        status, r = await self.call("POST", "/api/green/restore", ali, {"id": tree["id"]})
+        self.assertEqual(status, 409)  # no earned tree to spend
+        await self.earn(ali)
+        status, r = await self.call("POST", "/api/green/restore", vali, {"id": tree["id"]})
+        self.assertEqual(status, 404)  # somebody else's tree
+        status, r = await self.call("POST", "/api/green/restore", ali, {"id": tree["id"]})
+        self.assertEqual((status, r["tree"]["state"], r["unplanted"], r["planted"], r["wilted"]), (200, "planted", 0, 1, 0))
+        status, _ = await self.call("POST", "/api/green/restore", ali, {"id": tree["id"]})
+        self.assertEqual(status, 404)  # it is not wilted any more
+
+    async def test_trees_must_be_two_metres_apart(self):
+        ali, _ = await self.student_token("Ali", "Valiyev")
+        vali, _ = await self.student_token("Vali", "Aliyev")
+        await self.earn(ali)
+        await self.earn(vali)
+        await self.plant(ali)
+        near = GREEN_LAT + 1.4 * M
+        status, v = await self.call("POST", "/api/green/check", vali, {"lat": near, "lon": GREEN_LON})
+        self.assertEqual((status, v["ok"], v["code"]), (200, False, "close"))
+        self.assertAlmostEqual(v["distance"], 1.4, delta=0.05)
+        self.assertIn("atigi 1,4 metr", v["message"])
+        self.assertEqual(v["nearest"]["by"], "Ali Valiyev")
+        status, r = await self.call("POST", "/api/green/plant", vali, {"lat": near, "lon": GREEN_LON})
+        self.assertEqual((status, r["code"]), (409, "close"))
+        _, state = await self.call("GET", "/api/focus/state", vali)
+        self.assertEqual(state["unplanted"], 1)  # the refused try cost nothing
+        status, v = await self.call("POST", "/api/green/check", vali, {"lat": GREEN_LAT + 2.2 * M, "lon": GREEN_LON})
+        self.assertEqual((v["ok"], v["code"]), (True, "ok"))
+        await self.plant(vali, GREEN_LAT + 2.2 * M, GREEN_LON)
+        # a wilted tree still takes its place until it is restored
+        _, b = await self.call("POST", "/api/focus/start", ali, {})
+        await self.call("POST", "/api/focus/cancel", ali, {"id": b["id"]})
+        _, v = await self.call("POST", "/api/green/check", vali, {"lat": GREEN_LAT - 1.0 * M, "lon": GREEN_LON})
+        self.assertEqual((v["ok"], v["code"]), (False, "close"))
+
+    async def test_two_requests_at_once_cannot_break_the_two_metre_rule(self):
+        import asyncio
+        ali, _ = await self.student_token("Ali", "Valiyev")
+        vali, _ = await self.student_token("Vali", "Aliyev")
+        await self.earn(ali)
+        await self.earn(vali)
+        results = await asyncio.gather(
+            self.call("POST", "/api/green/plant", ali, {"lat": GREEN_LAT, "lon": GREEN_LON}),
+            self.call("POST", "/api/green/plant", vali, {"lat": GREEN_LAT + 0.5 * M, "lon": GREEN_LON}),
+        )
+        self.assertEqual(sorted(s for s, _ in results), [200, 409])
+        _, city = await self.call("GET", "/api/green", ali)
+        self.assertEqual(len(city["trees"]), 1)
+
+    async def test_only_green_ground_without_buildings_or_roads(self):
+        token, _ = await self.student_token()
+        await self.earn(token)
+        for lat, lon, code in ((40.6020, 72.2010, "outside"), (40.60045, 72.2005, "building"), (40.6008, 72.2010, "road"),
+                               (40.60083, 72.2010, "road")):  # 3 m from the middle of the road is still road
+            status, v = await self.call("POST", "/api/green/check", token, {"lat": lat, "lon": lon})
+            self.assertEqual((status, v["ok"], v["code"]), (200, False, code), (lat, lon))
+            self.assertTrue(v["message"])
+            status, r = await self.call("POST", "/api/green/plant", token, {"lat": lat, "lon": lon})
+            self.assertEqual((status, r["code"]), (409, code))
+        for bad in ({}, {"lat": "x", "lon": 1}, {"lat": 95, "lon": 72}, {"lat": None, "lon": None}):
+            status, _ = await self.call("POST", "/api/green/check", token, bad)
+            self.assertEqual(status, 400, bad)
+        await self.plant(token)
+
+    async def test_nothing_can_be_planted_without_an_earned_tree(self):
+        token, _ = await self.student_token()
+        status, r = await self.call("POST", "/api/green/plant", token, {"lat": GREEN_LAT, "lon": GREEN_LON})
+        self.assertEqual(status, 409)
+        status, _ = await self.call("POST", "/api/green/plant", None, {"lat": GREEN_LAT, "lon": GREEN_LON})
+        self.assertEqual(status, 401)
+
+    async def test_rare_trees_are_unlocked_by_finished_blocks(self):
+        token, student = await self.student_token()
+        await self.earn(token)
+        await self.plant(token, kind="blossom", expect=400)  # needs 10 finished blocks
+        await self.plant(token, kind="no-such-tree", expect=400)
+        for i in range(9):
+            self.db_exec("INSERT INTO focus_sessions (id, student_id, started_at, seconds, status, finished_at) VALUES (?, ?, 1, 1, 'done', 1)",
+                         (f"old{i}", student["id"]))
+        _, state = await self.call("GET", "/api/focus/state", token)
+        self.assertEqual((state["finished"], "blossom" in state["kinds"], "gold" in state["kinds"]), (10, True, False))
+        tree = (await self.plant(token, kind="blossom"))["tree"]
+        self.assertEqual(tree["kind"], "blossom")
 
     async def test_daily_tree_and_point_limits(self):
         saved = server.FOCUS_DAILY_TREES, server.FOCUS_REWARDED_TREES
         server.FOCUS_DAILY_TREES, server.FOCUS_REWARDED_TREES = 3, 2
         try:
             token, _ = await self.student_token()
-            awards = [(await self.plant(token))[1]["awarded"] for _ in range(3)]
+            awards = [(await self.earn(token))["awarded"] for _ in range(3)]
             self.assertEqual(awards, [server.FOCUS_POINTS_PER_TREE, server.FOCUS_POINTS_PER_TREE, 0])
             status, _ = await self.call("POST", "/api/focus/start", token, {})
             self.assertEqual(status, 409)  # 3 trees = the day's limit
         finally:
             server.FOCUS_DAILY_TREES, server.FOCUS_REWARDED_TREES = saved
 
-    async def test_forest_is_shared_and_spreads_over_many_places(self):
+    async def test_nobody_can_finish_someone_elses_block(self):
+        ali, _ = await self.student_token("Ali", "Valiyev")
+        vali, _ = await self.student_token("Vali", "Aliyev")
+        _, s = await self.call("POST", "/api/focus/start", ali, {})
+        self.backdate_focus(s["id"], server.FOCUS_SECONDS + 5)
+        for path in ("finish", "cancel", "pause", "resume"):
+            status, _ = await self.call("POST", f"/api/focus/{path}", vali, {"id": s["id"]})
+            self.assertEqual(status, 404, path)
+
+    async def test_the_city_is_shared_and_shows_who_planted_how_many(self):
         ali, _ = await self.student_token("Ali", "Valiyev")
         vali, _ = await self.student_token("Vali", "Aliyev")
         for token in (ali, ali, vali):
-            await self.plant(token)
-        status, f = await self.call("GET", "/api/focus/forest", vali)
-        self.assertEqual((status, f["total"], f["mine"], len(f["trees"])), (200, 3, 1, 3))
-        self.assertEqual(len({t["spot"] for t in f["trees"]}), 3)  # three different real places, not one pile
-        self.assertEqual(len({(t["lat"], t["lon"]) for t in f["trees"]}), 3)
-        self.assertEqual([(e["name"], e["trees"]) for e in f["week"]], [("Ali Valiyev", 2), ("Vali Aliyev", 1)])
-        _, newer = await self.call("GET", f"/api/focus/forest?after={f['trees'][1]['id']}", ali)
-        self.assertEqual([t["id"] for t in newer["trees"]], [f["trees"][2]["id"]])
-        status, _ = await self.call("GET", "/api/focus/forest")
+            await self.earn(token)
+        await self.plant(ali, GREEN_LAT, GREEN_LON)
+        await self.plant(ali, GREEN_LAT + 5 * M, GREEN_LON)
+        await self.plant(vali, GREEN_LAT + 10 * M, GREEN_LON)
+        status, c = await self.call("GET", "/api/green", vali)
+        self.assertEqual((status, c["cityTrees"], c["planted"], len(c["trees"])), (200, 3, 1, 3))
+        self.assertEqual(len({(t["lat"], t["lon"]) for t in c["trees"]}), 3)
+        self.assertEqual([(e["name"], e["trees"]) for e in c["week"]], [("Ali Valiyev", 2), ("Vali Aliyev", 1)])
+        self.assertEqual({t["by"] for t in c["trees"]}, {"Ali Valiyev", "Vali Aliyev"})
+        self.assertEqual(c["minDistance"], green_city.MIN_DISTANCE_M)
+        _, newer = await self.call("GET", f"/api/green?since={c['now'] + 60}", ali)
+        self.assertEqual(newer["trees"], [])  # nothing changed since
+        status, _ = await self.call("GET", "/api/green")
         self.assertEqual(status, 401)
+
+    async def test_an_administrator_can_add_and_remove_planting_areas(self):
+        admin = await self.admin_token()
+        token, _ = await self.student_token()
+        await self.earn(token)
+        spot = {"lat": 40.6050, "lon": 72.2100}  # outside the OpenStreetMap ground of the test
+        status, v = await self.call("POST", "/api/green/check", token, spot)
+        self.assertEqual(v["code"], "outside")
+        area = {"name": "Sinov bog'i", "polygon": [[40.6045, 72.2095], [40.6045, 72.2105], [40.6055, 72.2105], [40.6055, 72.2095]]}
+        status, _ = await self.call("POST", "/api/green/zones", token, area)
+        self.assertEqual(status, 403)  # students cannot draw areas
+        for bad in ({"name": "x", "polygon": [[40.6, 72.2]]}, {"name": "x", "polygon": [[10, 10], [10, 11], [11, 11]]},
+                    {"name": "x", "polygon": [[40.5, 72.1], [40.5, 72.5], [40.8, 72.5], [40.8, 72.1]]}):
+            status, _ = await self.call("POST", "/api/green/zones", admin, bad)
+            self.assertEqual(status, 400, bad)
+        status, z = await self.call("POST", "/api/green/zones", admin, area)
+        self.assertEqual(status, 200)
+        _, v = await self.call("POST", "/api/green/check", token, spot)
+        self.assertEqual((v["ok"], v["code"]), (True, "ok"))
+        _, city = await self.call("GET", "/api/green", token)
+        self.assertEqual([x["name"] for x in city["zones"]], ["Sinov bog'i"])
+        self.assertFalse(city["isAdmin"])
+        status, _ = await self.call("POST", "/api/green/zones/delete", token, {"id": z["zone"]["id"]})
+        self.assertEqual(status, 403)
+        await self.call("POST", "/api/green/zones/delete", admin, {"id": z["zone"]["id"]})
+        _, v = await self.call("POST", "/api/green/check", token, spot)
+        self.assertEqual(v["code"], "outside")
 
     async def test_submit_is_graded_by_the_server_not_trusted(self):
         token, _ = await self.student_token()
@@ -990,6 +1191,16 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(lb["me"]["allPoints"], 0)
         _, state = await self.call("GET", "/api/state", admin)
         self.assertEqual(state["attempts"], [])
+
+    async def test_leaderboard_tells_the_home_screen_what_the_games_gave(self):
+        token, _ = await self.student_token()
+        _, lb = await self.call("GET", "/api/leaderboard", token)
+        self.assertEqual((lb["me"]["gameToday"], lb["me"]["gameCap"], lb["me"]["gameWeek"]), (0, server.GAME_DAILY_POINTS_CAP, {}))
+        await self.call("POST", "/api/game/finish", token, {"game": "dragon", "tries": [1]})
+        await self.call("POST", "/api/game/finish", token, {"game": "millionaire", "tries": [2]})
+        _, lb = await self.call("GET", "/api/leaderboard", token)
+        self.assertEqual(lb["me"]["gameToday"], 40)
+        self.assertEqual(lb["me"]["gameWeek"], {"dragon": 25, "millionaire": 15})
 
     async def test_telegram_photo_url_kept_and_avatar_route_safe(self):
         init = sign_init_data({"id": 222, "first_name": "Ann", "photo_url": "https://t.me/i/userpic/320/abc.jpg"})
@@ -1122,6 +1333,39 @@ class DataIntegrityTests(unittest.TestCase):
     def test_exercise_ids_are_unique(self):
         ids = [e["id"] for e in self.exercises()]
         self.assertEqual(len(ids), len(set(ids)))
+
+    def test_the_green_ground_of_yashil_shahar_is_built(self):
+        zones = green_city.Zones(os.path.join(self.APP_DIR, "static", "green_zones.json"))
+        self.assertTrue(zones.available(), "run: python tools/build_green_zones.py")
+        self.assertGreater(len(zones.green), 50)
+        for z in zones.green:
+            s, w, n, e = z["b"]
+            self.assertTrue(s < n and w < e and 40.4 < s < 40.9 and 71.9 < w < 72.6, z["b"])
+            self.assertGreaterEqual(len(z["r"][0]), 3)
+        # a point just inside the first green area is allowed unless a building or a road covers it; the centre of the box is a fair probe
+        verdicts = {zones.judge((z["b"][0] + z["b"][2]) / 2, (z["b"][1] + z["b"][3]) / 2) for z in zones.green}
+        self.assertIn("ok", verdicts)
+
+    def test_there_are_ten_boys_and_ten_girls_to_choose_from(self):
+        with open(os.path.join(self.APP_DIR, "static", "characters.js"), encoding="utf-8") as f:
+            js = f.read()
+        self.assertEqual((js.count('g: "m"'), js.count('g: "f"')), (10, 10))
+
+    def test_no_text_in_the_app_is_smaller_than_12_pixels(self):
+        import re
+        rx = re.compile(r"(?:font-size\s*:\s*|text-\[)([0-9.]+)(px|rem|em)", re.I)
+        small = []
+        for root, dirs, files in os.walk(os.path.join(self.APP_DIR, "static")):
+            dirs[:] = [d for d in dirs if d != "vendor"]
+            for name in files:
+                if name.endswith((".css", ".js", ".html")):
+                    with open(os.path.join(root, name), encoding="utf-8") as f:
+                        for n, line in enumerate(f, 1):
+                            for m in rx.finditer(line):
+                                px = float(m.group(1)) * (16 if m.group(2).lower() in ("rem", "em") else 1)
+                                if px < 12:
+                                    small.append(f"{name}:{n} {m.group(0)}")
+        self.assertEqual(small, [])
 
 
 class HelperTests(unittest.TestCase):

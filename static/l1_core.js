@@ -185,6 +185,17 @@
         osc.stop(t + dur + 0.02);
       } catch (e) {}
     },
+    // The shared audio context (created on first use, resumed after a tap), for games that build their own sounds. null when muted.
+    ctx() {
+      if (this.muted) return null;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = audioCtx || new AC();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        return audioCtx;
+      } catch (e) { return null; }
+    },
     right() { this.tone(660, "sine", 0.12, 0, 0.12); this.tone(880, "sine", 0.18, 0.09, 0.12); },
     wrong() { this.tone(220, "triangle", 0.16, 0, 0.16); this.tone(165, "triangle", 0.22, 0.12, 0.14); },
     finish() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, "sine", 0.22, i * 0.11, 0.12)); },

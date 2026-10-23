@@ -53,7 +53,7 @@ main .rounded-3xl { border-radius: 22px; }
 /* ---------- Bottom bar: flat white bar, raised round centre button (O'rganish) ---------- */
 #l1BottomNav { bottom: 0; padding: 0 8px var(--l1-safe-bottom-total); background: #fff; border-top: 1px solid var(--l1-line); box-shadow: 0 -8px 24px -14px rgba(60, 70, 160, .3); pointer-events: auto; }
 #l1BottomNav .l1-nav { max-width: 520px; height: 64px; background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-#l1BottomNav button { height: 64px; border-radius: 0; gap: 3px; font-size: 9.5px; font-weight: 600; color: #8a90b3; background: none; }
+#l1BottomNav button { height: 64px; border-radius: 0; gap: 3px; font-size: 12px; font-weight: 600; color: #8a90b3; background: none; }
 #l1BottomNav button svg { width: 20px; height: 20px; }
 #l1BottomNav button.is-active { background: none; color: var(--l1-primary); box-shadow: none; font-weight: 700; }
 #l1BottomNav button[data-tab="learn"] { justify-content: flex-start; }
@@ -93,7 +93,7 @@ main .rounded-3xl { border-radius: 22px; }
 .l1-btn-danger { background: #fff0f0; color: #e5484d; }
 
 /* Chips read like the picture's priority tags: soft pill, coloured text */
-.l1-chip { font-weight: 700; font-size: 10.5px; padding: 4px 10px; }
+.l1-chip { font-weight: 700; font-size: 12px; padding: 4px 10px; }
 .l1-chip-blue { background: var(--l1-primary-50); color: var(--l1-primary); }
 .l1-chip-green { background: #e3f7ea; color: #22a05b; }
 .l1-chip-red { background: #fee9ea; color: #ef4444; }
@@ -227,3 +227,92 @@ html[data-theme="dark"] .bg-amber-300, html[data-theme="dark"] .bg-amber-400, ht
 
 /* Full screen: keep our bar clear of Telegram's own buttons (and a phone's notch) */
 #l1AppBar { padding-top: calc(12px + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + var(--tg-content-safe-area-inset-top, 0px)); }
+/* Home: Yashil shahar card (app_shell.js Pomo) */
+.l1-pomo-tree { flex: none; width: 64px; height: 76px; }
+.l1-pomo-tree svg { width: 100%; height: 100%; overflow: visible; }
+.l1-pomo-btn { font-size: 13px; }
+.l1-pomo-btn.is-main { background: var(--l1-primary); color: #fff; }
+
+/* Profile: tap the picture to change it */
+.l1-avatar-edit { position: relative; flex: none; display: block; border-radius: 50%; }
+.l1-avatar-edit-badge { position: absolute; right: -3px; bottom: -3px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; color: #fff; background: var(--l1-primary); border: 2px solid var(--l1-card); }
+
+/* ===== Home (app_shell.js renderHome) ===== */
+.hm-hero { position: relative; display: flex; align-items: flex-end; gap: 4px; min-height: 172px; padding: 18px 6px 0 18px; border-radius: 28px; color: #fff; isolation: isolate;
+  background: linear-gradient(135deg, #5b5cf0 0%, #7a5cf5 52%, #b45cf2 100%); box-shadow: 0 22px 40px -22px rgba(91, 92, 240, .85); }
+.hm-hero::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: radial-gradient(130px 130px at 86% 10%, rgba(255, 255, 255, .26), transparent 70%), radial-gradient(170px 170px at 6% 112%, rgba(255, 255, 255, .15), transparent 70%); }
+.hm-hero > :last-child { flex: none; margin-top: -30px; }
+.hm-hero-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-bottom: 18px; }
+.hm-kicker { font-size: 14px; font-weight: 700; opacity: .9; }
+.hm-name { font-size: 28px; font-weight: 900; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
+.hm-line { margin-top: 2px; font-size: 14px; font-weight: 700; opacity: .95; }
+.hm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.hm-chips span { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .22); }
+
+.hm-card { padding: 16px; border-radius: 24px; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
+.hm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.hm-card-head h2 { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--l1-ink); }
+.hm-more { font-size: 13px; font-weight: 800; color: var(--l1-primary); }
+.hm-goals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hm-goal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px 9px; border-radius: 18px; background: var(--l1-primary-50); transition: transform .12s ease; }
+.hm-goal:active { transform: scale(.97); }
+.hm-goal b { margin-top: 6px; font-size: 16px; font-weight: 900; color: var(--l1-ink); }
+.hm-goal > span:last-child { font-size: 12px; font-weight: 800; color: var(--l1-muted); }
+.hm-goal.is-done { background: #e3f7ea; }
+html[data-theme="dark"] .hm-goal.is-done { background: rgba(34, 197, 94, .16); }
+.hm-ring { position: relative; width: 64px; height: 64px; display: grid; place-items: center; }
+.hm-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hm-ring .t { fill: none; stroke: rgba(120, 130, 180, .2); stroke-width: 7; }
+.hm-ring .p { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.hm-ring b { position: relative; margin: 0; font-size: 24px; line-height: 1; }
+.hm-goal.is-done .hm-ring b { color: #1f9d55; font-size: 26px; }
+
+.hm-city { position: relative; padding: 14px; border-radius: 26px; color: #fff; overflow: hidden;
+  background: linear-gradient(160deg, #22b36a 0%, #0e8f5a 62%, #0b7a5e 100%); box-shadow: 0 22px 40px -22px rgba(14, 143, 90, .85); }
+.hm-city::before { content: ""; position: absolute; left: -10%; right: -10%; top: 54px; height: 70px; border-radius: 50%; background: rgba(255, 255, 255, .13); }
+.hm-city-trees { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0; height: 80px; margin-bottom: 6px; }
+.hm-city-trees i { display: block; flex: none; width: 46px; height: 56px; transform-origin: 50% 100%; animation: hm-sway 4.4s ease-in-out infinite; }
+.hm-city-trees i:nth-child(2) { animation-delay: -1s; } .hm-city-trees i:nth-child(3) { animation-delay: -2s; }
+.hm-city-trees i:nth-child(4) { animation-delay: -3s; } .hm-city-trees i:nth-child(5) { animation-delay: -1.5s; }
+.hm-city-trees i.is-big { width: 66px; height: 80px; }
+.hm-city-trees svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0, 40, 20, .3)); }
+@keyframes hm-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+.hm-city-body { position: relative; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.hm-city-title { font-size: 21px; font-weight: 900; letter-spacing: -.02em; }
+.hm-city-sub { margin-top: 2px; font-size: 14px; font-weight: 700; opacity: .96; }
+.hm-city-new { padding: 1px 9px; border-radius: 999px; font-weight: 900; color: #3b2f00; background: #fde047; }
+.hm-city-btns { display: flex; gap: 8px; }
+.hm-btn { min-height: 42px; padding: 0 16px; border-radius: 14px; font-size: 14px; font-weight: 900; }
+.hm-btn.is-white { background: #fff; color: #0b6b43; box-shadow: 0 10px 18px -10px rgba(0, 50, 25, .6); }
+.hm-btn.is-glass { color: #fff; background: rgba(255, 255, 255, .22); border: 1px solid rgba(255, 255, 255, .38); }
+
+.hm-games { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 4px 16px 14px; scroll-padding-left: 16px; scrollbar-width: none; }
+.hm-games::-webkit-scrollbar { display: none; }
+.hm-game { position: relative; flex: none; scroll-snap-align: start; width: 152px; min-height: 176px; padding: 14px; border-radius: 24px; display: flex; flex-direction: column; gap: 4px;
+  text-align: left; color: #fff; overflow: hidden; box-shadow: 0 18px 30px -18px rgba(20, 30, 90, .75); transition: transform .12s ease; }
+.hm-game:active { transform: scale(.97); }
+.hm-game::after { content: ""; position: absolute; right: -26px; top: -26px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+.hm-game-emoji { position: relative; z-index: 1; font-size: 40px; line-height: 1; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .25)); }
+.hm-game-name { position: relative; z-index: 1; margin-top: 8px; font-size: 17px; font-weight: 900; line-height: 1.15; }
+.hm-game-status { position: relative; z-index: 1; font-size: 13px; font-weight: 700; line-height: 1.3; opacity: .94; }
+.hm-game-go { position: relative; z-index: 1; align-self: flex-start; margin-top: auto; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, .24); }
+
+.hm-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hm-q { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 22px; text-align: left; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
+.hm-q:active { transform: scale(.98); }
+.hm-q-ico { flex: none; width: 46px; height: 46px; display: grid; place-items: center; }
+.hm-q b { display: block; font-size: 15px; font-weight: 900; color: var(--l1-ink); }
+.hm-q small { display: block; margin-top: 1px; font-size: 12px; font-weight: 700; color: var(--l1-muted); }
+.hm-q-dot { position: absolute; top: 8px; right: 10px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 900; color: #fff; background: #ef4444; }
+
+.hm-top { display: flex; justify-content: center; gap: 8px; align-items: flex-end; }
+.hm-top-i { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1 1 0; max-width: 150px; padding: 10px 4px; border-radius: 18px; background: var(--l1-primary-50); min-width: 0; }
+.hm-top-i.r1 { background: #fff3c4; padding-bottom: 14px; }
+html[data-theme="dark"] .hm-top-i.r1 { background: rgba(250, 204, 21, .16); }
+.hm-top-i.is-me { outline: 2px solid var(--l1-primary); }
+.hm-top-i b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 900; color: var(--l1-ink); }
+.hm-top-i > span:last-child { font-size: 13px; font-weight: 800; color: var(--l1-muted); }
+.hm-medal { font-size: 22px; line-height: 1; }
+@media (prefers-reduced-motion: reduce) { .hm-city-trees i { animation: none; } }

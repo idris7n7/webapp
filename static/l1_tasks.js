@@ -349,9 +349,9 @@
         <div class="text-[42px] font-extrabold leading-none">${my.points}</div>
         <div class="text-[13px] font-bold opacity-90">ball · maksimal ${max}</div></div></div>
       <div class="grid grid-cols-3 gap-2">
-        <div class="l1-card p-3"><b class="text-[20px]">${solved}/${R.flat.length}</b><div class="l1-sub" style="font-size:11px">To'g'ri</div></div>
-        <div class="l1-card p-3"><b class="text-[20px] text-[color:var(--l1-success)]">${firstTry}</b><div class="l1-sub" style="font-size:11px">1-urinishda</div></div>
-        <div class="l1-card p-3"><b class="text-[20px]" id="l1FinishRank">…</b><div class="l1-sub" style="font-size:11px">Haftalik o'rin</div></div>
+        <div class="l1-card p-3"><b class="text-[20px]">${solved}/${R.flat.length}</b><div class="l1-sub" style="font-size:12px">To'g'ri</div></div>
+        <div class="l1-card p-3"><b class="text-[20px] text-[color:var(--l1-success)]">${firstTry}</b><div class="l1-sub" style="font-size:12px">1-urinishda</div></div>
+        <div class="l1-card p-3"><b class="text-[20px]" id="l1FinishRank">…</b><div class="l1-sub" style="font-size:12px">Haftalik o'rin</div></div>
       </div>
       <div class="space-y-2 pt-1">
         <button type="button" id="l1FinRating" class="l1-btn l1-btn-primary w-full">🏆 Reytingni ko'rish</button>
@@ -453,7 +453,7 @@
           <label class="l1-ex-pick" data-search="${html((ex.title + " " + (ex.part || "") + " " + ex.category).toLowerCase())}">
             <input type="checkbox" value="${html(ex.id)}" data-q="${(ex.questions || []).length}">
             <span class="min-w-0 flex-1"><span class="block text-[13px] font-bold truncate">${html(ex.title)}</span>
-            <span class="block text-[11px] text-[color:var(--l1-muted)] truncate">${html(ex.part || "")}</span></span>
+            <span class="block text-[12px] text-[color:var(--l1-muted)] truncate">${html(ex.part || "")}</span></span>
             <span class="l1-chip ${ex.category === "grammar" ? "l1-chip-blue" : "l1-chip-green"}">${(ex.questions || []).length}</span>
           </label>`).join("")}</div></div>`).join("");
   }
@@ -509,7 +509,7 @@
         <div class="min-w-0"><div class="flex flex-wrap gap-1.5 mb-1"><span class="l1-chip ${status[0]}">${status[1]}</span>${a.weekLabel ? `<span class="l1-chip l1-chip-blue">${html(a.weekLabel)}</span>` : ""}</div>
           <div class="text-[16px] font-extrabold">${html(a.title)}</div>
           <div class="l1-sub">${a.exercises.length} ta mashq · ${a.questionCount} savol · Deadline: ${html(fmtDate(a.deadline))}${!ended ? " (" + html(countdown(a.deadline, now)) + " qoldi)" : ""}</div></div>
-        <div class="text-right flex-none"><div class="text-[22px] font-extrabold text-[color:var(--l1-primary)]">${a.doneCount}/${a.studentCount}</div><div class="l1-sub" style="font-size:11px">bajardi</div></div>
+        <div class="text-right flex-none"><div class="text-[22px] font-extrabold text-[color:var(--l1-primary)]">${a.doneCount}/${a.studentCount}</div><div class="l1-sub" style="font-size:12px">bajardi</div></div>
       </div>
       <div class="l1-progress"><i style="width:${pct}%"></i></div>
       <div class="flex flex-wrap gap-2">

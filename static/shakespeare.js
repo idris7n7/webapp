@@ -163,8 +163,8 @@
       wrap.innerHTML = `
         <div class="shrink-0">${portraitHtml(78, MODE_POSE[mode])}</div>
         <div class="min-w-0 flex-1">
-          <div class="text-[10px] font-black uppercase tracking-wider text-amber-700">Shekspir aytadi</div>
-          <p class="text-sm sm:text-base font-bold text-slate-800 mt-0.5">${esc(uzq)}</p>          <button type="button" class="mt-1.5 text-[11px] font-bold text-indigo-600 hover:underline">😄 Yana bir ibora</button>
+          <div class="text-[12px] font-black uppercase tracking-wider text-amber-700">Shekspir aytadi</div>
+          <p class="text-sm sm:text-base font-bold text-slate-800 mt-0.5">${esc(uzq)}</p>          <button type="button" class="mt-1.5 text-[12px] font-bold text-indigo-600 hover:underline">😄 Yana bir ibora</button>
         </div>`;
       wrap.querySelector("button").onclick = () => {
         i = (i + 1) % list.length;
@@ -200,11 +200,11 @@
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-orange-50 border border-orange-200 rounded-2xl p-3 text-center">
           <div class="text-2xl font-black text-orange-600">🔥 ${me ? me.streak || 0 : "–"}</div>
-          <div class="text-[11px] font-bold text-slate-500">kun ketma-ket (streak)</div>
+          <div class="text-[12px] font-bold text-slate-500">kun ketma-ket (streak)</div>
         </div>
         <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3 text-center">
           <div class="text-2xl font-black text-indigo-600">⭐ ${me ? me.weekPoints || 0 : "–"}</div>
-          <div class="text-[11px] font-bold text-slate-500">ball (bu hafta)</div>
+          <div class="text-[12px] font-bold text-slate-500">ball (bu hafta)</div>
         </div>
       </div>
       <div class="bg-white border border-slate-200 rounded-2xl p-3">
@@ -218,14 +218,14 @@
       <div class="bg-white border border-slate-200 rounded-2xl p-3">
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-xs font-black text-slate-800">🏆 Reyting (bu hafta)</span>
-          ${me && me.weekRank ? `<span class="text-[11px] font-bold text-indigo-600">Siz: ${me.weekRank}-o'rin</span>` : ""}
+          ${me && me.weekRank ? `<span class="text-[12px] font-bold text-indigo-600">Siz: ${me.weekRank}-o'rin</span>` : ""}
         </div>
         ${top.length ? top.map((e, i) => `
           <div class="flex items-center gap-2 py-1 px-1.5 rounded-lg ${e.id === meId ? "bg-indigo-50" : ""}">
             <span class="w-6 text-center text-sm">${medals[i] || e.rank}</span>
             <span class="flex-1 min-w-0 truncate text-[13px] font-bold text-slate-800">${h(e.name)}${e.id === meId ? " (siz)" : ""}</span>
             <span class="text-[13px] font-extrabold text-slate-700">${e.points}</span>
-          </div>`).join("") : `<div class="text-[11px] text-slate-400 text-center py-2">${data ? "Hali reyting yo'q." : "Reytingni ko'rish uchun tizimga kiring."}</div>`}
+          </div>`).join("") : `<div class="text-[12px] text-slate-400 text-center py-2">${data ? "Hali reyting yo'q." : "Reytingni ko'rish uchun tizimga kiring."}</div>`}
       </div>`;
     // O'rganish (Study) has no leaderboard: drop the last block, keep streak, points and progress.
     if (box.dataset.mode === "learn" && box.lastElementChild) box.lastElementChild.remove();

@@ -31,3 +31,6 @@ static/img/books_manifest.json
 
 # Recorded voice clips (switched off in dragon_chase.js, PLAY_VOICE_LINES = false)
 static/sfx/*.mp3
+
+# Installed JavaScript packages are never committed
+node_modules/

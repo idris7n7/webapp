@@ -14,6 +14,8 @@
     { id: "carlos", name: "Carlos", g: "m", skin: "#d3a070", hair: "#4a2a17", style: "wavy",   acc: "none",       top: "#facc15", bg: "#fef9c3" },
     { id: "omar",   name: "Omar",   g: "m", skin: "#d8a678", hair: "#16110e", style: "short",  acc: "beard",      top: "#f8fafc", bg: "#e2e8f0" },
     { id: "ivan",   name: "Ivan",   g: "m", skin: "#f6d0b4", hair: "#8a5a35", style: "short",  acc: "beanie",     top: "#7c3aed", bg: "#ede9fe" },
+    { id: "sardor", name: "Sardor", g: "m", skin: "#e9bd8f", hair: "#2a1c14", style: "bangs",  acc: "none",       top: "#14b8a6", bg: "#ccfbf1" },
+    { id: "noah",   name: "Noah",   g: "m", skin: "#f3cfae", hair: "#7a4a22", style: "curly",  acc: "glasses",    top: "#fb923c", bg: "#ffedd5" },
     // ----- girls -----
     { id: "malika", name: "Malika", g: "f", skin: "#e9bd8f", hair: "#17171c", style: "braids", acc: "headband",   top: "#e11d48", bg: "#ffe4e6" },
     { id: "emma",   name: "Emma",   g: "f", skin: "#f8d9c0", hair: "#c2410c", style: "ponytail", acc: "freckles", top: "#14b8a6", bg: "#ccfbf1" },
@@ -23,6 +25,8 @@
     { id: "sofia",  name: "Sofia",  g: "f", skin: "#d3a070", hair: "#4a2a17", style: "curly",  acc: "flower",     top: "#22c55e", bg: "#dcfce7" },
     { id: "layla",  name: "Layla",  g: "f", skin: "#dcab7e", hair: "#16110e", style: "hijab",  acc: "none",       top: "#0891b2", bg: "#cffafe", cloth: "#2dd4bf" },
     { id: "anya",   name: "Anya",   g: "f", skin: "#f8d3b8", hair: "#e8c36a", style: "braids", acc: "none",       top: "#3b82f6", bg: "#dbeafe" },
+    { id: "zilola", name: "Zilola", g: "f", skin: "#e9bd8f", hair: "#17171c", style: "long",   acc: "headband",   top: "#8b5cf6", bg: "#ede9fe" },
+    { id: "yuki",   name: "Yuki",   g: "f", skin: "#f6dcc3", hair: "#14141a", style: "bob",    acc: "none",       top: "#ef4444", bg: "#fee2e2" },
   ];
   const BY_ID = {};
   CHARACTERS.forEach((c) => { BY_ID[c.id] = c; });
@@ -35,6 +39,7 @@
       case "afro": return `<circle cx="60" cy="46" r="35" fill="${h}"/>`;
       case "curly": return `<g fill="${h}"><circle cx="38" cy="42" r="13"/><circle cx="50" cy="30" r="14"/><circle cx="70" cy="30" r="14"/><circle cx="82" cy="42" r="13"/><circle cx="34" cy="62" r="11"/><circle cx="86" cy="62" r="11"/></g>`;
       case "long": return `<path d="M31 50 Q28 98 40 112 L80 112 Q92 98 89 50Z" fill="${h}"/>`;
+      case "bob": return `<path d="M30 52 Q27 90 40 94 L80 94 Q93 90 90 52Z" fill="${h}"/>`;
       case "ponytail": return `<path d="M82 44 Q108 44 104 82 Q100 96 92 98 Q96 76 84 62Z" fill="${h}"/>`;
       case "buns": return `<circle cx="36" cy="26" r="11" fill="${h}"/><circle cx="84" cy="26" r="11" fill="${h}"/>`;
       case "braids": return `<g fill="${h}">${[0, 1, 2, 3].map((i) => `<ellipse cx="33" cy="${74 + i * 9}" rx="6" ry="5.5"/><ellipse cx="87" cy="${74 + i * 9}" rx="6" ry="5.5"/>`).join("")}</g><path d="M31 52 Q30 70 34 78 L40 72Z M89 52 Q90 70 86 78 L80 72Z" fill="${h}"/>`;
@@ -51,7 +56,7 @@
       case "wavy": return `<path d="M33 58 Q28 24 60 23 Q92 24 87 58 Q84 44 74 38 Q66 48 56 38 Q46 46 38 40 Q34 46 33 58Z" fill="${h}"/>`;
       case "afro": return `<path d="M36 50 Q40 34 60 34 Q80 34 84 50 Q74 42 60 42 Q46 42 36 50Z" fill="${h}"/>`;
       case "curly": return `<path d="M36 50 Q42 34 60 34 Q78 34 84 50 Q72 44 60 44 Q48 44 36 50Z" fill="${h}"/>`;
-      case "long": case "ponytail": case "buns": case "braids":
+      case "long": case "bob": case "ponytail": case "buns": case "braids":
         return `<path d="M33 58 Q30 24 60 23 Q90 24 87 58 Q86 46 74 40 Q62 50 46 40 Q36 46 33 58Z" fill="${h}"/>`;
       case "hijab": return `<path d="M33 52 Q34 28 60 27 Q86 28 87 52 Q82 40 60 40 Q38 40 33 52Z" fill="${c.cloth}"/><path d="M33 52 Q60 38 87 52" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>`;
       default: return "";
@@ -107,7 +112,8 @@
     return `<span style="display:block;width:${size}px;height:${size}px;border-radius:50%;overflow:hidden">${svg(c)}</span>`;
   }
 
-  // ------------------------------------------------------------------ Picker (shown before entering the platform)
+  // ------------------------------------------------------------------ Picker
+  // First visit: shown only to a student who has neither a character nor a Telegram photo. From the profile: always.
   let open = false;
 
   function student() {
@@ -115,47 +121,57 @@
   }
   function needsPick() {
     const u = student();
-    if (!u || (u.role && u.role !== "student") || u.character) return false;
+    if (!u || (u.role && u.role !== "student") || u.character || u.photoUrl) return false;
     if (u.status && u.status !== "approved") return false;
     try { if (state.mode === "teacher") return false; } catch (e) {}
     return true;
   }
 
-  function showPicker() {
+  function showPicker(opts) {
     if (open) return;
     open = true;
-    let gender = "m";
-    let chosen = "";
+    const change = !!(opts && opts.change);
+    const u0 = student() || {};
+    let gender = (BY_ID[u0.character] || {}).g || "m";
+    let chosen = BY_ID[u0.character] || u0.character === "tg" ? u0.character : "";
     const wrap = document.createElement("div");
     wrap.id = "l1CharPicker";
-    wrap.style.cssText = "position:fixed;inset:0;z-index:200;overflow-y:auto;background:var(--l1-bg,#eef2ff);-webkit-overflow-scrolling:touch";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:9600;overflow-y:auto;background:var(--l1-bg,#eef2ff);-webkit-overflow-scrolling:touch";
     document.body.appendChild(wrap);
+    const done = () => { open = false; wrap.remove(); };
 
+    const ring = (on) => `border:3px solid ${on ? "var(--l1-primary,#4f46e5)" : "transparent"};${on ? "transform:scale(1.03);" : ""}`;
     const render = () => {
       const list = CHARACTERS.filter((c) => c.g === gender);
+      const photo = u0.photoUrl ? `<button type="button" data-id="tg" style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;margin-bottom:14px;border-radius:20px;background:var(--l1-card,#fff);cursor:pointer;${ring(chosen === "tg")}box-shadow:0 10px 24px -14px rgba(15,23,42,.35)">
+          <span style="display:block;width:54px;height:54px;border-radius:50%;overflow:hidden;flex:none"><img src="${u0.photoUrl}" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover"></span>
+          <span style="font-weight:800;font-size:15px;color:var(--l1-ink,#0f172a)">Telegram rasmim</span></button>` : "";
       wrap.innerHTML = `
-        <div style="max-width:520px;margin:0 auto;padding:22px 16px calc(28px + env(safe-area-inset-bottom,0px))">
-          <div style="text-align:center;margin-bottom:14px">
-            <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">Personajingizni tanlang</div>
-            <div style="font-size:13px;font-weight:600;color:var(--l1-muted,#64748b);margin-top:4px">Platformada sizni shu rasm ifodalaydi. Keyin o'zgartirib bo'lmaydi.</div>
+        <div style="max-width:520px;margin:0 auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}</div>
+            ${change ? `<button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="Yopish">✕</button>` : ""}
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--l1-card,#fff);border:1px solid var(--l1-line,#e0e7ff);border-radius:999px;padding:4px;margin-bottom:16px">
+          ${photo}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--l1-card,#fff);border:1px solid var(--l1-line,#e0e7ff);border-radius:999px;padding:4px;margin-bottom:14px">
             ${[["m", "O'g'il bola"], ["f", "Qiz bola"]].map(([g, label]) => `<button type="button" data-g="${g}" style="height:40px;border-radius:999px;font-weight:800;font-size:14px;border:0;cursor:pointer;${gender === g ? "background:var(--l1-primary,#4f46e5);color:#fff" : "background:transparent;color:var(--l1-muted,#64748b)"}">${label}</button>`).join("")}
           </div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-            ${list.map((c) => `<button type="button" data-id="${c.id}" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border-radius:22px;background:var(--l1-card,#fff);cursor:pointer;border:3px solid ${chosen === c.id ? "var(--l1-primary,#4f46e5)" : "transparent"};box-shadow:0 10px 24px -14px rgba(15,23,42,.35);${chosen === c.id ? "transform:scale(1.03)" : ""}">
-              <span style="display:block;width:104px;height:104px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px #fff,0 6px 14px -6px rgba(15,23,42,.4)">${svg(c)}</span>
-              <span style="font-weight:800;font-size:15px;color:var(--l1-ink,#0f172a)">${c.name}</span>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            ${list.map((c) => `<button type="button" data-id="${c.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:20px;background:var(--l1-card,#fff);cursor:pointer;${ring(chosen === c.id)}box-shadow:0 10px 24px -14px rgba(15,23,42,.35)">
+              <span style="display:block;width:78px;height:78px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px #fff,0 6px 14px -6px rgba(15,23,42,.4)">${svg(c)}</span>
+              <span style="font-weight:800;font-size:14px;color:var(--l1-ink,#0f172a)">${c.name}</span>
             </button>`).join("")}
           </div>
           <div id="l1CharErr" style="min-height:20px;text-align:center;color:#dc2626;font-size:13px;font-weight:700;margin-top:12px"></div>
-          <button type="button" id="l1CharGo" style="width:100%;height:52px;border-radius:999px;border:0;font-weight:800;font-size:16px;color:#fff;background:var(--l1-primary,#4f46e5);box-shadow:0 12px 24px -12px rgba(47,107,255,.9);cursor:pointer;margin-top:4px">Tanlash</button>
+          <button type="button" id="l1CharGo" style="width:100%;height:52px;border-radius:999px;border:0;font-weight:800;font-size:16px;color:#fff;background:var(--l1-primary,#4f46e5);box-shadow:0 12px 24px -12px rgba(47,107,255,.9);cursor:pointer;margin-top:4px">${change ? "Saqlash" : "Tanlash"}</button>
         </div>`;
       wrap.querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => { gender = b.dataset.g; render(); }));
       wrap.querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => { chosen = b.dataset.id; render(); }));
+      const x = wrap.querySelector("[data-close]");
+      if (x) x.addEventListener("click", done);
       wrap.querySelector("#l1CharGo").addEventListener("click", async () => {
         const err = wrap.querySelector("#l1CharErr");
-        if (!chosen) { err.textContent = "Avval personajni tanlang."; return; }
+        if (!chosen) { err.textContent = "Avval rasmni tanlang."; return; }
         const btn = wrap.querySelector("#l1CharGo");
         btn.disabled = true; btn.style.opacity = ".6";
         try {
@@ -174,6 +190,7 @@
 
   function tick() { if (!open && needsPick()) showPicker(); }
 
-  window.L1_Characters = { list: CHARACTERS, html, svg: (id) => (BY_ID[id] ? svg(BY_ID[id]) : "") };
+  // "tg" means: show the Telegram photo (no cartoon), so svg("tg") is empty and avatar() falls back to the photo
+  window.L1_Characters = { list: CHARACTERS, html, svg: (id) => (BY_ID[id] ? svg(BY_ID[id]) : ""), open: () => showPicker({ change: true }) };
   setInterval(tick, 700);
 })(window, document);

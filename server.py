@@ -66,6 +66,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
+import green_city
 import race_engine
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -145,15 +146,16 @@ HINT_AFTER_TRIES = 2
 LATE_POINTS_DIVISOR = 2
 # Games are for practice; this cap keeps the homework the main source of rating points.
 GAME_DAILY_POINTS_CAP = int(os.getenv("GAME_DAILY_POINTS_CAP", "50"))
-# Pomodoro focus: one 25-minute block plants one tree in the shared Asaka forest.
+# Pomodoro focus: one finished 25-minute block earns one tree, which the student plants on the Yashil shahar map.
 FOCUS_SECONDS = int(os.getenv("FOCUS_SECONDS", "1500"))
 FOCUS_GRACE_SECONDS = 3  # clock jitter between the phone and the server
 FOCUS_CLAIM_SECONDS = 12 * 3600  # a finished block can still be claimed for half a day (app closed meanwhile)
+FOCUS_PAUSE_SECONDS = 600  # a pause stops the clock, but all pauses of one block together may last this long
 FOCUS_DAILY_TREES = 12  # 6 hours of focus per day
 FOCUS_REWARDED_TREES = 6  # trees per day that also earn points
 FOCUS_POINTS_PER_TREE = 10
-ASAKA_SPOTS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "asaka_spots.json")
-TREE_KINDS = ("oak", "pine", "cherry", "poplar", "apple", "plane")
+GREEN_ZONES = green_city.Zones()
+GREEN_MAX_ZONE_POINTS = 60  # a teacher-drawn area may have this many corners
 # Shared vocabulary memory (spaced repetition): a word moves up a Leitner box on every right answer and falls back on a
 # mistake. WORD_BOX_DAYS[box] is how long it rests before it is due again; from MASTERED_BOX on it counts as learned.
 WORD_BOX_DAYS = (0.25, 1, 3, 7, 14, 30)
@@ -492,16 +494,31 @@ def init_db() -> None:
                 PRIMARY KEY (student_id, mission)
             );
 
-            -- The shared Asaka forest: one tree per finished focus block.
-            CREATE TABLE IF NOT EXISTS trees (
+            -- Yashil shahar: a finished focus block earns one tree ('unplanted'); the student plants it on the map
+            -- ('planted'). A failed block wilts the student's latest planted tree ('wilted'); restoring it spends one
+            -- earned tree ('spent' is the one that was used).
+            CREATE TABLE IF NOT EXISTS green_trees (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id TEXT NOT NULL,
                 session_id TEXT NOT NULL UNIQUE,
-                spot_id TEXT NOT NULL,
-                lat REAL NOT NULL,
-                lon REAL NOT NULL,
-                kind TEXT NOT NULL,
-                planted_at INTEGER NOT NULL
+                state TEXT NOT NULL DEFAULT 'unplanted',   -- unplanted | planted | wilted | spent
+                kind TEXT,
+                lat REAL,
+                lon REAL,
+                earned_at INTEGER NOT NULL,
+                planted_at INTEGER,
+                wilted_at INTEGER,
+                restored_at INTEGER,
+                updated_at INTEGER NOT NULL
+            );
+
+            -- Extra planting areas drawn on the map by an administrator (a polygon as JSON [[lat, lon], ...]).
+            CREATE TABLE IF NOT EXISTS green_zones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                polygon TEXT NOT NULL,
+                created_by TEXT NOT NULL,
+                created_at INTEGER NOT NULL
             );
             """
         )
@@ -538,10 +555,22 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_points_time ON points_log(created_at);
             CREATE INDEX IF NOT EXISTS idx_answer_assignment ON answer_log(assignment_id);
             CREATE INDEX IF NOT EXISTS idx_focus_student ON focus_sessions(student_id, status);
-            CREATE INDEX IF NOT EXISTS idx_trees_student_time ON trees(student_id, planted_at);
-            CREATE INDEX IF NOT EXISTS idx_trees_spot ON trees(spot_id);
+            CREATE INDEX IF NOT EXISTS idx_green_student ON green_trees(student_id, state);
+            CREATE INDEX IF NOT EXISTS idx_green_pos ON green_trees(lat, lon);
+            CREATE INDEX IF NOT EXISTS idx_green_updated ON green_trees(updated_at);
             """
         )
+
+        # The pause columns of a focus block, and the old Asaka forest table (trees were placed by the server then;
+        # there is no way to carry them over, so it goes away once it is empty).
+        for col, col_def in (("paused_at", "INTEGER"), ("paused_total", "INTEGER NOT NULL DEFAULT 0")):
+            try:
+                conn.execute(f"ALTER TABLE focus_sessions ADD COLUMN {col} {col_def}")
+            except sqlite3.OperationalError:
+                pass
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'trees'").fetchone():
+            if conn.execute("SELECT COUNT(*) FROM trees").fetchone()[0] == 0:
+                conn.execute("DROP TABLE trees")
 
         for row in conn.execute("SELECT id, name FROM students WHERE name_key IS NULL").fetchall():
             conn.execute(
@@ -1613,6 +1642,18 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
         week_points = points_since(conn, week_start)
         all_points = points_since(conn, 0)
         streak = activity_streak(conn, user["id"], now)
+        # what the games gave this student: today (against the daily cap) and this week, per game, for the home screen
+        game_today = conn.execute(
+            "SELECT COALESCE(SUM(points), 0) FROM points_log WHERE student_id = ? AND source = 'game' AND created_at >= ?",
+            (user["id"], day_start_ts(now)),
+        ).fetchone()[0]
+        game_week = {
+            r["ref"]: r["p"]
+            for r in conn.execute(
+                "SELECT ref, SUM(points) AS p FROM points_log WHERE student_id = ? AND source = 'game' AND created_at >= ? GROUP BY ref",
+                (user["id"], week_start),
+            )
+        }
     week_rank = ranked(students, week_points)
     all_rank = ranked(students, all_points)
     me_week = next((e for e in week_rank if e["id"] == user["id"]), None)
@@ -1630,6 +1671,9 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
             "allRank": me_all["rank"] if me_all else None,
             "streak": streak,
             "students": len(students),
+            "gameToday": game_today,
+            "gameCap": GAME_DAILY_POINTS_CAP,
+            "gameWeek": game_week,
         },
     })
 
@@ -1816,50 +1860,90 @@ async def handle_words_get(request: web.Request) -> web.Response:
 
 
 # ---------------------------------------------------------------------------
-# Pomodoro focus blocks and the shared Asaka forest
+# Pomodoro focus blocks and Yashil shahar (the shared tree map)
 # ---------------------------------------------------------------------------
-_SPOTS_CACHE = {"mtime": None, "data": []}
+def refuse(message: str, status: int = 409, **extra) -> web.Response:
+    """An error answer that carries extra fields (ApiError only has a message)."""
+    return web.json_response(dict(extra, message=message), status=status)
 
 
-def load_asaka_spots() -> list:
-    """Real Asaka places (villages, schools, ...) a tree can be planted at, from asaka_spots.json."""
-    try:
-        mtime = os.path.getmtime(ASAKA_SPOTS_PATH)
-    except OSError:
-        return []
-    if _SPOTS_CACHE["mtime"] != mtime:
-        with open(ASAKA_SPOTS_PATH, encoding="utf-8") as f:
-            _SPOTS_CACHE.update(mtime=mtime, data=json.load(f))
-    return _SPOTS_CACHE["data"]
+def focus_pause_used(row, now: int) -> int:
+    """Seconds of pause that count: the earlier pauses plus a running one, never more than the budget."""
+    used = (row["paused_total"] or 0) + (max(0, now - row["paused_at"]) if row["paused_at"] else 0)
+    return min(FOCUS_PAUSE_SECONDS, used)
 
 
-def choose_tree_spot(conn):
-    """The place that is emptiest for its size, plus a fresh position inside it (golden-angle spiral, ~14 m apart)."""
-    spots = load_asaka_spots()
-    if not spots:
-        raise ApiError("Xarita ma'lumoti topilmadi.", 500)
-    counts = {r["spot_id"]: r["n"] for r in conn.execute("SELECT spot_id, COUNT(*) AS n FROM trees GROUP BY spot_id")}
-    spot = min(spots, key=lambda s: ((counts.get(s["id"], 0) + 1) / s["weight"], random.random()))
-    k = counts.get(spot["id"], 0)
-    cap = max(8, int((spot["radius"] / 14) ** 2))
-    r = spot["radius"] * math.sqrt(((k % cap) + 0.5) / cap)
-    theta = k * 2.399963 + (k // cap) * 0.9 + (sum(map(ord, spot["id"])) % 628) / 100
-    lat = spot["lat"] + r * math.cos(theta) / 111320
-    lon = spot["lon"] + r * math.sin(theta) / (111320 * math.cos(math.radians(spot["lat"])))
-    return spot, round(lat, 6), round(lon, 6)
+def focus_is_paused(row, now: int) -> bool:
+    return bool(row["paused_at"]) and focus_pause_used(row, now) < FOCUS_PAUSE_SECONDS
 
 
-def focus_trees_today(conn, student_id: str, now: int) -> int:
-    return conn.execute(
-        "SELECT COUNT(*) FROM trees WHERE student_id = ? AND planted_at >= ?", (student_id, day_start_ts(now))
-    ).fetchone()[0]
+def focus_active_seconds(row, now: int) -> int:
+    """How long the block has really run: the clock stands still while paused."""
+    if focus_is_paused(row, now):
+        return max(0, row["paused_at"] - row["started_at"] - (row["paused_total"] or 0))
+    return max(0, now - row["started_at"] - focus_pause_used(row, now))
 
 
 def focus_session_view(row, now: int) -> dict:
+    used = focus_pause_used(row, now)
     return {
-        "id": row["id"], "startedAt": row["started_at"], "seconds": row["seconds"],
-        "endsAt": row["started_at"] + row["seconds"], "now": now,
+        "id": row["id"], "startedAt": row["started_at"], "seconds": row["seconds"], "now": now,
+        "remaining": max(0, row["seconds"] - focus_active_seconds(row, now)),
+        "paused": focus_is_paused(row, now), "pauseLeft": FOCUS_PAUSE_SECONDS - used,
     }
+
+
+def focus_expired(row, now: int) -> bool:
+    """A block nobody came back to claim for half a day after it should have ended."""
+    return now > row["started_at"] + row["seconds"] + FOCUS_PAUSE_SECONDS + FOCUS_CLAIM_SECONDS
+
+
+def focus_done_today(conn, student_id: str, now: int) -> int:
+    return conn.execute(
+        "SELECT COUNT(*) FROM focus_sessions WHERE student_id = ? AND status = 'done' AND finished_at >= ?",
+        (student_id, day_start_ts(now)),
+    ).fetchone()[0]
+
+
+def focus_finished_total(conn, student_id: str) -> int:
+    return conn.execute("SELECT COUNT(*) FROM focus_sessions WHERE student_id = ? AND status = 'done'", (student_id,)).fetchone()[0]
+
+
+def green_counts(conn, student_id: str) -> dict:
+    out = {"unplanted": 0, "planted": 0, "wilted": 0}
+    for r in conn.execute("SELECT state, COUNT(*) AS n FROM green_trees WHERE student_id = ? GROUP BY state", (student_id,)):
+        if r["state"] in out:
+            out[r["state"]] = r["n"]
+    out["finished"] = focus_finished_total(conn, student_id)
+    out["kinds"] = green_city.unlocked_kinds(out["finished"])
+    return out
+
+
+def active_focus_row(conn, student_id: str):
+    return conn.execute(
+        "SELECT * FROM focus_sessions WHERE student_id = ? AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+        (student_id,),
+    ).fetchone()
+
+
+def tree_view(r, name: str = "") -> dict:
+    return {
+        "id": r["id"], "lat": r["lat"], "lon": r["lon"], "kind": r["kind"], "state": r["state"],
+        "at": r["planted_at"], "wiltedAt": r["wilted_at"], "ownerId": r["student_id"], "by": name,
+    }
+
+
+def wilt_latest_tree(conn, student_id: str, now: int):
+    """A failed block wilts the student's own latest planted tree (and never invents one if there is none)."""
+    r = conn.execute(
+        "SELECT * FROM green_trees WHERE student_id = ? AND state = 'planted' "
+        "ORDER BY COALESCE(restored_at, planted_at) DESC, id DESC LIMIT 1",
+        (student_id,),
+    ).fetchone()
+    if r is None:
+        return None
+    conn.execute("UPDATE green_trees SET state = 'wilted', wilted_at = ?, updated_at = ? WHERE id = ?", (now, now, r["id"]))
+    return conn.execute("SELECT * FROM green_trees WHERE id = ?", (r["id"],)).fetchone()
 
 
 async def handle_focus_start(request: web.Request) -> web.Response:
@@ -1867,58 +1951,97 @@ async def handle_focus_start(request: web.Request) -> web.Response:
     with get_db() as conn:
         user = require_user(conn, request)
         enforce_rate_limit(f"focus:{user['id']}", 40, 3600)
-        today = focus_trees_today(conn, user["id"], now)
+        conn.execute("BEGIN IMMEDIATE")
+        row = active_focus_row(conn, user["id"])
+        if row is not None:
+            if focus_expired(row, now):
+                conn.execute("UPDATE focus_sessions SET status = 'cancelled' WHERE id = ?", (row["id"],))
+            else:  # the app was closed meanwhile: hand the running block back instead of starting a second one
+                return refuse("Sizda tugallanmagan pomidor bor.", 409, active=focus_session_view(row, now))
+        today = focus_done_today(conn, user["id"], now)
         if today >= FOCUS_DAILY_TREES:
             raise ApiError("Bugun 6 soat dars qildingiz. Ertaga yana davom eting!", 409)
-        conn.execute("UPDATE focus_sessions SET status = 'cancelled' WHERE student_id = ? AND status = 'active'", (user["id"],))
         sid = secrets.token_hex(8)
         conn.execute(
             "INSERT INTO focus_sessions (id, student_id, started_at, seconds, status) VALUES (?, ?, ?, ?, 'active')",
             (sid, user["id"], now, FOCUS_SECONDS),
         )
         row = conn.execute("SELECT * FROM focus_sessions WHERE id = ?", (sid,)).fetchone()
-    return web.json_response(dict(focus_session_view(row, now), todayTrees=today, dailyTrees=FOCUS_DAILY_TREES))
+        counts = green_counts(conn, user["id"])
+    return web.json_response(dict(focus_session_view(row, now), todayTrees=today, dailyTrees=FOCUS_DAILY_TREES, unplanted=counts["unplanted"]))
 
 
-def tree_view(spot, tree_id, lat, lon, kind, planted_at, by="") -> dict:
-    return {"id": tree_id, "lat": lat, "lon": lon, "kind": kind, "at": planted_at, "by": by,
-            "spot": spot["name"] if spot else "", "spotKind": spot["kind"] if spot else ""}
+def _own_active_block(conn, request, data):
+    user = require_user(conn, request)
+    row = conn.execute(
+        "SELECT * FROM focus_sessions WHERE id = ? AND student_id = ?", (clean_text(data.get("id"), 32), user["id"])
+    ).fetchone()
+    if row is None:
+        raise ApiError("Seans topilmadi.", 404)
+    return user, row
+
+
+async def handle_focus_pause(request: web.Request) -> web.Response:
+    now = int(time.time())
+    data = await read_json(request)
+    with get_db() as conn:
+        user, row = _own_active_block(conn, request, data)
+        if row["status"] != "active":
+            raise ApiError("Bu seans tugagan.", 409)
+        if not focus_is_paused(row, now):
+            if focus_pause_used(row, now) >= FOCUS_PAUSE_SECONDS:
+                raise ApiError("Pauza vaqti tugagan. Pomidorni davom ettiring.", 409)
+            if focus_active_seconds(row, now) >= row["seconds"]:
+                raise ApiError("Vaqt tugadi, pauza kerak emas.", 409)
+            conn.execute("UPDATE focus_sessions SET paused_at = ? WHERE id = ?", (now, row["id"]))
+            row = conn.execute("SELECT * FROM focus_sessions WHERE id = ?", (row["id"],)).fetchone()
+    return web.json_response(focus_session_view(row, now))
+
+
+async def handle_focus_resume(request: web.Request) -> web.Response:
+    now = int(time.time())
+    data = await read_json(request)
+    with get_db() as conn:
+        user, row = _own_active_block(conn, request, data)
+        if row["status"] != "active":
+            raise ApiError("Bu seans tugagan.", 409)
+        if row["paused_at"]:
+            conn.execute(
+                "UPDATE focus_sessions SET paused_total = ?, paused_at = NULL WHERE id = ?",
+                (focus_pause_used(row, now), row["id"]),
+            )
+            row = conn.execute("SELECT * FROM focus_sessions WHERE id = ?", (row["id"],)).fetchone()
+    return web.json_response(focus_session_view(row, now))
 
 
 async def handle_focus_finish(request: web.Request) -> web.Response:
-    """Plants the tree once the whole focus block has run on the server's clock (idempotent per block)."""
+    """Earns the tree once the whole block has run on the server's clock (idempotent per block)."""
     now = int(time.time())
+    data = await read_json(request)
     with get_db() as conn:
-        user = require_user(conn, request)
+        user, row = _own_active_block(conn, request, data)
         enforce_rate_limit(f"focusfin:{user['id']}", 60, 3600)
-        data = await read_json(request)
-        sid = clean_text(data.get("id"), 32)
-        row = conn.execute("SELECT * FROM focus_sessions WHERE id = ? AND student_id = ?", (sid, user["id"])).fetchone()
-        if row is None:
-            raise ApiError("Seans topilmadi.", 404)
-        spots = {s["id"]: s for s in load_asaka_spots()}
+        conn.execute("BEGIN IMMEDIATE")
         if row["status"] == "done":
-            t = conn.execute("SELECT * FROM trees WHERE session_id = ?", (sid,)).fetchone()
-            return web.json_response({"already": True, "awarded": 0, "todayTrees": focus_trees_today(conn, user["id"], now),
-                                      "tree": tree_view(spots.get(t["spot_id"]), t["id"], t["lat"], t["lon"], t["kind"], t["planted_at"], user["name"])})
+            return web.json_response({"already": True, "awarded": 0, "todayTrees": focus_done_today(conn, user["id"], now),
+                                      "dailyTrees": FOCUS_DAILY_TREES, **green_counts(conn, user["id"])})
         if row["status"] != "active":
             raise ApiError("Bu seans bekor qilingan.", 409)
-        end = row["started_at"] + row["seconds"]
-        if now < end - FOCUS_GRACE_SECONDS:
-            raise ApiError(f"Hali vaqt tugamadi. Yana {end - now} soniya.", 409)
-        if now > end + FOCUS_CLAIM_SECONDS:
-            conn.execute("UPDATE focus_sessions SET status = 'cancelled' WHERE id = ?", (sid,))
+        left = row["seconds"] - focus_active_seconds(row, now)
+        if left > FOCUS_GRACE_SECONDS:
+            raise ApiError(f"Hali vaqt tugamadi. Yana {left} soniya.", 409)
+        if focus_expired(row, now):
+            conn.execute("UPDATE focus_sessions SET status = 'cancelled' WHERE id = ?", (row["id"],))
+            conn.commit()
             raise ApiError("Seans muddati o'tib ketdi. Qaytadan boshlang.", 409)
-        today = focus_trees_today(conn, user["id"], now)
+        today = focus_done_today(conn, user["id"], now)
         if today >= FOCUS_DAILY_TREES:
             raise ApiError("Bugun 6 soat dars qildingiz. Ertaga yana davom eting!", 409)
-        spot, lat, lon = choose_tree_spot(conn)
-        kind = random.choice(TREE_KINDS)
-        cur = conn.execute(
-            "INSERT INTO trees (student_id, session_id, spot_id, lat, lon, kind, planted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user["id"], sid, spot["id"], lat, lon, kind, now),
+        conn.execute("UPDATE focus_sessions SET status = 'done', finished_at = ?, paused_at = NULL WHERE id = ?", (now, row["id"]))
+        conn.execute(
+            "INSERT INTO green_trees (student_id, session_id, state, earned_at, updated_at) VALUES (?, ?, 'unplanted', ?, ?)",
+            (user["id"], row["id"], now, now),
         )
-        conn.execute("UPDATE focus_sessions SET status = 'done', finished_at = ? WHERE id = ?", (now, sid))
         rewarded = conn.execute(
             "SELECT COUNT(*) FROM points_log WHERE student_id = ? AND source = 'focus' AND created_at >= ?",
             (user["id"], day_start_ts(now)),
@@ -1927,79 +2050,248 @@ async def handle_focus_finish(request: web.Request) -> web.Response:
         if awarded:
             conn.execute(
                 "INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'focus', ?, ?, ?)",
-                (user["id"], sid, awarded, now),
+                (user["id"], row["id"], awarded, now),
             )
-        tree = tree_view(spot, cur.lastrowid, lat, lon, kind, now, user["name"])
-    return web.json_response({"already": False, "awarded": awarded, "todayTrees": today + 1, "dailyTrees": FOCUS_DAILY_TREES, "tree": tree})
+        counts = green_counts(conn, user["id"])
+    return web.json_response({"already": False, "awarded": awarded, "todayTrees": today + 1, "dailyTrees": FOCUS_DAILY_TREES, **counts})
 
 
 async def handle_focus_cancel(request: web.Request) -> web.Response:
+    """Giving up a block wilts the student's latest planted tree. A pause never does."""
+    now = int(time.time())
+    data = await read_json(request)
     with get_db() as conn:
-        user = require_user(conn, request)
-        data = await read_json(request)
-        conn.execute(
-            "UPDATE focus_sessions SET status = 'cancelled' WHERE id = ? AND student_id = ? AND status = 'active'",
-            (clean_text(data.get("id"), 32), user["id"]),
-        )
-    return web.json_response({"status": "ok"})
+        user, row = _own_active_block(conn, request, data)
+        conn.execute("BEGIN IMMEDIATE")
+        wilted = None
+        if row["status"] == "active":
+            if row["seconds"] - focus_active_seconds(row, now) <= FOCUS_GRACE_SECONDS:
+                raise ApiError("Vaqt tugadi, daraxtni oling.", 409)
+            conn.execute("UPDATE focus_sessions SET status = 'cancelled', paused_at = NULL WHERE id = ?", (row["id"],))
+            r = wilt_latest_tree(conn, user["id"], now)
+            wilted = tree_view(r, user["name"]) if r else None
+        counts = green_counts(conn, user["id"])
+    return web.json_response({"status": "ok", "wiltedTree": wilted, **counts})
 
 
 async def handle_focus_state(request: web.Request) -> web.Response:
-    """The block that is running (or finished but not yet planted), so a reload or a closed app resumes it."""
+    """The block that is running (or finished but not yet claimed), so a reload or a closed app resumes it."""
     now = int(time.time())
     with get_db() as conn:
         user = require_user(conn, request)
-        row = conn.execute(
-            "SELECT * FROM focus_sessions WHERE student_id = ? AND status = 'active' ORDER BY started_at DESC LIMIT 1",
-            (user["id"],),
+        row = active_focus_row(conn, user["id"])
+        active = focus_session_view(row, now) if row and not focus_expired(row, now) else None
+        today = focus_done_today(conn, user["id"], now)
+        counts = green_counts(conn, user["id"])
+        latest = conn.execute(
+            "SELECT * FROM green_trees WHERE student_id = ? AND state = 'planted' "
+            "ORDER BY COALESCE(restored_at, planted_at) DESC, id DESC LIMIT 1", (user["id"],)).fetchone()
+        city = conn.execute("SELECT COUNT(*) FROM green_trees WHERE state = 'planted'").fetchone()[0]
+    return web.json_response({"active": active, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES, "now": now, "cityTrees": city,
+                              "pauseSeconds": FOCUS_PAUSE_SECONDS, "latestTree": tree_view(latest, user["name"]) if latest else None, **counts})
+
+
+def custom_green_rings(conn) -> list:
+    rings = []
+    for r in conn.execute("SELECT polygon FROM green_zones"):
+        try:
+            ring = json.loads(r["polygon"])
+        except ValueError:
+            continue
+        if isinstance(ring, list) and len(ring) >= 3:
+            rings.append(ring)
+    return rings
+
+
+def read_coordinates(data: dict) -> tuple:
+    try:
+        lat, lon = float(data.get("lat")), float(data.get("lon"))
+    except (TypeError, ValueError):
+        raise ApiError("Joy noto'g'ri berilgan.", 400)
+    if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
+        raise ApiError("Joy noto'g'ri berilgan.", 400)
+    return round(lat, 7), round(lon, 7)
+
+
+def judge_green_spot(conn, lat: float, lon: float, exclude_id=None) -> dict:
+    """May a tree stand here? Checks the ground first, then the 2 m rule against every planted or wilted tree."""
+    rings = custom_green_rings(conn)
+    if not GREEN_ZONES.available() and not rings:
+        raise ApiError("Yashil hududlar ma'lumoti topilmadi.", 503)
+    dlat, dlon = green_city.degree_box(lat, green_city.NEAR_WINDOW_M)
+    near = conn.execute(
+        "SELECT g.*, s.name AS owner FROM green_trees g LEFT JOIN students s ON s.id = g.student_id "
+        "WHERE g.state IN ('planted', 'wilted') AND g.lat BETWEEN ? AND ? AND g.lon BETWEEN ? AND ?",
+        (lat - dlat, lat + dlat, lon - dlon, lon + dlon),
+    ).fetchall()
+    near = [r for r in near if r["id"] != exclude_id]
+    distance, hit = green_city.nearest_tree(lat, lon, near)
+    verdict = GREEN_ZONES.judge(lat, lon, rings)
+    out = {"ok": False, "code": verdict, "distance": None if distance is None else round(distance, 2),
+           "nearest": None if hit is None else {"by": hit["owner"] or "", "kind": hit["kind"], "state": hit["state"]}}
+    if verdict != "ok":
+        out["message"] = green_city.REASONS[verdict]
+    elif distance is not None and distance < green_city.MIN_DISTANCE_M:
+        out["code"] = "close"
+        out["message"] = green_city.too_close_message(distance)
+    else:
+        out["ok"], out["code"], out["message"] = True, "ok", ""
+    return out
+
+
+async def handle_green_check(request: web.Request) -> web.Response:
+    """The preview before planting: nothing is stored."""
+    data = await read_json(request)
+    lat, lon = read_coordinates(data)
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"greencheck:{user['id']}", 1200, 3600)
+        verdict = judge_green_spot(conn, lat, lon)
+    return web.json_response(verdict)
+
+
+async def handle_green_plant(request: web.Request) -> web.Response:
+    now = int(time.time())
+    data = await read_json(request)
+    lat, lon = read_coordinates(data)
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"greenplant:{user['id']}", 300, 3600)
+        # one writer at a time, so two requests for the same spot can never both pass the 2 m check
+        conn.execute("BEGIN IMMEDIATE")
+        credit = conn.execute(
+            "SELECT * FROM green_trees WHERE student_id = ? AND state = 'unplanted' ORDER BY earned_at, id LIMIT 1", (user["id"],)
         ).fetchone()
-        active = None
-        if row and now <= row["started_at"] + row["seconds"] + FOCUS_CLAIM_SECONDS:
-            active = focus_session_view(row, now)
-        today = focus_trees_today(conn, user["id"], now)
-    return web.json_response({"active": active, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES, "now": now})
+        if credit is None:
+            raise ApiError("Ekadigan daraxtingiz yo'q. Avval pomidorni tugating.", 409)
+        counts = green_counts(conn, user["id"])
+        kind = clean_text(data.get("kind"), 20) or random.choice(green_city.COMMON_KINDS)
+        if kind not in counts["kinds"]:
+            raise ApiError("Bu daraxt turi hali ochilmagan.", 400)
+        verdict = judge_green_spot(conn, lat, lon)
+        if not verdict["ok"]:
+            return refuse(verdict["message"], 409, code=verdict["code"], distance=verdict["distance"])
+        conn.execute(
+            "UPDATE green_trees SET state = 'planted', kind = ?, lat = ?, lon = ?, planted_at = ?, updated_at = ? WHERE id = ?",
+            (kind, lat, lon, now, now, credit["id"]),
+        )
+        tree = conn.execute("SELECT * FROM green_trees WHERE id = ?", (credit["id"],)).fetchone()
+        counts = green_counts(conn, user["id"])
+    return web.json_response({"tree": tree_view(tree, user["name"]), "now": now, **counts})
 
 
-async def handle_focus_forest(request: web.Request) -> web.Response:
-    """Everybody's trees (optionally only the ones after `after`), the weekly planters and the user's own totals."""
+async def handle_green_restore(request: web.Request) -> web.Response:
+    """A wilted tree comes back to life for one earned tree (one finished Pomodoro)."""
+    now = int(time.time())
+    data = await read_json(request)
+    try:
+        tree_id = int(data.get("id"))
+    except (TypeError, ValueError):
+        raise ApiError("Daraxt topilmadi.", 404)
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"greenrestore:{user['id']}", 120, 3600)
+        conn.execute("BEGIN IMMEDIATE")
+        tree = conn.execute(
+            "SELECT * FROM green_trees WHERE id = ? AND student_id = ? AND state = 'wilted'", (tree_id, user["id"])
+        ).fetchone()
+        if tree is None:
+            raise ApiError("So'lgan daraxt topilmadi.", 404)
+        credit = conn.execute(
+            "SELECT id FROM green_trees WHERE student_id = ? AND state = 'unplanted' ORDER BY earned_at, id LIMIT 1", (user["id"],)
+        ).fetchone()
+        if credit is None:
+            raise ApiError("Tiklash uchun 1 ta pomidor (ekilmagan daraxt) kerak. Avval pomidorni tugating.", 409)
+        conn.execute("UPDATE green_trees SET state = 'spent', updated_at = ? WHERE id = ?", (now, credit["id"]))
+        conn.execute(
+            "UPDATE green_trees SET state = 'planted', restored_at = ?, wilted_at = NULL, updated_at = ? WHERE id = ?",
+            (now, now, tree["id"]),
+        )
+        tree = conn.execute("SELECT * FROM green_trees WHERE id = ?", (tree["id"],)).fetchone()
+        counts = green_counts(conn, user["id"])
+    return web.json_response({"tree": tree_view(tree, user["name"]), "now": now, **counts})
+
+
+async def handle_green_city(request: web.Request) -> web.Response:
+    """Everybody's planted and wilted trees (only the ones changed since `since`), the planters and the user's totals."""
     now = int(time.time())
     try:
-        after = max(0, int(request.query.get("after", "0")))
+        since = max(0, int(request.query.get("since", "0")))
     except ValueError:
-        after = 0
-    spots = {s["id"]: s for s in load_asaka_spots()}
+        since = 0
     with get_db() as conn:
         user = require_user(conn, request)
         rows = conn.execute(
-            "SELECT t.id, t.lat, t.lon, t.kind, t.planted_at, t.spot_id, t.student_id, s.name FROM trees t "
-            "LEFT JOIN students s ON s.id = t.student_id WHERE t.id > ? ORDER BY t.id LIMIT 3000",
-            (after,),
+            "SELECT g.*, s.name FROM green_trees g LEFT JOIN students s ON s.id = g.student_id "
+            "WHERE g.state IN ('planted', 'wilted') AND g.updated_at >= ? ORDER BY g.id LIMIT 6000",
+            (since,),
         ).fetchall()
-        total = conn.execute("SELECT COUNT(*) FROM trees").fetchone()[0]
-        mine = conn.execute("SELECT COUNT(*) FROM trees WHERE student_id = ?", (user["id"],)).fetchone()[0]
-        filled = conn.execute("SELECT COUNT(DISTINCT spot_id) FROM trees").fetchone()[0]
+        planted = conn.execute("SELECT COUNT(*) FROM green_trees WHERE state = 'planted'").fetchone()[0]
+        wilted = conn.execute("SELECT COUNT(*) FROM green_trees WHERE state = 'wilted'").fetchone()[0]
 
-        def board(since):
+        def board(since_ts):
             out = []
             for r in conn.execute(
-                "SELECT s.*, COUNT(*) AS n FROM trees t JOIN students s ON s.id = t.student_id "
-                "WHERE t.planted_at >= ? GROUP BY s.id ORDER BY n DESC, MIN(t.planted_at) LIMIT 10",
-                (since,),
+                "SELECT s.*, SUM(g.state = 'planted') AS n, SUM(g.state = 'wilted') AS w FROM green_trees g "
+                "JOIN students s ON s.id = g.student_id WHERE g.state IN ('planted', 'wilted') AND g.planted_at >= ? "
+                "GROUP BY s.id HAVING n > 0 OR w > 0 ORDER BY n DESC, MIN(g.planted_at) LIMIT 15",
+                (since_ts,),
             ).fetchall():
                 out.append({"id": r["id"], "name": r["name"], "photoUrl": avatar_url(r), "character": character_of(r),
-                            "trees": r["n"], "minutes": r["n"] * FOCUS_SECONDS // 60})
+                            "trees": r["n"] or 0, "wilted": r["w"] or 0})
             return out
 
-        week = board(week_start_ts(now))
-        alltime = board(0)
-        today = focus_trees_today(conn, user["id"], now)
-    return web.json_response({
-        "trees": [dict(tree_view(spots.get(r["spot_id"]), r["id"], r["lat"], r["lon"], r["kind"], r["planted_at"], r["name"] or ""),
-                       mine=r["student_id"] == user["id"]) for r in rows],
-        "total": total, "mine": mine, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES,
-        "spotsFilled": filled, "spotsTotal": len(spots), "week": week, "all": alltime, "now": now,
-        "meId": user["id"],
-    })
+        zones = [{"id": z["id"], "name": z["name"], "polygon": json.loads(z["polygon"])}
+                 for z in conn.execute("SELECT * FROM green_zones ORDER BY id")]
+        counts = green_counts(conn, user["id"])
+        today = focus_done_today(conn, user["id"], now)
+        payload = {
+            "trees": [tree_view(r, r["name"] or "") for r in rows],
+            "cityTrees": planted, "cityWilted": wilted, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES,
+            "week": board(week_start_ts(now)), "all": board(0), "zones": zones, "now": now, "meId": user["id"],
+            "minDistance": green_city.MIN_DISTANCE_M, "rare": [{"kind": k, "need": n} for k, n in green_city.RARE_KINDS],
+            "isAdmin": user["role"] == "admin", **counts,
+        }
+    return web.json_response(payload)
+
+
+def read_zone_polygon(data: dict) -> list:
+    pts = data.get("polygon")
+    if not isinstance(pts, list) or not 3 <= len(pts) <= GREEN_MAX_ZONE_POINTS:
+        raise ApiError("Hudud kamida 3 ta nuqtadan iborat bo'lishi kerak.", 400)
+    ring = []
+    for p in pts:
+        if not isinstance(p, (list, tuple)) or len(p) != 2:
+            raise ApiError("Hudud nuqtalari noto'g'ri.", 400)
+        lat, lon = read_coordinates({"lat": p[0], "lon": p[1]})
+        if not (40.4 <= lat <= 40.9 and 71.9 <= lon <= 72.6):
+            raise ApiError("Hudud Asaka tumanidan tashqarida.", 400)
+        ring.append([lat, lon])
+    lats, lons = [p[0] for p in ring], [p[1] for p in ring]
+    if max(lats) - min(lats) > 0.03 or max(lons) - min(lons) > 0.04:
+        raise ApiError("Hudud juda katta (3 km dan oshmasin).", 400)
+    return ring
+
+
+async def handle_green_zone_add(request: web.Request) -> web.Response:
+    data = await read_json(request)
+    ring = read_zone_polygon(data)
+    name = clean_text(data.get("name"), 60) or "Yangi hudud"
+    with get_db() as conn:
+        user = require_user(conn, request, roles=("admin",))
+        cur = conn.execute(
+            "INSERT INTO green_zones (name, polygon, created_by, created_at) VALUES (?, ?, ?, ?)",
+            (name, json.dumps(ring), user["id"], int(time.time())),
+        )
+    return web.json_response({"zone": {"id": cur.lastrowid, "name": name, "polygon": ring}})
+
+
+async def handle_green_zone_delete(request: web.Request) -> web.Response:
+    data = await read_json(request)
+    with get_db() as conn:
+        require_user(conn, request, roles=("admin",))
+        conn.execute("DELETE FROM green_zones WHERE id = ?", (clean_text(data.get("id"), 12),))
+    return web.json_response({"status": "ok"})
 
 
 # ---------------------------------------------------------------------------
@@ -2831,10 +3123,17 @@ def build_web_app() -> web.Application:
     web_app.router.add_post("/api/words/report", handle_words_report)
     web_app.router.add_get("/api/words", handle_words_get)
     web_app.router.add_post("/api/focus/start", handle_focus_start)
+    web_app.router.add_post("/api/focus/pause", handle_focus_pause)
+    web_app.router.add_post("/api/focus/resume", handle_focus_resume)
     web_app.router.add_post("/api/focus/finish", handle_focus_finish)
     web_app.router.add_post("/api/focus/cancel", handle_focus_cancel)
     web_app.router.add_get("/api/focus/state", handle_focus_state)
-    web_app.router.add_get("/api/focus/forest", handle_focus_forest)
+    web_app.router.add_get("/api/green", handle_green_city)
+    web_app.router.add_post("/api/green/check", handle_green_check)
+    web_app.router.add_post("/api/green/plant", handle_green_plant)
+    web_app.router.add_post("/api/green/restore", handle_green_restore)
+    web_app.router.add_post("/api/green/zones", handle_green_zone_add)
+    web_app.router.add_post("/api/green/zones/delete", handle_green_zone_delete)
     web_app.router.add_post("/api/character", handle_set_character)
     web_app.router.add_get("/avatars/{student_id}.jpg", handle_avatar)
     return web_app

@@ -1,108 +1,114 @@
-/* Pomodoro focus mode + the shared Asaka forest map (focus.js). Full screen, above the whole app. */
-#l1Focus {
-  position: fixed; inset: 0; z-index: 9000; display: none; flex-direction: column;
-  background: radial-gradient(120% 70% at 50% 0%, #fff7ed 0%, #fdeedd 55%, #f9e3d0 100%);
-  color: var(--l1-ink); overflow: hidden;
-  padding-top: var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px));
+/* The floating Pomodoro tomato and the sheet that opens from it (focus.js). */
+.gv-pomo {
+  position: fixed; right: 12px; z-index: 8000;
+  bottom: calc(var(--l1-nav-h, 64px) + var(--l1-safe-bottom-total, 0px) + 14px);
+  display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 20px);
+  padding: 4px 9px 4px 4px; border-radius: 999px; text-align: left; touch-action: none; user-select: none; -webkit-user-select: none;
+  background: var(--l1-card); color: var(--l1-ink); border: 1px solid var(--l1-line);
+  box-shadow: 0 14px 28px -12px rgba(30, 40, 110, .5), 0 2px 6px rgba(30, 40, 110, .12);
+  transition: transform .15s ease, box-shadow .2s ease;
 }
-#l1Focus.is-open { display: flex; }
-#l1Focus[data-view="map"], #l1Focus[data-view="plant"] { background: var(--l1-bg); }
-html[data-theme="dark"] #l1Focus { background: radial-gradient(120% 70% at 50% 0%, #1f2744 0%, #141a30 60%, #0e1426 100%); }
-html[data-theme="dark"] #l1Focus[data-view="map"], html[data-theme="dark"] #l1Focus[data-view="plant"] { background: var(--l1-bg); }
+.gv-pomo[hidden] { display: none; }
+body:not(.l1-has-nav) .gv-pomo { bottom: calc(14px + var(--l1-safe-bottom-total, 0px)); }
+.gv-pomo:active { transform: scale(.97); }
+.gv-pomo.is-drag { transform: scale(1.04); box-shadow: 0 20px 34px -12px rgba(30, 40, 110, .6); }
+.gv-tomato { position: relative; flex: none; width: 40px; height: 40px; }
+.gv-tomato svg { width: 100%; height: 100%; overflow: visible; }
+.gv-track { fill: none; stroke: rgba(120, 90, 60, .18); stroke-width: 7; }
+.gv-ring { fill: none; stroke: #ef4444; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .4s linear; }
+.gv-pomo[data-state="paused"] .gv-ring, .gv-sheet[data-state="paused"] .gv-ring { stroke: #f59e0b; }
+.gv-fruit { transform-origin: 60px 64px; transform: scale(.7); }
+.gv-pomo[data-state="running"] .gv-fruit { animation: gv-beat 2.4s ease-in-out infinite; }
+.gv-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.gv-time { font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.gv-city { font-size: 12px; font-weight: 700; color: var(--l1-muted); white-space: nowrap; }
+.gv-tree { flex: none; width: 30px; height: 36px; margin-left: -2px; transform-origin: 50% 100%; animation: gv-sway 4.2s ease-in-out infinite; }
+.gv-tree svg { width: 100%; height: 100%; overflow: visible; }
+.gv-pomo[data-state="paused"] .gv-tree { animation-play-state: paused; opacity: .75; }
+.gv-badge {
+  position: absolute; left: 2px; top: -9px; min-width: 24px; height: 22px; padding: 0 7px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 900; color: #fff; background: #1f9d55; border: 2px solid var(--l1-card); animation: gv-pop 2s ease-in-out infinite;
+}
+@keyframes gv-beat { 0%, 100% { transform: scale(.7); } 50% { transform: scale(.74); } }
+@keyframes gv-sway { 0%, 100% { transform: rotate(-2.5deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes gv-pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
-.fc-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; flex: none; }
-.fc-back { display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px 0 8px; border-radius: 999px; font-size: 13px; font-weight: 800;
-  background: var(--l1-card); color: var(--l1-ink); box-shadow: var(--l1-shadow); border: 1px solid var(--l1-line); }
-.fc-chip { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 800;
-  background: var(--l1-card); color: var(--l1-muted); border: 1px solid var(--l1-line); white-space: nowrap; }
-.fc-chip b { color: var(--l1-ink); }
-.fc-title { font-size: 15px; font-weight: 900; letter-spacing: -.01em; }
+/* ---- the sheet ---- */
+.gv-wrap { position: fixed; inset: 0; z-index: 8800; display: flex; align-items: flex-end; justify-content: center; }
+.gv-wrap[hidden] { display: none; }
+.gv-back { position: absolute; inset: 0; background: rgba(12, 16, 40, .45); animation: gv-fade .2s ease both; }
+.gv-sheet {
+  position: relative; width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px;
+  padding: 14px 18px calc(18px + var(--l1-safe-bottom-total, 0px)); background: var(--l1-card); color: var(--l1-ink);
+  border-radius: 28px 28px 0 0; box-shadow: 0 -18px 40px -16px rgba(10, 14, 40, .5); animation: gv-up .28s cubic-bezier(.2, .9, .3, 1) both;
+  max-height: 92vh; overflow-y: auto;
+}
+.gv-sheet h2 { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -.02em; text-align: center; }
+.gv-line { margin: 0; text-align: center; font-size: 14px; line-height: 1.45; color: var(--l1-muted); }
+.gv-pts { color: #1f8f4e; }
+.gv-head { display: flex; align-items: center; justify-content: space-between; }
+.gv-chip { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 800;
+  background: var(--l1-primary-50); color: var(--l1-muted); }
+.gv-chip b { color: var(--l1-ink); }
+.gv-x { width: 34px; height: 34px; border-radius: 50%; font-size: 16px; font-weight: 800; color: var(--l1-muted); background: var(--l1-primary-50); }
+.gv-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.gv-btn { min-height: 48px; padding: 0 22px; border-radius: 16px; font-size: 15px; font-weight: 900; background: var(--l1-primary); color: #fff;
+  box-shadow: 0 12px 22px -12px rgba(79, 91, 240, .9); transition: transform .12s ease; }
+.gv-btn:active { transform: scale(.96); }
+.gv-btn:disabled { opacity: .45; box-shadow: none; }
+.gv-btn.is-green { background: #1f8f4e; box-shadow: 0 12px 22px -12px rgba(31, 143, 78, .9); }
+.gv-btn.is-quiet { background: var(--l1-primary-50); color: var(--l1-ink); box-shadow: none; }
+.gv-btn.is-danger { background: #e5484d; box-shadow: 0 12px 22px -12px rgba(229, 72, 77, .9); }
+.gv-link { align-self: center; padding: 6px 12px; font-size: 14px; font-weight: 800; color: var(--l1-muted); }
 
-/* ---- the focus timer ---- */
-.fc-center { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 8px 20px 28px; text-align: center; }
-.fc-tomato { position: relative; width: min(64vw, 250px); aspect-ratio: 1; display: grid; place-items: center; }
-.fc-tomato svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.fc-ring-track { fill: none; stroke: rgba(120, 90, 60, .16); stroke-width: 5; }
-.fc-ring { fill: none; stroke: #ef4444; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
-#l1Focus[data-phase="rest"] .fc-ring, #l1Focus[data-phase="ready"] .fc-ring { stroke: #22a05b; }
-.fc-fruit { transform-origin: 60px 64px; filter: drop-shadow(0 10px 14px rgba(185, 28, 28, .35)); animation: fc-beat 2.6s ease-in-out infinite; }
-@keyframes fc-beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
-.fc-time { position: relative; margin-top: 18%; font-size: clamp(38px, 11vw, 54px); font-weight: 900; letter-spacing: -.03em; color: #fff;
+.gv-idle, .gv-run, .gv-earned, .gv-leave { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.gv-start-wrap { display: grid; place-items: center; padding-top: 4px; }
+.gv-start { position: relative; width: min(46vw, 170px); aspect-ratio: 1; display: grid; place-items: center; }
+.gv-start-tomato { position: absolute; inset: 0; }
+.gv-start-tomato svg, .gv-big-ring svg { width: 100%; height: 100%; overflow: visible; }
+.gv-start .gv-fruit, .gv-big-ring .gv-fruit { transform: scale(1); filter: drop-shadow(0 10px 14px rgba(185, 28, 28, .35)); animation: gv-beat2 2.6s ease-in-out infinite; }
+.gv-start-label { position: relative; margin-top: 16%; font-size: 30px; font-weight: 900; color: #fff; text-shadow: 0 2px 6px rgba(127, 29, 29, .55); font-variant-numeric: tabular-nums; }
+@keyframes gv-beat2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.gv-big-ring { position: relative; align-self: center; width: min(54vw, 210px); aspect-ratio: 1; display: grid; place-items: center; }
+.gv-big-ring svg { position: absolute; inset: 0; }
+.gv-big-ring .gv-ring { stroke-width: 5; }
+.gv-big-ring .gv-track { stroke-width: 5; }
+.gv-big-time { position: relative; margin-top: 16%; font-size: clamp(36px, 10.5vw, 50px); font-weight: 900; letter-spacing: -.03em; color: #fff;
   text-shadow: 0 2px 6px rgba(127, 29, 29, .55); font-variant-numeric: tabular-nums; }
-.fc-phase { font-size: 19px; font-weight: 900; letter-spacing: -.01em; }
-.fc-hint { max-width: 330px; font-size: 13.5px; line-height: 1.5; color: var(--l1-muted); }
-.fc-steps { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-.fc-steps span { font-size: 12px; font-weight: 800; padding: 4px 11px; border-radius: 999px; background: rgba(255, 255, 255, .7); color: var(--l1-muted); border: 1px solid var(--l1-line); }
-.fc-steps span.is-now { background: var(--l1-primary); color: #fff; border-color: transparent; }
-.fc-steps span.is-done { background: #e3f7ea; color: #22a05b; }
-html[data-theme="dark"] .fc-steps span { background: rgba(255, 255, 255, .06); }
-html[data-theme="dark"] .fc-steps span.is-done { background: rgba(34, 197, 94, .15); color: #6ee7a1; }
-.fc-btn { min-height: 46px; padding: 0 22px; border-radius: 16px; font-size: 14.5px; font-weight: 900; background: var(--l1-primary); color: #fff;
-  box-shadow: 0 12px 22px -12px rgba(79, 91, 240, .9); }
-.fc-btn.is-green { background: #1f8f4e; box-shadow: 0 12px 22px -12px rgba(31, 143, 78, .9); }
-.fc-btn.is-quiet { background: var(--l1-card); color: var(--l1-ink); border: 1px solid var(--l1-line); box-shadow: none; }
-.fc-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.fc-note { font-size: 12px; color: var(--l1-muted); }
+.gv-grow { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.gv-grow-art { width: 54px; height: 64px; transform-origin: 50% 100%; animation: gv-sway 4.2s ease-in-out infinite; }
+.gv-grow-art svg { width: 100%; height: 100%; overflow: visible; }
+.gv-grow-text { font-size: 14px; font-weight: 800; color: var(--l1-muted); }
+.gv-pause-line { text-align: center; font-size: 13px; font-weight: 700; color: var(--l1-muted); }
+.gv-pause-line b { color: var(--l1-ink); font-variant-numeric: tabular-nums; }
 
-/* ---- planting / map screens ---- */
-.fc-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 14px calc(22px + var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
-.fc-card { background: var(--l1-card); border: 1px solid var(--l1-line); border-radius: 22px; box-shadow: var(--l1-shadow); padding: 16px; }
-.fc-mapbox { position: relative; border-radius: 22px; overflow: hidden; border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); background: #dfe9d9; }
-.fc-mapbox.is-tall { height: min(62vh, 560px); }
-.fc-mapbox.is-short { height: min(40vh, 330px); }
-.fc-map { position: absolute; inset: 0; }
-.fc-maploading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #5d6b55; z-index: 400; pointer-events: none; }
-.fc-plant { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
-.fc-big { font-size: 22px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
-.fc-place { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: #1f8f4e; }
-html[data-theme="dark"] .fc-place { color: #6ee7a1; }
-.fc-rest { display: flex; align-items: center; gap: 12px; }
-.fc-rest .fc-mini { position: relative; width: 62px; height: 62px; flex: none; display: grid; place-items: center; font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.fc-mini svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.fc-level { display: flex; flex-direction: column; gap: 8px; }
-.fc-bar-track { height: 9px; border-radius: 999px; background: var(--l1-primary-50); overflow: hidden; }
-.fc-bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #34c759, #1f8f4e); transition: width .6s ease; }
-.fc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.fc-stat { text-align: center; padding: 10px 4px; border-radius: 16px; background: var(--l1-primary-50); }
-.fc-stat b { display: block; font-size: 19px; font-weight: 900; color: var(--l1-ink); }
-.fc-stat span { font-size: 10.5px; font-weight: 800; color: var(--l1-muted); }
-.fc-seg { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--l1-primary-50); }
-.fc-seg button { height: 28px; padding: 0 14px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--l1-muted); }
-.fc-seg button.is-on { background: var(--l1-card); color: var(--l1-ink); box-shadow: var(--l1-shadow); }
-.fc-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--l1-line); }
-.fc-row:last-child { border-bottom: 0; }
-.fc-row.is-me { background: var(--l1-primary-50); border-radius: 14px; padding-left: 10px; padding-right: 10px; }
-.fc-rank { width: 22px; text-align: center; font-weight: 900; font-size: 13px; color: var(--l1-muted); }
-.fc-av { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 900; background: #6a6df5; overflow: hidden; }
-.fc-av img { width: 100%; height: 100%; object-fit: cover; }
-.fc-rowname { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fc-rowval { font-size: 13px; font-weight: 900; color: #1f8f4e; white-space: nowrap; }
-html[data-theme="dark"] .fc-rowval { color: #6ee7a1; }
+.gv-earned-art { position: relative; align-self: center; width: 110px; height: 132px; animation: gv-drop .8s cubic-bezier(.2, 1.5, .4, 1) both; }
+.gv-earned-art svg { width: 100%; height: 100%; overflow: visible; }
+.gv-spark { position: absolute; color: #ffc934; font-size: 20px; animation: gv-twinkle 1.6s ease-in-out infinite; }
+.gv-spark.s1 { left: -14px; top: 10px; } .gv-spark.s2 { right: -10px; top: 24px; animation-delay: .4s; } .gv-spark.s3 { right: 6px; top: -10px; animation-delay: .8s; }
+@keyframes gv-twinkle { 0%, 100% { transform: scale(.6) rotate(0); opacity: .5; } 50% { transform: scale(1.15) rotate(30deg); opacity: 1; } }
+@keyframes gv-drop { 0% { transform: translateY(-40px) scale(.3); opacity: 0; } 100% { transform: none; opacity: 1; } }
 
-/* ---- map decoration that grows with the forest ---- */
-.fm-tree { background: none; border: 0; }
-.fm-tree svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
-/* Leaflet positions a marker with its own transform, so animations must run on an inner element, never on the marker itself */
-.fm-tree.is-new { z-index: 900 !important; }
-.fm-tree.is-new svg { animation: fm-pop .9s cubic-bezier(.2, 1.6, .4, 1) both; }
-.fm-tree.is-new::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 54px; height: 54px; margin-left: -27px; border-radius: 50%;
-  border: 3px solid #ffd34d; animation: fm-ring 1.8s ease-out infinite; pointer-events: none; }
-@keyframes fm-pop { 0% { transform: translateY(-34px) scale(.2); opacity: 0; } 60% { transform: translateY(2px) scale(1.15); opacity: 1; } 100% { transform: none; } }
-@keyframes fm-ring { 0% { transform: scale(.4); opacity: .9; } 100% { transform: scale(1.6); opacity: 0; } }
-.fm-fly { background: none; border: 0; font-size: 20px; line-height: 1; pointer-events: none; }
-.fm-fly span { display: block; animation: fm-float 5s ease-in-out infinite; }
-@keyframes fm-float { 0%, 100% { transform: translate(0, 0) rotate(-6deg); } 50% { transform: translate(14px, -12px) rotate(8deg); } }
-.fm-sky { position: absolute; inset: 0; z-index: 450; pointer-events: none; overflow: hidden; }
-.fm-bird { position: absolute; left: -10%; font-size: 17px; animation: fm-bird linear infinite; }
-@keyframes fm-bird { from { transform: translateX(0); } to { transform: translateX(125vw); } }
-.fm-petal { position: absolute; top: -8%; font-size: 14px; opacity: .85; animation: fm-petal linear infinite; }
-@keyframes fm-petal { from { transform: translate(0, 0) rotate(0); } to { transform: translate(40px, 540px) rotate(300deg); } }
-.leaflet-popup-content { font-family: inherit; font-size: 13px; line-height: 1.45; margin: 10px 12px; }
-.leaflet-container { font-family: inherit; }
-html[data-theme="dark"] .fc-mapbox { background: #1b2a1f; }
-html[data-theme="dark"] .fm-tile-fix .leaflet-tile-pane { filter: brightness(.95); }
+.gv-latest { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.gv-latest-art { display: flex; align-items: center; gap: 10px; }
+.gv-latest-art svg { width: 54px; height: 64px; }
+.gv-latest-art i { font-style: normal; font-size: 22px; font-weight: 900; color: var(--l1-muted); }
+.gv-warn-line { margin: 0; text-align: center; font-size: 14px; line-height: 1.5; color: var(--l1-ink); }
+
+.gv-city-btn { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 18px; text-align: left; background: var(--l1-primary-50); color: var(--l1-ink); }
+.gv-city-btn b { display: block; font-size: 15px; font-weight: 900; }
+.gv-city-btn i { display: block; font-style: normal; font-size: 13px; font-weight: 700; color: var(--l1-muted); }
+.gv-city-art { width: 34px; height: 40px; flex: none; }
+.gv-city-art svg { width: 100%; height: 100%; }
+.gv-city-go { margin-left: auto; font-size: 24px; color: var(--l1-muted); }
+
+@keyframes gv-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes gv-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .fc-fruit, .fm-fly span, .fm-bird, .fm-petal, .fm-tree.is-new svg, .fm-tree.is-new::after { animation: none; }
+  .gv-pomo .gv-fruit, .gv-tree, .gv-grow-art, .gv-badge, .gv-start .gv-fruit, .gv-big-ring .gv-fruit, .gv-spark, .gv-earned-art, .gv-sheet, .gv-back { animation: none; }
 }
+html[data-theme="dark"] .gv-track { stroke: rgba(255, 255, 255, .14); }
 
-.fc-modal { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: rgba(10, 14, 30, .55); }
+/* While a game is open the tomato shrinks to its ring and time, so it does not cover the game's buttons */
+body[data-l1-tab="games"] .gv-pomo .gv-city, body[data-l1-tab="games"] .gv-pomo .gv-tree { display: none; }
+body[data-l1-tab="games"] .gv-pomo { padding-right: 12px; opacity: .92; }

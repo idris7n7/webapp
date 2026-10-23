@@ -80,13 +80,13 @@
       if (!card || !el) return;
       const status = this.ratingOf(card.id);
       if (status === 'mastered') {
-        el.innerHTML = `<span class="bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-1 rounded-full border border-emerald-300">⭐ Mastered it (O'zlashtirildi)</span>`;
+        el.innerHTML = `<span class="bg-emerald-100 text-emerald-800 text-[12px] font-black px-2.5 py-1 rounded-full border border-emerald-300">⭐ Mastered it (O'zlashtirildi)</span>`;
       } else if (status === 'know') {
-        el.innerHTML = `<span class="bg-amber-100 text-amber-800 text-[11px] font-black px-2.5 py-1 rounded-full border border-amber-300">🟡 I know it (Bilaman)</span>`;
+        el.innerHTML = `<span class="bg-amber-100 text-amber-800 text-[12px] font-black px-2.5 py-1 rounded-full border border-amber-300">🟡 I know it (Bilaman)</span>`;
       } else if (status === 'dont_know') {
-        el.innerHTML = `<span class="bg-rose-100 text-rose-800 text-[11px] font-black px-2.5 py-1 rounded-full border border-rose-300">🔴 I don't know (Bilmayman)</span>`;
+        el.innerHTML = `<span class="bg-rose-100 text-rose-800 text-[12px] font-black px-2.5 py-1 rounded-full border border-rose-300">🔴 I don't know (Bilmayman)</span>`;
       } else {
-        el.innerHTML = `<span class="bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-200">⚪ Yangi so'z</span>`;
+        el.innerHTML = `<span class="bg-slate-100 text-slate-600 text-[12px] font-bold px-2.5 py-1 rounded-full border border-slate-200">⚪ Yangi so'z</span>`;
       }
     },
 
@@ -242,7 +242,7 @@
         cardFront.innerHTML = `
           <div class="flex flex-col items-center justify-between h-full p-6 text-center space-y-4">
             <div class="flex items-center justify-between w-full">
-              <span class="text-[11px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+              <span class="text-[12px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
                 ${card.category || "Vocabulary"}
               </span>
               <span class="text-xs font-semibold text-slate-400 italic">
@@ -265,7 +265,7 @@
               </div>
             </div>
 
-            <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 animate-pulse">
+            <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1.5 animate-pulse">
               <span>↻ Kartani ag'darish uchun bosing</span>
             </div>
           </div>
@@ -277,7 +277,7 @@
         cardBack.innerHTML = `
           <div class="flex flex-col items-center justify-between h-full p-6 text-center space-y-4">
             <div class="flex items-center justify-between w-full">
-              <span class="text-[11px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              <span class="text-[12px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                 O'zbekcha Ma'nosi
               </span>
               <span class="text-xs font-black text-indigo-600">
@@ -295,20 +295,20 @@
               ${card.example_en ? `
                 <div class="bg-indigo-50/90 rounded-2xl p-3 border border-indigo-200 text-left space-y-1">
                   <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600">Misol:</span>
+                    <span class="text-[12px] font-black uppercase tracking-wider text-indigo-600">Misol:</span>
                     <button type="button" onclick="event.stopPropagation(); window.L1_Flashcards.speakExample();" class="text-xs text-indigo-700 hover:text-indigo-900 font-bold">
                       🔊
                     </button>
                   </div>
                   <p class="text-xs sm:text-sm font-bold text-indigo-950 leading-snug">${card.example_en}</p>
-                  <p class="text-[11px] text-indigo-700/80 font-medium italic">${card.example_uz || ''}</p>
+                  <p class="text-[12px] text-indigo-700/80 font-medium italic">${card.example_uz || ''}</p>
                 </div>
               ` : ''}
 
-              ${card.note ? `<p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 text-left leading-snug">💡 ${card.note}</p>` : ''}
+              ${card.note ? `<p class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 text-left leading-snug">💡 ${card.note}</p>` : ''}
             </div>
 
-            <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1.5">
               <span>↻ Old tomoniga qaytish uchun bosing</span>
             </div>
           </div>
@@ -501,7 +501,7 @@
               ${opts.map(opt => `
                 <button type="button" onclick="window.L1_PracticeSuite.selectOption(${idx}, '${opt.replace(/'/g, "\\'")}', this)" class="suite-opt-btn-${idx} p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 text-xs sm:text-sm font-bold text-slate-800 transition text-left flex items-center justify-between">
                   <span>${opt}</span>
-                  <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] radio-indicator"></span>
+                  <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[12px] radio-indicator"></span>
                 </button>
               `).join("")}
             </div>
