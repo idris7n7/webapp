@@ -522,6 +522,73 @@
     }).join("");
   }
 
+  // ------------------------------------------------------------------ Home greeting
+  // The hero greets with a different phrase depending on how the student has been doing (no name in these phrases).
+  const GREET = {
+    newcomer: [
+      "Assalomu alaykum, jigar!", "O'hoo, kimlarni ko'ryapmiz!", "Assalomu alaykum, bo'lajak Shekispir!",
+      "Qarsaklar! Bugungi kunning bosh qahramoni keldi!", "Salom! ChatGPT bugun dam olsin. Endi o'zingiz ishlang.",
+      "Band 9 sizni kutyapti. Faqat uxlab qolmang.", "Voy, mehmon kelibdi! Lekin choy yo'q, vazifa bor!",
+      "Ana, mijozimiz keldi! Bugun miyangizga xizmat ko'rsatamiz.",
+    ],
+    away: [
+      "O-ho, tirik ekansiz-ku!", "Sizni sog'indik. Ingliz tili ham xafa bo'lib yurgandi.",
+      "Tirikmisiz? Ingliz tili sizni bedarak yo'qolganlar ro'yxatiga kiritay dedi!",
+    ],
+    great: ["Voy, professor keldi!"],
+    best: ["Yana sizmi? Zo'r!"],
+  };
+  const DAY = 86400000;
+  // Worked out once per page load and student: how long the student was away and on how many different days they visited.
+  let visitInfo = null;
+  function visit() {
+    const u = user();
+    const key = "l1_visits_v1_" + ((u && (u.id || u.name)) || "guest");
+    if (visitInfo && visitInfo.key === key) return visitInfo;
+    let rec = {};
+    try { rec = JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) { rec = {}; }
+    const now = Date.now();
+    const today = new Date().toDateString();
+    const days = Array.isArray(rec.days) ? rec.days : [];
+    visitInfo = { key, first: !rec.last, awayDays: rec.last ? Math.floor((now - rec.last) / DAY) : 0, visitDays: days.length + (days.includes(today) ? 0 : 1) };
+    if (!days.includes(today)) days.push(today);
+    try { localStorage.setItem(key, JSON.stringify({ last: now, days: days.slice(-60), shown: rec.shown || {} })); } catch (e) {}
+    return visitInfo;
+  }
+
+  function greetingKind(me) {
+    const f = window.L1_Focus ? window.L1_Focus.summary() : { today: 0 };
+    const tasks = activeTasks();
+    const total = tasks.reduce((n, a) => n + (a.my ? a.my.total : 0), 0);
+    const done = tasks.reduce((n, a) => n + (a.my ? a.my.resolved : 0), 0);
+    const streak = me ? me.streak || 0 : 0;
+    const weekPoints = me ? me.weekPoints || 0 : 0;
+    if (visit().awayDays >= 3 && !(streak > 0)) return "away";
+    if ((streak >= 7 && me && me.weekRank && me.weekRank <= 3 && weekPoints > 0) || (streak >= 5 && total > 0 && done >= total)) return "best";
+    if (streak >= 3 || weekPoints >= 150 || f.today >= 3) return "great";
+    if (visit().visitDays <= 3) return "newcomer";
+    return "";
+  }
+
+  // The phrase changes now and then: the same one stays for 20 minutes, a new visit picks another one of its kind.
+  function greetingText(me) {
+    const kind = greetingKind(me);
+    const list = GREET[kind];
+    if (!list) return "";
+    let rec = {};
+    try { rec = JSON.parse(localStorage.getItem(visit().key) || "{}") || {}; } catch (e) { rec = {}; }
+    const shown = rec.shown || {};
+    const now = Date.now();
+    let cur = shown[kind];
+    if (!cur || !list.includes(cur.text) || now - cur.at > 20 * 60 * 1000) {
+      const pool = list.length > 1 ? list.filter((t) => !cur || t !== cur.text) : list;
+      cur = { text: pool[Math.floor(Math.random() * pool.length)], at: now };
+      shown[kind] = cur;
+      try { localStorage.setItem(visit().key, JSON.stringify({ ...rec, shown })); } catch (e) {}
+    }
+    return cur.text;
+  }
+
   function renderHome() {
     const el = $("l1Home");
     if (!el || Shell.tab !== "home") return;
@@ -532,13 +599,14 @@
     const hour = new Date().getHours();
     const hello = "Assalomu alaykum";
     const first = (u.firstName || (u.name || "").split(" ")[0] || "do'stim");
+    const phrase = greetingText(me);
     loadListenStars();
 
     el.innerHTML = `<div class="l1-page space-y-4">
       <section class="hm-hero">
         <div class="hm-hero-text">
-          <div class="hm-kicker">${hello},</div>
-          <div class="hm-name">${html(first)}!</div>
+          ${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
+            : `<div class="hm-kicker">${hello},</div><div class="hm-name">${html(first)}!</div>`}
           <div class="hm-chips">
             <span>🏅 Hafta: ${me && me.weekPoints ? `${me.weekRank}-o'rin` : "–"}</span>
             <span>🏆 Oy: ${me && me.monthPoints ? `${me.monthRank}-o'rin` : "–"}</span>
