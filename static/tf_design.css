@@ -39,10 +39,6 @@ main .rounded-3xl { border-radius: 22px; }
 /* ---------- Header: on the page background instead of a coloured bar (same elements, same order of content) ---------- */
 #l1AppBar { background: var(--l1-bg); color: var(--l1-ink); padding: 12px 16px 8px; box-shadow: none; border-bottom: 0; }
 #l1AppBar .l1-bar { gap: 8px; }
-#l1AppBar .l1-hello small { opacity: 1; color: var(--l1-muted); font-weight: 500; font-size: 12px; }
-#l1AppBar .l1-hello b { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
-/* greeting + name text removed: only the profile picture shows, left; the empty .l1-hello keeps the spacer */
-#l1AppBar .l1-hello > * { display: none; }
 .l1-pill { background: #fff; border: 1px solid var(--l1-line); color: var(--l1-ink); box-shadow: var(--l1-shadow); font-size: 12.5px; }
 .l1-pill .l1-coin { box-shadow: none; }
 .l1-icon-btn, .l1-theme-toggle { width: 36px; height: 36px; background: #fff; border: 1px solid var(--l1-line); color: var(--l1-ink); box-shadow: var(--l1-shadow); }
@@ -247,15 +243,16 @@ html[data-theme="dark"] .bg-amber-300, html[data-theme="dark"] .bg-amber-400, ht
 .hm-hero-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-bottom: 18px; }
 .hm-kicker { font-size: 14px; font-weight: 700; opacity: .9; }
 .hm-name { font-size: 28px; font-weight: 900; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
-.hm-line { margin-top: 2px; font-size: 14px; font-weight: 700; opacity: .95; }
 .hm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .hm-chips span { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .22); }
 
 .hm-card { padding: 16px; border-radius: 24px; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: var(--l1-shadow); }
 .hm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .hm-card-head h2 { margin: 0; font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--l1-ink); }
+.hm-count { padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; background: var(--l1-primary-soft, rgba(79, 91, 240, .12)); color: var(--l1-primary); }
+.hm-count.is-done { background: rgba(16, 185, 129, .14); color: #059669; }
 .hm-more { font-size: 13px; font-weight: 800; color: var(--l1-primary); }
-.hm-goals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hm-goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; }
 .hm-goal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px 9px; border-radius: 18px; background: var(--l1-primary-50); transition: transform .12s ease; }
 .hm-goal:active { transform: scale(.97); }
 .hm-goal b { margin-top: 6px; font-size: 16px; font-weight: 900; color: var(--l1-ink); }
@@ -290,14 +287,13 @@ html[data-theme="dark"] .hm-goal.is-done { background: rgba(34, 197, 94, .16); }
 
 .hm-games { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 4px 16px 14px; scroll-padding-left: 16px; scrollbar-width: none; }
 .hm-games::-webkit-scrollbar { display: none; }
-.hm-game { position: relative; flex: none; scroll-snap-align: start; width: 152px; min-height: 176px; padding: 14px; border-radius: 24px; display: flex; flex-direction: column; gap: 4px;
+.hm-game { position: relative; flex: none; scroll-snap-align: start; width: 152px; min-height: 132px; padding: 14px; border-radius: 24px; display: flex; flex-direction: column; gap: 4px;
   text-align: left; color: #fff; overflow: hidden; box-shadow: 0 18px 30px -18px rgba(20, 30, 90, .75); transition: transform .12s ease; }
 .hm-game:active { transform: scale(.97); }
 .hm-game::after { content: ""; position: absolute; right: -26px; top: -26px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255, 255, 255, .16); }
 .hm-game-emoji { position: relative; z-index: 1; font-size: 40px; line-height: 1; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .25)); }
 .hm-game-name { position: relative; z-index: 1; margin-top: 8px; font-size: 17px; font-weight: 900; line-height: 1.15; }
 .hm-game-status { position: relative; z-index: 1; font-size: 13px; font-weight: 700; line-height: 1.3; opacity: .94; }
-.hm-game-go { position: relative; z-index: 1; align-self: flex-start; margin-top: auto; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 900; background: rgba(255, 255, 255, .24); }
 
 .hm-top { display: flex; justify-content: center; gap: 8px; align-items: flex-end; }
 .hm-top-i { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1 1 0; max-width: 150px; padding: 10px 4px; border-radius: 18px; background: var(--l1-primary-50); min-width: 0; }

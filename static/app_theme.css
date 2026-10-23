@@ -47,8 +47,6 @@ main .rounded-3xl { border-radius: var(--l1-radius); }
 }
 #l1AppBar .l1-bar { max-width: 64rem; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
 #l1AppBar .l1-hello { line-height: 1.15; min-width: 0; flex: 1; }
-#l1AppBar .l1-hello small { display: block; font-size: 12px; opacity: .8; font-weight: 600; }
-#l1AppBar .l1-hello b { display: block; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .l1-pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px;
   background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .22);

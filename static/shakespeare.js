@@ -138,7 +138,6 @@
   // One picture for every situation: the Shakespeare picture (greeting pose).
   const portraitHtml = (size, pose) => (window.L1 && window.L1.Idris ? window.L1.Idris.html(pose || "wave", size) : "");
   // Each section shows Shakespeare in its own situation (see SCENES in l1_core.js).
-  const MODE_POSE = { learn: "glasses", practice: "desk", games: "ball" };
 
   // Swap pose and play a reaction ("happy" | "no" | "party"), like Idris.react.
   function react(el, pose, mood) {
@@ -158,121 +157,6 @@
   const GREETING = "Assalomu alaykum, jigarlar! Bo'vottimi?";
   const greeterHtml = (size) => figHtml("wave", size, "l1-greeter");
 
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-  function build(mode) {
-    const list = QUOTES[mode];
-    let i = Math.floor(Math.random() * list.length);
-    const wrap = document.createElement("div");
-    wrap.className = "flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 sm:p-4 mt-4";
-    const render = () => {
-      const [uzq] = list[i]; // only the Uzbek line is shown (the English original stays in QUOTES)
-      wrap.innerHTML = `
-        <div class="shrink-0">${portraitHtml(78, MODE_POSE[mode])}</div>
-        <div class="min-w-0 flex-1">
-          <div class="text-[12px] font-black uppercase tracking-wider text-amber-700">Shekspir aytadi</div>
-          <p class="text-sm sm:text-base font-bold text-slate-800 mt-0.5">${esc(uzq)}</p>          <button type="button" class="mt-1.5 text-[12px] font-bold text-indigo-600 hover:underline">😄 Yana bir ibora</button>
-        </div>`;
-      wrap.querySelector("button").onclick = () => {
-        i = (i + 1) % list.length;
-        render();
-        const L = window.L1 && window.L1.Idris;
-        if (L) L.react(wrap.querySelector(".idris"), null, "happy"); // keep this section's pose, just bounce
-      };
-    };
-    render();
-    return wrap;
-  }
-
-  // ---- Streak, progress and leaderboard under the quote ----
-  function progressInfo() {
-    let total = 0, done = 0;
-    try {
-      total = (window.FLASHCARDS_DATA || (typeof FLASHCARDS_DATA !== "undefined" ? FLASHCARDS_DATA : [])).length;
-      const r = JSON.parse(localStorage.getItem("l1_vocab_flashcard_ratings_v1") || "{}");
-      done = Object.values(r).filter((v) => v === "know" || v === "mastered").length;
-    } catch (e) {}
-    return { total, done, pct: total ? Math.round((done / total) * 100) : 0 };
-  }
-
-  function drawStats(box, data) {
-    const L1 = window.L1 || {};
-    const h = L1.html || esc;
-    const me = data && data.me;
-    const pr = progressInfo();
-    const meId = me && me.id;
-    const top = ((data && data.entries) || []).slice(0, 5);
-    const medals = ["🥇", "🥈", "🥉"];
-    box.innerHTML = `
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-orange-50 border border-orange-200 rounded-2xl p-3 text-center">
-          <div class="text-2xl font-black text-orange-600">🔥 ${me ? me.streak || 0 : "–"}</div>
-          <div class="text-[12px] font-bold text-slate-500">kun ketma-ket (streak)</div>
-        </div>
-        <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3 text-center">
-          <div class="text-2xl font-black text-indigo-600">⭐ ${me ? me.weekPoints || 0 : "–"}</div>
-          <div class="text-[12px] font-bold text-slate-500">ball (bu hafta)</div>
-        </div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-2xl p-3">
-        <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-          <span>📈 Lug'at progressi</span><span>${pr.done} / ${pr.total} so'z · ${pr.pct}%</span>
-        </div>
-        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden mt-2">
-          <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full" style="width:${pr.pct}%"></div>
-        </div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-2xl p-3">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-xs font-black text-slate-800">🏆 Reyting (bu hafta)</span>
-          ${me && me.weekRank ? `<span class="text-[12px] font-bold text-indigo-600">Siz: ${me.weekRank}-o'rin</span>` : ""}
-        </div>
-        ${top.length ? top.map((e, i) => `
-          <div class="flex items-center gap-2 py-1 px-1.5 rounded-lg ${e.id === meId ? "bg-indigo-50" : ""}">
-            <span class="w-6 text-center text-sm">${medals[i] || e.rank}</span>
-            <span class="flex-1 min-w-0 truncate text-[13px] font-bold text-slate-800">${h(e.name)}${e.id === meId ? " (siz)" : ""}</span>
-            <span class="text-[13px] font-extrabold text-slate-700">${e.points}</span>
-          </div>`).join("") : `<div class="text-[12px] text-slate-400 text-center py-2">${data ? "Hali reyting yo'q." : "Reytingni ko'rish uchun tizimga kiring."}</div>`}
-      </div>`;
-    // O'rganish (Study) has no leaderboard: drop the last block, keep streak, points and progress.
-    if (box.dataset.mode === "learn" && box.lastElementChild) box.lastElementChild.remove();
-  }
-
-  function refreshStats(box) {
-    drawStats(box, null);
-    const api = window.L1 && window.L1.api;
-    if (!api) return;
-    api("/api/leaderboard?period=week").then((d) => drawStats(box, d)).catch(() => {});
-  }
-
-  function buildStats(mode) {
-    const box = document.createElement("div");
-    box.className = "space-y-2 mt-3";
-    box.setAttribute("data-l1-stats", "1");
-    box.dataset.mode = mode;
-    refreshStats(box);
-    return box;
-  }
-  function mount() {
-    [["learnContainer", "learn"], ["practiceContainer", "practice"], ["gamesContainer", "games"]].forEach(([id, mode]) => {
-      const el = document.getElementById(id);
-      if (el && !el.querySelector("[data-shakespeare]")) {
-        const card = build(mode);
-        card.setAttribute("data-shakespeare", "1");
-        // Study and Practice: the Idris quote card sits at the very top, like on the Vazifalar page.
-        card.classList.remove("mt-4");
-        el.insertBefore(card, el.firstChild);
-        if (mode !== "games") el.appendChild(buildStats(mode));
-      }
-    });
-  }
-
-  // Refresh numbers when the student switches between Study and Practice.
-  document.addEventListener("click", (ev) => {
-    if (!ev.target.closest("#btnMainLearn, #btnMainPractice, #btnPracticeSubGrammar, #btnPracticeSubVocab")) return;
-    setTimeout(() => document.querySelectorAll("[data-l1-stats]").forEach(refreshStats), 400);
-  });
-
   window.L1_Shakespeare = {
     portrait: function (size, pose) { return portraitHtml(size || 90, pose); },
     react: react,
@@ -281,7 +165,4 @@
     quote: function (mode) { const a = QUOTES[mode]; return a[Math.floor(Math.random() * a.length)][0]; },
     quotes: function (mode) { return QUOTES[mode].map((q) => q[0]); },
   };
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
-  else mount();
 })();

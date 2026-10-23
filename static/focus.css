@@ -112,3 +112,6 @@ html[data-theme="dark"] .gv-track { stroke: rgba(255, 255, 255, .14); }
 /* While a game is open the tomato shrinks to its ring and time, so it does not cover the game's buttons */
 body[data-l1-tab="games"] .gv-pomo .gv-city, body[data-l1-tab="games"] .gv-pomo .gv-tree { display: none; }
 body[data-l1-tab="games"] .gv-pomo { padding-right: 12px; opacity: .92; }
+
+/* The Home page has its own Yashil shahar card and Pomidor goal, so the floating tomato would only repeat them. */
+body[data-l1-tab="home"] .gv-pomo { display: none; }

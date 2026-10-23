@@ -18,8 +18,6 @@
 
   const user = () => (typeof state !== "undefined" ? state.authStudent : null);
   const isStudentMode = () => !!user() && state.mode !== "teacher";
-  const shk = (size, pose) => (window.L1_Shakespeare ? window.L1_Shakespeare.portrait(size, pose) : "");
-  const shkQuote = (mode) => (window.L1_Shakespeare ? window.L1_Shakespeare.quote(mode) : "");
   const firstName = (u) => (u && (u.firstName || String(u.name || "").split(" ")[0])) || "do'stim";
 
   // ------------------------------------------------------------------ on-screen Back button
@@ -74,7 +72,7 @@
     bar.innerHTML = `<div class="l1-bar">
       <button type="button" id="l1BarBack" class="l1-icon-btn hidden" aria-label="Orqaga" title="Orqaga"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button type="button" id="l1BarAvatar" aria-label="Profil"></button>
-      <div class="l1-hello"><small id="l1BarGreeting">Xush kelibsiz</small><b id="l1BarName">Level Up</b></div>
+      <div class="l1-hello"></div>
       <button type="button" id="l1BarStaff" class="l1-pill hidden">Panel</button>
       ${Theme.buttonHtml("", "l1BarTheme")}
       <span id="l1BarStreak" class="l1-pill hidden"></span>
@@ -295,9 +293,6 @@
     const u = user();
     if (!u) return;
     $("l1BarAvatar").innerHTML = avatar(u, 40);
-    $("l1BarName").textContent = u.name || "Foydalanuvchi";
-    const h = new Date().getHours();
-    $("l1BarGreeting").textContent = h < 11 ? "Xayrli tong," : h < 18 ? "Xayrli kun," : "Xayrli kech,";
     const me = Shell.data.me;
     $("l1BarPointsNum").textContent = me ? me.weekPoints : "0";
     const streak = $("l1BarStreak");
@@ -459,19 +454,21 @@
     const total = tasks.reduce((n, a) => n + (a.my ? a.my.total : 0), 0);
     const done = tasks.reduce((n, a) => n + (a.my ? a.my.resolved : 0), 0);
     const lessons = lessonsToday();
-    return [
+    const goals = [
       { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
       { key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessons / LESSON_GOAL, text: `${Math.min(lessons, LESSON_GOAL)}/${LESSON_GOAL}` },
-      { key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: total ? done / total : 1, text: total ? `${done}/${total}` : "Yo'q" },
     ];
+    // No homework means no goal: an empty goal must not count as done.
+    if (total) goals.push({ key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: done / total, text: `${done}/${total}` });
+    return goals;
   }
   function goalsHtml() {
     return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon)}
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
-  function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalLine"); if (h) h.textContent = goalLine(); }
+  function goalCount() { const g = dailyGoals(); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
+  function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalCount"); if (h) h.innerHTML = goalCount(); }
   window.addEventListener("l1:lesson-learned", () => { paintGoals(); });
-  const goalLine = () => { const n = dailyGoals().filter((g) => g.frac >= 1).length; return n >= 3 ? "Bugungi maqsadlar bajarildi! 🎉" : `Bugun ${n}/3 maqsad bajarildi`; };
 
   // Listen and Survive stars (out of 3 per mission, 5 missions) come from the server; fetched once, then the home is drawn again.
   function loadListenStars() {
@@ -493,8 +490,7 @@
       if (g.id === "listen" && Shell.data.listen) status = `⭐ ${Shell.data.listen}/15 yulduz`;
       return `<button type="button" class="hm-game" data-game="${g.id}" style="background:${g.bg}">
         <span class="hm-game-emoji" aria-hidden="true">${g.emoji}</span>
-        <span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span>
-        <span class="hm-game-go">O'ynash ›</span></button>`;
+        <span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span></button>`;
     }).join("");
   }
 
@@ -515,18 +511,13 @@
         <div class="hm-hero-text">
           <div class="hm-kicker">${hello},</div>
           <div class="hm-name">${html(first)}!</div>
-          <div class="hm-line" id="hmGoalLine">${goalLine()}</div>
-          <div class="hm-chips">
-            <span>★ ${me ? me.weekPoints : 0} ball</span>
-            ${me && me.weekPoints ? `<span>🏅 ${me.weekRank}-o'rin</span>` : ""}
-            <span>🔥 ${me ? me.streak : 0} kun</span>
-          </div>
+          ${me && me.weekPoints ? `<div class="hm-chips"><span>🏅 Haftada ${me.weekRank}-o'rin</span></div>` : ""}
         </div>
         ${Idris.html("greet", 128, "")}
       </section>
 
       <section class="hm-card">
-        <div class="hm-card-head"><h2>Bugungi maqsadlar</h2></div>
+        <div class="hm-card-head"><h2>Bugungi maqsadlar</h2><span id="hmGoalCount">${goalCount()}</span></div>
         <div class="hm-goals" id="hmGoals">${goalsHtml()}</div>
       </section>
 
@@ -537,14 +528,13 @@
         <div class="hm-games">${gameCardsHtml()}</div>
       </section>
 
-      <section class="hm-card">
+      ${top3.length ? `<section class="hm-card">
         <div class="hm-card-head"><h2>Hafta yetakchilari</h2><button type="button" class="hm-more" data-go="rating">Hammasi ›</button></div>
-        ${top3.length ? `<div class="hm-top">${top3.map((e) => `
+        <div class="hm-top">${top3.map((e) => `
           <div class="hm-top-i r${e.rank}${me && e.id === me.id ? " is-me" : ""}">
             <span class="hm-medal">${["🥇", "🥈", "🥉"][e.rank - 1] || e.rank}</span>${avatar(e, e.rank === 1 ? 60 : 52)}
-            <b>${html((e.name || "").split(" ")[0])}</b><span>${e.points} ball</span></div>`).join("")}</div>`
-          : `<div class="l1-sub py-2">Bu hafta hali hech kim ball to'plamadi — birinchi bo'ling!</div>`}
-      </section>
+            <b>${html((e.name || "").split(" ")[0])}</b><span>${e.points} ball</span></div>`).join("")}</div>
+      </section>` : ""}
     </div>`;
     wireTaskButtons(el);
     el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
@@ -571,22 +561,9 @@
       <div class="flex items-end justify-between gap-3 px-1">
         <div><div class="l1-h1">Haftalik vazifalar</div><div class="l1-sub">O'qituvchingiz bergan mashqlar va muddatlar</div></div>
       </div>
-      <div class="l1-card l1-note-card p-3 flex items-center gap-3">
-        ${Idris.html("book", 78)}
-        <div class="min-w-0 flex-1">
-          <div class="text-[12px] font-black uppercase tracking-wider" style="color:var(--l1-muted)">Shekspir aytadi</div>
-          <div class="text-[13.5px] font-bold leading-snug mt-0.5" id="l1ShkHw">${html(shkQuote("homework"))}</div>
-          <button type="button" id="l1ShkHwNext" class="mt-1 text-[12px] font-extrabold text-[color:var(--l1-primary)]">😄 Yana bir ibora</button>
-        </div>
-      </div>
-      <div class="l1-card p-4 flex items-center gap-3">
-        <div class="flex-1 text-[13px] font-bold leading-relaxed">
-          <div class="l1-h2 mb-1">Ball qanday beriladi?</div>
-          1-urinishda to'g'ri — <b class="text-[color:var(--l1-success)]">25 ball</b><br>
-          2-urinishda — <b>15 ball</b> · 3–4-urinishda — <b>5 ball</b><br>
-          <span class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Muddatdan keyin ball 2 baravar kam.</span>
-        </div>
-      </div>
+      ${tasks && tasks.length ? `<div class="l1-card p-3 text-[13px] font-bold leading-relaxed">
+        <b class="text-[color:var(--l1-success)]">1-urinishda 25 ball</b> · 2-urinishda 15 · 3–4-urinishda 5
+        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Muddatdan keyin ball 2 baravar kam.</div></div>` : ""}
       ${tasks === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
       ${tasks && !tasks.length ? `<div class="l1-card l1-empty">${Idris.html("wave", 120)}
         <div class="l1-h2 mt-2">Hozircha vazifa yo'q</div><div class="l1-sub mt-1">Yangi vazifa chiqqanda Telegram bot xabar beradi.</div></div>` : ""}
@@ -594,11 +571,6 @@
       ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan haftalar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
     </div>`;
     wireTaskButtons(el);
-    const hwBtn = $("l1ShkHwNext");
-    if (hwBtn) hwBtn.addEventListener("click", () => {
-      Haptic.tap();
-      $("l1ShkHw").textContent = shkQuote("homework");
-    });
   }
 
   // ------------------------------------------------------------------ Rating
