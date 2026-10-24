@@ -121,7 +121,7 @@ html:not([data-theme="dark"]) { --l1-success: #15803d; }
 
 /* Shakespeare says: a compact banner on the Learn / Practice / Games / Tasks / Rating pages, so lists start higher */
 .shk-banner { gap: 8px; padding-top: 0; }
-.shk-banner .idris { --idris-size: 84px !important; }
+.shk-banner .idris { --idris-size: 121px !important; }
 .shk-bubble { margin-bottom: 8px; padding: 9px 12px; font-size: 14px; line-height: 1.35; }
 
 /* Game picker: same icon box, same height and same alignment on every button */

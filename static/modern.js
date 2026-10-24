@@ -1,5 +1,5 @@
 // Level Up — modern layer (pairs with modern.css). Adds the "surprise": confetti, count-up numbers, springy page transitions,
-// card tilt, XP ring + level-up screen, streak flame tiers, badges, a mascot reaction bubble and a sound switch.
+// card tilt, XP ring + level-up screen, streak badge, badges and a mascot reaction bubble.
 // It only reads app state (L1_Shell.data.me, L1.Fx, L1.Sound) and wraps a few helpers; if any piece is missing it quietly does nothing.
 (function () {
   "use strict";
@@ -81,13 +81,6 @@
       confetti(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, count: 70 } : { count: 110 });
     };
     L1.Fx.bigConfetti = () => { confetti({ x: innerWidth * 0.2, y: innerHeight * 0.7, count: 80, spread: 0.45 }); confetti({ x: innerWidth * 0.8, y: innerHeight * 0.7, count: 80, spread: 0.45 }); confetti({ count: 120 }); };
-    // quiet tick on every press, same mute switch as the rest of the app
-    document.addEventListener("pointerdown", (e) => {
-      const b = e.target.closest && e.target.closest("button, [role=button], .hm-game, .hm-goal");
-      if (!b || b.disabled) return;
-      try { L1.Sound.tone(560, "sine", 0.05, 0, 0.025); } catch (err) { /* no audio */ }
-      try { if (navigator.vibrate && !(window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback)) navigator.vibrate(6); } catch (err) { /* unsupported */ }
-    }, { passive: true });
   }
 
   // ------------------------------------------------------------------ card tilt (pointer) — hero, city, game tiles
@@ -187,7 +180,7 @@
     else if (lv > saved) { store.set(key, String(lv)); levelUp(lv); }
     // streak flame tier
     const sb = $("#l1BarStreak"), days = m.streak || 0;
-    if (sb) { sb.dataset.days = days > 0 ? days : ""; sb.dataset.tier = days >= 30 ? 3 : days >= 7 ? 2 : days >= 3 ? 1 : 0; }
+    if (sb) { if (days > 0) { sb.dataset.days = days; if (!sb.querySelector('.mod-days')) sb.insertAdjacentHTML('beforeend', '<span class="mod-days"></span>'); sb.querySelector('.mod-days').textContent = days; } else { delete sb.dataset.days; const d = sb.querySelector('.mod-days'); if (d) d.remove(); } }
   }
   function levelUp(lv) {
     if ($(".mod-lvlup")) return;
@@ -232,23 +225,10 @@
     if (fresh.length) { setTimeout(() => confetti({ count: 80 }), 400); try { window.L1.Sound.finish(); } catch (e) { /* no sound */ } }
   }
 
-  // ------------------------------------------------------------------ sound switch in the top bar
-  function paintSound() {
-    const bar = $("#l1AppBar .l1-bar");
-    if (!bar || $("#l1BarSound") || !window.L1) return;
-    const b = document.createElement("button");
-    b.type = "button"; b.id = "l1BarSound"; b.setAttribute("aria-label", "Ovozni yoqish / o'chirish");
-    const paint = () => { const off = L1.Sound.muted; b.textContent = off ? "🔇" : "🔊"; b.classList.toggle("is-off", off); b.title = off ? "Ovoz o'chiq" : "Ovoz yoqiq"; };
-    b.addEventListener("click", () => { L1.Sound.muted = !L1.Sound.muted; paint(); if (!L1.Sound.muted) L1.Sound.right(); });
-    paint();
-    const streak = $("#l1BarStreak");
-    bar.insertBefore(b, streak || null);
-  }
-
   // ------------------------------------------------------------------ boot
   let tries = 0;
   function tick() {
-    wrapFx(); wrapShell(); paintSound(); paintXp();
+    wrapFx(); wrapShell(); paintXp();
     if (window.L1_Shell && window.L1_Shell.tab === "home") paintBadges();
   }
   function boot() {

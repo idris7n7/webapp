@@ -750,8 +750,9 @@
     el.innerHTML = `<div class="l1-page space-y-4">
       <section class="hm-hero">
         <div class="hm-hero-text">
-          ${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
+          <div class="hm-greet">${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
             : `<div class="hm-kicker">${hello},</div><div class="hm-name">${html(first)}!</div>`}
+            <div class="hm-sub">Keling, bugun bir soatgina dars qilamiz. Quyidagi pomidorning ustiga bosing.</div></div>
           <div class="hm-daily">${wordBtnHtml()}${factBtnHtml()}</div>
         </div>
         ${wavingHtml(121)}

@@ -95,8 +95,7 @@ body::before {
 .hm-card, .pg-card { border-radius: 26px; background: color-mix(in srgb, var(--l1-card) 92%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
 .hm-goal { border-radius: 20px; box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset; }
 .hm-goal.is-done { box-shadow: 0 0 0 1.5px rgba(34, 197, 94, .35) inset, 0 8px 18px -10px rgba(34, 197, 94, .5); }
-.hm-count { background: var(--mod-grad); color: #fff; box-shadow: 0 6px 14px -6px rgba(139, 92, 246, .7); }
-.hm-count.is-done { background: linear-gradient(135deg, #10b981, #34d399); color: #fff; }
+html .hm-count, html .hm-count.is-done, html[data-theme] .hm-count { background: #fff !important; color: #171b3d !important; border: 1px solid rgba(23, 27, 61, .12); box-shadow: 0 4px 10px -6px rgba(40, 50, 120, .35); }
 
 /* =====================================================================================================
    4. GLASS BARS — top bar and bottom navigation
@@ -135,6 +134,8 @@ body::before {
 @keyframes mod-hero-glow { to { transform: translate(-6%, 6%) scale(1.15); opacity: .8; } }
 .hm-hero .hm-name, .hm-hero .hm-phrase { color: #fff; text-shadow: 0 2px 14px rgba(40, 20, 120, .35); }
 .hm-hero .hm-name { font-size: var(--fs-huge); }
+.hm-hero .hm-greet { grid-area: text; align-self: center; min-width: 0; }
+.hm-hero .hm-sub { margin-top: 8px; font-size: var(--fs-small); line-height: 1.4; font-weight: 500; color: rgba(255, 255, 255, .92); }
 .hm-hero .hm-kicker { color: rgba(255, 255, 255, .88); }
 .hm-hero .hm-fact { background: rgba(255, 255, 255, .22); color: #fff; border: 1px solid rgba(255, 255, 255, .4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .hm-hero .hm-daily .hm-fact.is-read { background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .78); border-color: rgba(255, 255, 255, .25); }
@@ -143,15 +144,6 @@ body::before {
 @keyframes mod-float { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
 /* sections that become half tiles */
 #l1Home .l1-page > .hm-card:nth-of-type(1) { grid-column: span 2; }
-/* games: a bento block instead of a sideways scroller */
-#l1Home .hm-games { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(124px, auto); gap: 12px; overflow: visible; margin: 0; padding: 0; }
-#l1Home .hm-game { width: auto; min-height: 0; }
-#l1Home .hm-game:first-child { grid-column: span 2; display: grid; grid-template-columns: auto 1fr; column-gap: 16px; align-content: center; min-height: 112px; }
-#l1Home .hm-game:first-child .hm-game-emoji { grid-row: 1 / span 2; align-self: center; font-size: 56px; }
-#l1Home .hm-game:first-child .hm-game-name { margin-top: 0; align-self: end; }
-#l1Home .hm-game:first-child .hm-game-status { align-self: start; }
-#l1Home .hm-game:nth-child(4n + 2) { grid-row: span 2; justify-content: flex-end; }
-#l1Home .hm-game:nth-child(4n + 2) .hm-game-emoji { font-size: 64px; margin-bottom: auto; }
 .hm-game { border-radius: 26px; box-shadow: 0 22px 36px -20px rgba(20, 30, 90, .75), 0 0 0 1px rgba(255, 255, 255, .22) inset; transform-style: preserve-3d; }
 .hm-game::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(160deg, rgba(255, 255, 255, .28), transparent 45%); pointer-events: none; }
 .hm-game-emoji { animation: mod-bob 3.6s ease-in-out infinite; }
@@ -173,12 +165,11 @@ button, a, [role="button"], .hm-game, .hm-goal, .hm-card, .hub-card, .section-na
 .mod-tilt { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s var(--mod-out); will-change: transform; }
 .mod-tilt.is-tilting { transition: transform .06s linear; }
 /* staggered entrance: only right after a tab change (modern.js adds .mod-enter for ~1 s) */
-.mod-enter .l1-page > *, .mod-enter .hm-games > * { animation: mod-rise .6s var(--mod-spring) both; }
+.mod-enter .l1-page > * { animation: mod-rise .6s var(--mod-spring) both; }
 .mod-enter .l1-page > *:nth-child(1) { animation-delay: 0s; } .mod-enter .l1-page > *:nth-child(2) { animation-delay: .06s; }
 .mod-enter .l1-page > *:nth-child(3) { animation-delay: .12s; } .mod-enter .l1-page > *:nth-child(4) { animation-delay: .18s; }
 .mod-enter .l1-page > *:nth-child(5) { animation-delay: .24s; } .mod-enter .l1-page > *:nth-child(6) { animation-delay: .30s; }
 .mod-enter .l1-page > *:nth-child(n + 7) { animation-delay: .36s; }
-.mod-enter .hm-games > *:nth-child(2) { animation-delay: .3s; } .mod-enter .hm-games > *:nth-child(3) { animation-delay: .36s; } .mod-enter .hm-games > *:nth-child(4) { animation-delay: .42s; }
 @keyframes mod-rise { from { opacity: 0; transform: translateY(26px) scale(.96); } to { opacity: 1; transform: none; } }
 /* page transitions (View Transitions API, where the browser has it) */
 @supports (view-transition-name: x) {
@@ -206,14 +197,9 @@ body.mod-quake { animation: mod-quake .4s linear; }
 .l1-card-blue .l1-progress > i { background: #fff; box-shadow: 0 0 14px rgba(255, 255, 255, .8); }
 @keyframes mod-shimmer { to { transform: translateX(100%); } }
 .hm-ring .p { filter: drop-shadow(0 0 5px currentColor); }
-/* flame grows with the streak (modern.js sets data-tier 1-3 and data-days) */
+/* streak: the button stays still; the day count sits in an orange chip, like the level chip on the avatar */
 #l1BarStreak { position: relative; }
-#l1BarStreak[data-tier]:not(.is-cold) { animation: mod-flame 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
-#l1BarStreak[data-tier="1"] { box-shadow: 0 0 14px -2px rgba(255, 140, 40, .65); }
-#l1BarStreak[data-tier="2"] { font-size: 1.15em; box-shadow: 0 0 20px 0 rgba(255, 110, 30, .8); }
-#l1BarStreak[data-tier="3"] { font-size: 1.3em; box-shadow: 0 0 26px 2px rgba(255, 70, 40, .9), 0 0 0 2px rgba(255, 200, 60, .8); }
-#l1BarStreak[data-days]:not(.is-cold)::after { content: attr(data-days); font: 700 11px/1 var(--font-display); margin-left: 3px; color: #b45309; vertical-align: middle; }
-@keyframes mod-flame { 0%, 100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.07) rotate(2deg); } }
+.mod-days { position: absolute; right: -6px; bottom: -5px; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; font: 700 11px/1 var(--font-display); color: #fff; background: linear-gradient(135deg, #ff9a3c, #f97316); border: 2px solid var(--l1-bg); box-shadow: 0 4px 10px -3px rgba(249, 115, 22, .8); }
 /* XP ring + level chip around the top-bar avatar */
 #l1BarAvatar { position: relative; }
 .mod-xp { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); pointer-events: none; transform: rotate(-90deg); }
@@ -259,12 +245,10 @@ body.mod-quake { animation: mod-quake .4s linear; }
 @keyframes mod-spin { to { transform: rotate(360deg); } }
 @keyframes mod-zoom { 0% { transform: scale(.2) rotate(-14deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
 .mod-bubble { position: fixed; z-index: 300; right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: flex-end; gap: 6px; pointer-events: none; animation: mod-bubble 2.4s var(--mod-spring) both; }
-.mod-bubble img { width: 76px; height: 76px; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(30, 20, 100, .4)); }
-.mod-bubble span { margin-bottom: 40px; max-width: 170px; padding: 9px 13px; border-radius: 16px 16px 4px 16px; font: 600 var(--fs-small)/1.25 var(--font-display); color: var(--l1-ink); background: var(--l1-card); box-shadow: 0 14px 28px -12px rgba(30, 20, 100, .5); border: 1px solid var(--l1-line); }
+.mod-bubble img { width: 121px; height: 121px; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(30, 20, 100, .4)); }
+.mod-bubble span { margin-bottom: 70px; max-width: 170px; padding: 9px 13px; border-radius: 16px 16px 4px 16px; font: 600 var(--fs-small)/1.25 var(--font-display); color: var(--l1-ink); background: var(--l1-card); box-shadow: 0 14px 28px -12px rgba(30, 20, 100, .5); border: 1px solid var(--l1-line); }
 @keyframes mod-bubble { 0% { transform: translateY(40px) scale(.7); opacity: 0; } 14%, 80% { transform: none; opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
 canvas.mod-confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 450; pointer-events: none; }
-#l1BarSound { min-width: 40px; min-height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: var(--fs-sub); background: var(--l1-primary-50); }
-#l1BarSound.is-off { opacity: .55; filter: grayscale(1); }
 
 /* =====================================================================================================
    10. DARK MODE — deep indigo with neon accents
@@ -295,7 +279,6 @@ html[data-theme="dark"] .l1-progress { background: rgba(139, 141, 255, .16); }
 html[data-theme="dark"] #l1BarPoints { background: linear-gradient(135deg, rgba(251, 191, 36, .22), rgba(251, 146, 60, .18)); color: #ffd98a; border-color: rgba(251, 191, 36, .4); box-shadow: 0 0 18px -4px rgba(251, 191, 36, .5); }
 html[data-theme="dark"] .mod-level { border-color: var(--l1-bg); }
 html[data-theme="dark"] .mod-badge { background: rgba(139, 141, 255, .1); }
-html[data-theme="dark"] #l1BarStreak[data-days]:not(.is-cold)::after { color: #ffcf8a; }
 html[data-theme="dark"] .hm-top-i.r1 { background: linear-gradient(160deg, rgba(250, 204, 21, .26), rgba(251, 146, 60, .16)); }
 
 /* =====================================================================================================
@@ -303,7 +286,7 @@ html[data-theme="dark"] .hm-top-i.r1 { background: linear-gradient(160deg, rgba(
    ===================================================================================================== */
 @media (prefers-reduced-motion: reduce) {
   body::before, .hm-hero::before, .hm-hero .hm-mascot img, .hm-game-emoji, .l1-progress > i::after, #l1BarStreak, #l1BarPoints .l1-coin, .mod-lvlup::before, .mod-badge-ico { animation: none !important; }
-  .mod-enter .l1-page > *, .mod-enter .hm-games > * { animation: none !important; }
+  .mod-enter .l1-page > * { animation: none !important; }
   .mod-tilt { transform: none !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }
