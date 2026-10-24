@@ -266,7 +266,7 @@
 #l1LevelGate p{margin:6px 0 20px;color:var(--l1-muted,#667);text-align:center;font-size:14px}
 #l1LevelGate .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:380px}
 #l1LevelGate button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:16px 4px;border-radius:16px;border:1.5px solid var(--l1-line,#dde);background:var(--l1-card,#fff);color:var(--l1-ink,#111);cursor:pointer}
-#l1LevelGate button b{font-size:26px;font-weight:800;color:var(--l1-primary,#2f5bea)}
+#l1LevelGate button b{font-size:28px;font-weight:800;color:var(--l1-primary,#2f5bea)}
 #l1LevelGate button span{font-size:12px;color:var(--l1-muted,#667)}
 #l1LevelGate button:active{transform:scale(.97);border-color:var(--l1-primary,#2f5bea)}`;
       document.head.appendChild(st);
@@ -329,7 +329,7 @@
     const hello = document.querySelector("#l1AppBar .l1-hello");
     if (hello) {
       hello.textContent = u.firstName || (u.name || "").split(" ")[0] || "";
-      hello.style.cssText = "font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+      hello.style.cssText = "font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
     }
     const me = Shell.data.me;
     $("l1BarPointsNum").textContent = me ? me.weekPoints : "0";
@@ -366,15 +366,15 @@
           </div>
           <div>
             <div class="text-[20px] font-extrabold leading-tight">${html(a.title)}</div>
-            <div class="text-[12.5px] font-semibold opacity-90 mt-1">${a.exercises.length} ta mashq · ${a.questionCount} ta savol</div>
+            <div class="text-[12px] font-semibold opacity-90 mt-1">${a.exercises.length} ta mashq · ${a.questionCount} ta savol</div>
           </div>
-          <div class="flex items-center justify-between text-[12.5px] font-bold">
+          <div class="flex items-center justify-between text-[12px] font-bold">
             <span>⏰ ${open ? html(countdown(a.deadline, now)) + " qoldi" : "Muddat tugagan"}</span>
             <span class="opacity-90">${html(fmtDate(a.deadline))}</span>
           </div>
           <div class="l1-progress"><i style="width:${pct}%"></i></div>
           <div class="flex items-center justify-between gap-3">
-            <div class="text-[13px] font-bold">${a.my.resolved}/${a.my.total} savol · <span class="l1-coin" style="display:inline-grid;vertical-align:-3px">★</span> ${a.my.points} ball</div>
+            <div class="text-[14px] font-bold">${a.my.resolved}/${a.my.total} savol · <span class="l1-coin" style="display:inline-grid;vertical-align:-3px">★</span> ${a.my.points} ball</div>
             <button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-open-task="${html(a.id)}">${btn} →</button>
           </div>
         </div>
@@ -401,14 +401,14 @@
       </div>
       <div class="l1-progress"><i style="width:${pct}%"></i></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="text-[12.5px] font-bold text-[color:var(--l1-muted)]">${a.my.resolved}/${a.my.total} savol${a.my.firstTry ? ` · ${a.my.firstTry} tasi 1-urinishda` : ""}</span>
+        <span class="text-[12px] font-bold text-[color:var(--l1-muted)]">${a.my.resolved}/${a.my.total} savol${a.my.firstTry ? ` · ${a.my.firstTry} tasi 1-urinishda` : ""}</span>
         <button type="button" class="l1-btn ${a.my.done ? "l1-btn-soft" : "l1-btn-primary"} l1-btn-sm" data-open-task="${html(a.id)}">${btn}</button>
       </div>
       <details class="group">
-        <summary class="cursor-pointer list-none text-[12.5px] font-extrabold text-[color:var(--l1-primary)]">Mashqlar ro'yxati va ballsiz mashq ▾</summary>
+        <summary class="cursor-pointer list-none text-[12px] font-extrabold text-[color:var(--l1-primary)]">Mashqlar ro'yxati va ballsiz mashq ▾</summary>
         <div class="mt-2 space-y-1.5">${a.exercises.map((ex) => `
           <div class="flex items-center justify-between gap-2 p-2 rounded-xl l1-subrow">
-            <span class="text-[13px] font-bold min-w-0 truncate">${html(ex.title)} <span class="l1-sub">(${ex.questionCount})</span></span>
+            <span class="text-[14px] font-bold min-w-0 truncate">${html(ex.title)} <span class="l1-sub">(${ex.questionCount})</span></span>
             <button type="button" class="l1-btn l1-btn-ghost l1-btn-sm" data-practice-ex="${html(ex.id)}">Ballsiz ↗</button>
           </div>`).join("")}
         </div>
@@ -754,7 +754,7 @@
             : `<div class="hm-kicker">${hello},</div><div class="hm-name">${html(first)}!</div>`}
           <div class="hm-daily">${wordBtnHtml()}${factBtnHtml()}</div>
         </div>
-        ${wavingHtml(150)}
+        ${wavingHtml(121)}
       </section>
 
       <section class="hm-card">
@@ -852,9 +852,10 @@
       ${banner}
       ${all === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
       ${homeworkToday(plan)}
-      ${plan.length ? `<div class="l1-card p-3 text-[13px] font-bold leading-relaxed">
-        <b class="text-[color:var(--l1-success)]">1-urinishda 25 ball</b> · 2-urinishda 15 · 3–4-urinishda 5
-        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Vazifa dars → mashq → vazifa tartibida ochiladi, o'tkazib bo'lmaydi.</div></div>
+      ${plan.length ? `<details class="l1-card hw-rules text-[14px] font-bold">
+        <summary><b class="text-[color:var(--l1-success)]">1-urinishda 25 ball</b><span class="hw-rules-more">Qoidalar</span></summary>
+        <div class="hw-rules-body">2-urinishda 15 · 3–4-urinishda 5
+        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Vazifa dars → mashq → vazifa tartibida ochiladi, o'tkazib bo'lmaydi.</div></div></details>
       <div class="flex items-center justify-between px-1"><div class="l1-h2">Barcha vazifalar</div><span class="l1-chip l1-chip-blue">${doneN}/${plan.length}</span></div>
       <div class="hw-list">${homeworkRows(plan)}</div>` : ""}
       ${active.length ? `<div class="l1-h2 px-1 pt-2">O'qituvchi vazifalari</div>${active.map((a) => taskCard(a)).join("")}` : ""}
@@ -941,7 +942,7 @@
     const el = $("l1Rating");
     if (!el || Shell.tab !== "rating") return;
     el.innerHTML = `<div class="l1-page space-y-4">
-      ${window.L1_Hub ? window.L1_Hub.shk("trophy", "rating", 123) : ""}
+      ${window.L1_Hub ? window.L1_Hub.shk("trophy", "rating", 121) : ""}
       <div class="l1-sub hidden" id="l1RatingMe"></div>
       <div id="l1RatingBox"></div></div>`;
     const box = $("l1RatingBox");

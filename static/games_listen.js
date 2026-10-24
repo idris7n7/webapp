@@ -354,7 +354,7 @@
     S.view = "hub";
     const g = W() ? W().glossary() : { seen: 0, total: GLOSS.length };
     stage(`
-      <div class="ls-title"><span style="font-size:30px">🎧</span><div>Listen and Survive<small>Tinglang va omon qoling</small></div></div>
+      <div class="ls-title"><span style="font-size:32px">🎧</span><div>Listen and Survive<small>Tinglang va omon qoling</small></div></div>
       <div><div class="ls-h" style="margin-bottom:6px">Qiyinlik</div>
         <div class="ls-row">${Object.entries(DIFFS).map(([id, d]) => `<button type="button" class="ls-chip ${S.diff === id ? "is-on" : ""}" data-ls="diff" data-v="${id}">${d.name}<small>${d.hint}</small></button>`).join("")}</div></div>
       <div style="display:flex;flex-direction:column;gap:8px">${MISSIONS.map((m, idx) => {
@@ -372,7 +372,7 @@
     const words = GLOSS.filter((w) => m.words.includes(w.id));
     stage(`
       <div class="ls-bar"><button type="button" class="ls-x" data-ls="hub" aria-label="Orqaga">‹</button><div class="ls-h">${m.n}-missiya</div><span style="width:36px"></span></div>
-      <div class="ls-title"><span style="font-size:34px">${m.icon}</span><div>${esc(m.title)}<small>${esc(m.uz)}</small></div></div>
+      <div class="ls-title"><span style="font-size:32px">${m.icon}</span><div>${esc(m.title)}<small>${esc(m.uz)}</small></div></div>
       <div class="ls-story">${esc(m.story)}</div>
       <div class="ls-card"><div class="ls-h" style="margin-bottom:6px">Qiyinlik: ${D().name}</div><div class="ls-note">❤️ 3 jon · ${D().replays === Infinity ? "cheksiz takrorlash" : D().replays + " marta takrorlash"} · ovoz tezligi ${D().rate}×</div></div>
       <div class="ls-card"><div class="ls-h" style="margin-bottom:6px">Yangi so'zlar (bosib eshiting)</div><div class="ls-words">${words.map((w) => `<button type="button" class="ls-wordbtn" data-ls="say" data-v="${esc(w.word)}"><span class="sp">🔊</span><span>${esc(w.word)}<small>${esc(w.meaning_uz)}</small></span></button>`).join("")}</div></div>
@@ -643,7 +643,7 @@
     const idx = MISSIONS.findIndex((m) => m.id === S.mission.id);
     const unlocked = !failed && stars >= 1 && MISSIONS[idx + 1] && !(S.progress[MISSIONS[idx + 1].id] || {}).stars;
     stage(`
-      <div class="ls-title"><span style="font-size:30px">${failed ? "💔" : stars === 3 ? "🏆" : "🎉"}</span><div>${failed ? "Missiya muvaffaqiyatsiz" : stars ? "Missiya bajarildi!" : "Yana urinib ko'ring"}<small>${esc(S.mission.title)} · ${D().name}</small></div></div>
+      <div class="ls-title"><span style="font-size:32px">${failed ? "💔" : stars === 3 ? "🏆" : "🎉"}</span><div>${failed ? "Missiya muvaffaqiyatsiz" : stars ? "Missiya bajarildi!" : "Yana urinib ko'ring"}<small>${esc(S.mission.title)} · ${D().name}</small></div></div>
       <div class="ls-result"><div class="big">${"★".repeat(stars)}<s>${"★".repeat(3 - stars)}</s></div><b>${correct}/${steps} ta to'g'ri · ${seconds} soniya</b>
         <div class="ls-note" style="margin-top:6px">${r.ok ? (r.data.awarded ? `+${r.data.awarded} ball reytingga qo'shildi` : r.data.earned ? "Bugungi o'yin balli limiti to'lgan" : "Ball olish uchun missiyani sekinroq va diqqat bilan o'ynang") : "Natija faqat shu qurilmada ko'rsatildi (internet yo'q)."}</div>
         ${unlocked ? `<div class="ls-note" style="color:#fcd34d;margin-top:4px">🔓 Keyingi missiya ochildi: ${esc(MISSIONS[idx + 1].title)}</div>` : ""}</div>

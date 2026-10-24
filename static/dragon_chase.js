@@ -2437,7 +2437,7 @@
       wrap.style.cssText = "display:flex;align-items:center;gap:8px";
       wrap.innerHTML =
         '<div style="flex:1;height:8px;border-radius:99px;background:#e2e8f0;overflow:hidden"><div id="dragonTimerFill" style="height:100%;width:100%;border-radius:99px;background:#6366f1"></div></div>' +
-        '<span id="dragonTimerNum" style="min-width:16px;text-align:right;font-weight:800;font-size:13px;color:var(--l1-muted,#475569)">' + ANSWER_SECONDS + "</span>";
+        '<span id="dragonTimerNum" style="min-width:16px;text-align:right;font-weight:800;font-size:14px;color:var(--l1-muted,#475569)">' + ANSWER_SECONDS + "</span>";
       q.parentNode.insertBefore(wrap, q);
     },
 

@@ -22,7 +22,7 @@
     root.id = "l1Runner";
     root.innerHTML = `<div class="l1-runner-top"><div class="max-w-[560px] mx-auto flex items-center gap-3">
         <button type="button" id="l1RunClose" class="l1-icon-btn" style="background:#fff;color:var(--l1-ink);border-color:var(--l1-line)" aria-label="Yopish">${ICONS.close}</button>
-        <div class="flex-1 min-w-0"><div class="text-[12.5px] font-extrabold truncate" id="l1RunTitle">Yuklanmoqda…</div>
+        <div class="flex-1 min-w-0"><div class="text-[12px] font-extrabold truncate" id="l1RunTitle">Yuklanmoqda…</div>
           <div class="l1-progress mt-1.5"><i id="l1RunBar" style="width:0%"></i></div></div>
         <span class="l1-chip l1-chip-amber" id="l1RunPts">★ 0</span>
       </div></div>
@@ -112,7 +112,7 @@
             <span class="l1-points-badge" id="l1PtsBadge">${isDone ? (q.solved ? "+" + (q.points || 0) : "0") : "+" + nextPoints(it)}</span>
           </div>
         </div>
-        ${inst ? `<div class="l1-sub mb-2" style="font-size:12.5px">${html(inst)}</div>` : ""}
+        ${inst ? `<div class="l1-sub mb-2" style="font-size:12px">${html(inst)}</div>` : ""}
         ${q.img ? `<div class="rounded-2xl overflow-hidden border border-[color:var(--l1-line)] bg-[#f6f8ff] mb-3 max-w-[260px]"><img src="${html(q.img)}" alt="" class="w-full h-auto"></div>` : ""}
         <div class="l1-qtext">${html(q.q)}</div>
         <div id="l1Answer" class="mt-4"></div>
@@ -198,7 +198,7 @@
       });
       box.innerHTML = `<div class="l1-chip l1-chip-amber">💡 Maslahat: noto'g'ri variantlar olib tashlandi</div>`;
     } else if (hint.mask) {
-      box.innerHTML = `<div class="rounded-2xl p-3 bg-[#fff6dc] text-[#7a4b00] text-[13px] font-bold">💡 Maslahat: <span style="letter-spacing:.08em;font-size:16px">${html(hint.mask)}</span></div>`;
+      box.innerHTML = `<div class="rounded-2xl p-3 bg-[#fff6dc] text-[#7a4b00] text-[14px] font-bold">💡 Maslahat: <span style="letter-spacing:.08em;font-size:16px">${html(hint.mask)}</span></div>`;
     }
   }
 
@@ -213,8 +213,8 @@
         <button type="button" id="l1Next" class="l1-btn l1-btn-primary l1-btn-sm">${nextLabel}</button></div>`;
     } else {
       box.innerHTML = `<div class="rounded-2xl p-3.5 bg-[color:var(--l1-danger-50)] border border-[#ffd0d2] space-y-2">
-        <div class="text-[13px] font-bold text-[#8c1d22]">4 ta urinish tugadi. To'g'ri javob:</div>
-        <div class="text-[17px] font-extrabold text-[color:var(--l1-ink)]">${html(q.correctAnswer || "")}</div>
+        <div class="text-[14px] font-bold text-[#8c1d22]">4 ta urinish tugadi. To'g'ri javob:</div>
+        <div class="text-[18px] font-extrabold text-[color:var(--l1-ink)]">${html(q.correctAnswer || "")}</div>
         <button type="button" id="l1Next" class="l1-btn l1-btn-primary l1-btn-sm w-full">${nextLabel}</button></div>`;
     }
     $("l1Next").addEventListener("click", () => goNext(false));
@@ -346,8 +346,8 @@
       <div><div class="l1-h1">${fresh ? "Vazifa bajarildi!" : "Bu vazifa bajarilgan"}</div>
         <div class="l1-sub mt-1">${my.late ? "Muddatdan keyin bajarildi — ball yarmiga hisoblandi." : "Barakalla! Natijangiz o'qituvchiga yuborildi."}</div></div>
       <div class="l1-card-blue p-5"><div class="relative z-[1]">
-        <div class="text-[42px] font-extrabold leading-none">${my.points}</div>
-        <div class="text-[13px] font-bold opacity-90">ball · maksimal ${max}</div></div></div>
+        <div class="text-[40px] font-extrabold leading-none">${my.points}</div>
+        <div class="text-[14px] font-bold opacity-90">ball · maksimal ${max}</div></div></div>
       <div class="grid grid-cols-3 gap-2">
         <div class="l1-card p-3"><b class="text-[20px]">${solved}/${R.flat.length}</b><div class="l1-sub" style="font-size:12px">To'g'ri</div></div>
         <div class="l1-card p-3"><b class="text-[20px] text-[color:var(--l1-success)]">${firstTry}</b><div class="l1-sub" style="font-size:12px">1-urinishda</div></div>
@@ -447,12 +447,12 @@
     const groups = {};
     exs.forEach((ex) => { const g = ex.week || "Boshqa mashqlar"; (groups[g] = groups[g] || []).push(ex); });
     return Object.keys(groups).map((g) => `<div class="l1-ex-group" data-group="${html(g)}">
-        <div class="flex items-center justify-between mt-3 mb-1.5"><div class="font-extrabold text-[13px]">${html(g)}</div>
+        <div class="flex items-center justify-between mt-3 mb-1.5"><div class="font-extrabold text-[14px]">${html(g)}</div>
           <button type="button" class="text-[12px] font-extrabold text-[color:var(--l1-primary)]" data-pick-all="${html(g)}">Hammasini tanlash</button></div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">${groups[g].map((ex) => `
           <label class="l1-ex-pick" data-search="${html((ex.title + " " + (ex.part || "") + " " + ex.category).toLowerCase())}">
             <input type="checkbox" value="${html(ex.id)}" data-q="${(ex.questions || []).length}">
-            <span class="min-w-0 flex-1"><span class="block text-[13px] font-bold truncate">${html(ex.title)}</span>
+            <span class="min-w-0 flex-1"><span class="block text-[14px] font-bold truncate">${html(ex.title)}</span>
             <span class="block text-[12px] text-[color:var(--l1-muted)] truncate">${html(ex.part || "")}</span></span>
             <span class="l1-chip ${ex.category === "grammar" ? "l1-chip-blue" : "l1-chip-green"}">${(ex.questions || []).length}</span>
           </label>`).join("")}</div></div>`).join("");
@@ -483,12 +483,12 @@
         <div class="l1-field"><label>Mashqlar</label><input id="tTaskSearch" placeholder="Qidirish: to be, plural, jobs…"></div>
         <div id="tTaskPicker" class="max-h-[420px] overflow-y-auto pr-1">${exercisePicker()}</div>
         <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <span class="text-[13px] font-extrabold" id="tTaskSummary">Mashq tanlanmagan</span>
+          <span class="text-[14px] font-extrabold" id="tTaskSummary">Mashq tanlanmagan</span>
           <button type="button" id="tTaskPublish" class="l1-btn l1-btn-primary">📤 E'lon qilish</button>
         </div>
       </div>` : ""}
       ${list === null ? `<div class="l1-skeleton" style="height:140px"></div>` : ""}
-      ${T.error && !list ? `<div class="l1-card p-4 text-[13px] font-bold text-[color:var(--l1-danger)]">${html(T.error)}</div>` : ""}
+      ${T.error && !list ? `<div class="l1-card p-4 text-[14px] font-bold text-[color:var(--l1-danger)]">${html(T.error)}</div>` : ""}
       ${list && !list.length ? `<div class="l1-card l1-empty"><div class="l1-h2">Hali vazifa yo'q</div><div class="l1-sub mt-1">“+ Yangi vazifa” tugmasini bosing.</div></div>` : ""}
       ${(list || []).map((a) => teacherCard(a, now)).join("")}`;
     wireWeekly(el);
@@ -509,7 +509,7 @@
         <div class="min-w-0"><div class="flex flex-wrap gap-1.5 mb-1"><span class="l1-chip ${status[0]}">${status[1]}</span>${a.weekLabel ? `<span class="l1-chip l1-chip-blue">${html(a.weekLabel)}</span>` : ""}</div>
           <div class="text-[16px] font-extrabold">${html(a.title)}</div>
           <div class="l1-sub">${a.exercises.length} ta mashq · ${a.questionCount} savol · Deadline: ${html(fmtDate(a.deadline))}${!ended ? " (" + html(countdown(a.deadline, now)) + " qoldi)" : ""}</div></div>
-        <div class="text-right flex-none"><div class="text-[22px] font-extrabold text-[color:var(--l1-primary)]">${a.doneCount}/${a.studentCount}</div><div class="l1-sub" style="font-size:12px">bajardi</div></div>
+        <div class="text-right flex-none"><div class="text-[24px] font-extrabold text-[color:var(--l1-primary)]">${a.doneCount}/${a.studentCount}</div><div class="l1-sub" style="font-size:12px">bajardi</div></div>
       </div>
       <div class="l1-progress"><i style="width:${pct}%"></i></div>
       <div class="flex flex-wrap gap-2">
@@ -523,7 +523,7 @@
         <button type="button" class="l1-btn l1-btn-primary l1-btn-sm" data-act="save-deadline">Saqlash</button>
       </div>
       ${open ? `<div class="space-y-2">
-        <label class="inline-flex items-center gap-2 text-[12.5px] font-bold"><input type="checkbox" data-act="only-missing" ${onlyMissing ? "checked" : ""}> Faqat bajarmaganlar</label>
+        <label class="inline-flex items-center gap-2 text-[12px] font-bold"><input type="checkbox" data-act="only-missing" ${onlyMissing ? "checked" : ""}> Faqat bajarmaganlar</label>
         <div class="overflow-x-auto"><table class="l1-table"><thead><tr><th>Talaba</th><th>Holat</th><th>Ball</th><th>1-urinishda</th><th>Oxirgi faollik</th></tr></thead><tbody>
           ${rows.map((s) => `<tr><td><div class="flex items-center gap-2">${avatar(s, 30)}<span class="font-bold">${html(s.name)}</span></div></td>
             <td>${chip(s)}</td><td class="font-extrabold">${s.points}</td><td>${s.firstTry}/${s.total}</td>

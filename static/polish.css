@@ -93,5 +93,48 @@ img { max-width: 100%; height: auto; }
 .gv-pomo { transition: opacity .2s ease, transform .2s var(--l1-ease), box-shadow .2s ease; }
 body.l1-deep .gv-pomo:not(.is-drag):not([data-state="running"]):not([data-state="paused"]) { opacity: 0; transform: translateY(10px) scale(.96); pointer-events: none; }
 .lb-step.r2 .lb-pos { background: #cbd5e1; color: #1f2430; }
-.lb-empty { padding: 14px 8px; text-align: center; color: var(--l1-muted); font-size: 13px; font-weight: 600; }
+.lb-empty { padding: 14px 8px; text-align: center; color: var(--l1-muted); font-size: 14px; font-weight: 600; }
 #l1BarStaff, #tTabWeekly, #tTabRating, #tTabCompletion, #tTabMistakes, #tTabRoster, #tTabAddEx, #btnExportCsv { min-height: 40px; }
+
+/* ===== Design audit fixes ===== */
+/* Dark mode contrast: the bottom-bar labels, the filled "active" chips and the SIZ tag fell under 4.5:1 */
+html[data-theme="dark"] #l1BottomNav button:not(.is-active) { color: var(--l1-muted); }
+html[data-theme="dark"] .hub-modes button.is-active, html[data-theme="dark"] .lb-you { background: #3a62d4; color: #fff; }
+/* Light mode: the success green is a touch too pale as text on white */
+html:not([data-theme="dark"]) { --l1-success: #15803d; }
+
+/* Locked lessons/tasks: dim the number badge only, so the "Avval 1-darsni o'zlashtiring" reason stays readable */
+.hub-unit.is-locked, .hw-row.is-locked { opacity: 1; }
+.hub-unit.is-locked > :first-child, .hw-row.is-locked > :first-child { opacity: .6; }
+
+/* Short lines never end on a single orphaned word or number ("... 3-4-urinishda / 5") */
+.l1-card, .l1-sub, .hub-desc, .idris-bubble { text-wrap: pretty; }
+
+/* Learn sub-tabs (Grammatika / Lug'at kartalar / Rasmli lug'at): all three fit on a phone; if they ever overflow they still scroll and snap */
+.hub-tabs { gap: 4px; }
+.hub-tabs:not(:hover) { scroll-snap-type: x proximity; }
+.hub-tabs button { flex: 1 0 auto; min-height: 40px; padding: 0 8px; font-size: 12px; scroll-snap-align: start; }
+
+/* The floating Pomidor is just the tomato until a timer runs, so it covers less of the lists behind it */
+.gv-pomo[data-state="idle"] .gv-info { display: none; }
+.gv-pomo[data-state="idle"] { padding: 6px; min-width: 52px; min-height: 52px; justify-content: center; }
+
+/* Shakespeare says: a compact banner on the Learn / Practice / Games / Tasks / Rating pages, so lists start higher */
+.shk-banner { gap: 8px; padding-top: 0; }
+.shk-banner .idris { --idris-size: 84px !important; }
+.shk-bubble { margin-bottom: 8px; padding: 9px 12px; font-size: 14px; line-height: 1.35; }
+
+/* Game picker: same icon box, same height and same alignment on every button */
+#gameTabs button { min-height: 48px; text-align: left; line-height: 1.15; }
+#gameTabs button:not(.bg-indigo-600) { border-width: 1px; }
+#gameTabs button > span:first-child { flex: none; width: 24px; height: 24px; display: inline-grid; place-items: center; font-size: 18px; line-height: 1; }
+#gameTabs img.l1-emo { width: 22px; height: 22px; margin: 0; }
+
+/* Task scoring rules: the 25-point line stays visible, the rest opens on tap */
+.hw-rules { padding: 10px 14px; }
+.hw-rules summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; list-style: none; min-height: 24px; }
+.hw-rules summary::-webkit-details-marker { display: none; }
+.hw-rules-more { color: var(--l1-muted); font-size: 12px; font-weight: 800; }
+.hw-rules-more::after { content: " ▾"; }
+.hw-rules[open] .hw-rules-more::after { content: " ▴"; }
+.hw-rules-body { margin-top: 6px; line-height: 1.5; }

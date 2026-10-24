@@ -268,7 +268,7 @@
   function renderMenu() {
     const c = W() ? W().counts() : { mastered: 0, review: 0, learning: 0, new: 0 };
     stage(`
-      ${has3d() ? `<div class="wr-3d wr-hero" id="wrHero"><div class="wr-hero-title">Word Race<small>Inglizcha so'zlar poygasi</small></div></div>` : `<div class="wr-title"><span style="font-size:30px">🏎️</span><div>Word Race<small>Inglizcha so'zlar poygasi</small></div></div>`}
+      ${has3d() ? `<div class="wr-3d wr-hero" id="wrHero"><div class="wr-hero-title">Word Race<small>Inglizcha so'zlar poygasi</small></div></div>` : `<div class="wr-title"><span style="font-size:32px">🏎️</span><div>Word Race<small>Inglizcha so'zlar poygasi</small></div></div>`}
       <div><div class="wr-h" style="margin-bottom:6px">1. Poyga turi</div>
         <div class="wr-modes">${MODES.map((m) => `<button type="button" class="wr-chip ${S.mode === m.id ? "is-on" : ""}" data-wr="mode" data-v="${m.id}">${m.icon} ${m.name}<small>${m.desc}</small></button>`).join("")}</div></div>
       <div><div class="wr-h" style="margin-bottom:6px">2. Botlar qanchalik kuchli?</div>
@@ -308,8 +308,8 @@
       <div class="wr-bar"><button type="button" class="wr-x" data-wr="leave" aria-label="Chiqish">✕</button><div class="wr-h">Do'stlar bilan poyga</div><span style="width:36px"></span></div>
       <div class="wr-card wr-code"><div class="wr-h">Xona kodi</div><b>${esc(L.code)}</b>
         <div class="wr-row" style="justify-content:center;margin-top:8px">
-          <button type="button" class="wr-btn is-quiet" data-wr="copy" data-v="${esc(link)}" style="min-height:38px;font-size:13px">📋 Havolani nusxalash</button>
-          <button type="button" class="wr-btn is-quiet" data-wr="share" data-v="${esc(link)}" style="min-height:38px;font-size:13px">✈️ Telegram</button></div></div>
+          <button type="button" class="wr-btn is-quiet" data-wr="copy" data-v="${esc(link)}" style="min-height:38px;font-size:14px">📋 Havolani nusxalash</button>
+          <button type="button" class="wr-btn is-quiet" data-wr="share" data-v="${esc(link)}" style="min-height:38px;font-size:14px">✈️ Telegram</button></div></div>
       <div class="wr-slots">${slots.map(slotHtml).join("")}</div>
       ${host ? `
       <div class="wr-card" style="display:flex;flex-direction:column;gap:10px">
@@ -320,7 +320,7 @@
         ${bots ? `<div class="wr-row">${LEVELS.map(([id, n]) => `<button type="button" class="wr-chip ${L.level === id ? "is-on" : ""}" data-wr="lobbylevel" data-v="${id}">${n}</button>`).join("")}</div>` : ""}
       </div>` : `<div class="wr-note" style="text-align:center">Poyga turi: <b>${(MODES.find((m) => m.id === L.mode) || {}).name}</b>. Xona egasi boshlashini kuting.</div>`}
       <div class="wr-card"><div class="wr-h" style="margin-bottom:6px">Sinfdoshlarni chaqirish</div>
-        <div id="wrMates"><button type="button" class="wr-btn is-quiet" data-wr="mates" style="min-height:40px;font-size:13px">Ro'yxatni ochish</button></div></div>
+        <div id="wrMates"><button type="button" class="wr-btn is-quiet" data-wr="mates" style="min-height:40px;font-size:14px">Ro'yxatni ochish</button></div></div>
       ${host ? `<button type="button" class="wr-btn is-hot" data-wr="start" ${L.canStart ? "" : "disabled"}>${L.canStart ? "🏁 Poygani boshlash" : "Hamma tayyor bo'lishini kutamiz…"}</button>` : ""}`);
     if (S.mates) fillMates();
   }
@@ -463,7 +463,7 @@
     const words = [...seen.entries()].sort((a, b) => Number(a[1]) - Number(b[1])).slice(0, 8);
     const title = !me ? "Poyga tugadi" : me.finished && me.rank === 1 ? "🏆 Siz g'olibsiz!" : me.finished ? `${me.rank}-o'rin` : "Finishga yetib kelolmadingiz";
     stage(`
-      <div class="wr-title"><span style="font-size:30px">${me && me.rank === 1 && me.finished ? "🏆" : "🏁"}</span><div>${title}<small>Natijalar</small></div></div>
+      <div class="wr-title"><span style="font-size:32px">${me && me.rank === 1 && me.finished ? "🏆" : "🏁"}</span><div>${title}<small>Natijalar</small></div></div>
       <div class="wr-podium">${res.map((r) => {
         const rk = medals[r.rank - 1] || r.rank;
         const initials = esc((r.name || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase());

@@ -146,14 +146,15 @@
 
     const ring = (on) => `border:3px solid ${on ? "var(--l1-primary,#4f46e5)" : "transparent"};${on ? "transform:scale(1.03);" : ""}`;
     const render = () => {
+      const keepScroll = wrap.scrollTop;
       const list = CHARACTERS.filter((c) => c.g === gender);
       const photo = u0.photoUrl ? `<button type="button" data-id="tg" style="display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;margin-bottom:14px;border-radius:20px;background:var(--l1-card,#fff);cursor:pointer;${ring(chosen === "tg")}box-shadow:0 10px 24px -14px rgba(15,23,42,.35)">
           <span style="display:block;width:54px;height:54px;border-radius:50%;overflow:hidden;flex:none"><img src="${u0.photoUrl}" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover"></span>
-          <span style="font-weight:800;font-size:15px;color:var(--l1-ink,#0f172a)">Telegram rasmim</span></button>` : "";
+          <span style="font-weight:800;font-size:16px;color:var(--l1-ink,#0f172a)">Telegram rasmim</span></button>` : "";
       wrap.innerHTML = `
         <div style="max-width:520px;margin:0 auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}${u0.firstName || u0.name ? `<div style="font-size:15px;font-weight:700;color:var(--l1-muted,#64748b);margin-top:2px">${String(u0.firstName || u0.name).replace(/[<>&"]/g, "")}</div>` : ""}</div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--l1-ink,#0f172a)">${change ? "Profil rasmi" : "Personajingizni tanlang"}${u0.firstName || u0.name ? `<div style="font-size:16px;font-weight:700;color:var(--l1-muted,#64748b);margin-top:2px">${String(u0.firstName || u0.name).replace(/[<>&"]/g, "")}</div>` : ""}</div>
             ${change ? `<button type="button" data-close style="width:38px;height:38px;border-radius:50%;border:0;font-size:16px;font-weight:800;cursor:pointer;background:var(--l1-card,#fff);color:var(--l1-muted,#64748b)" aria-label="Yopish" title="Yopish">✕</button>` : ""}
           </div>
           ${photo}
@@ -166,9 +167,12 @@
               <span style="font-weight:800;font-size:14px;color:var(--l1-ink,#0f172a)">${c.name}</span>
             </button>`).join("")}
           </div>
-          <div id="l1CharErr" style="min-height:20px;text-align:center;color:#dc2626;font-size:13px;font-weight:700;margin-top:12px"></div>
-          <button type="button" id="l1CharGo" style="width:100%;height:52px;border-radius:999px;border:0;font-weight:800;font-size:16px;color:#fff;background:var(--l1-primary,#4f46e5);box-shadow:0 12px 24px -12px rgba(47,107,255,.9);cursor:pointer;margin-top:4px">${change ? "Saqlash" : "Tanlash"}</button>
+          <div style="position:sticky;bottom:calc(-28px - env(safe-area-inset-bottom,0px));margin:12px -16px calc(-28px - env(safe-area-inset-bottom,0px));padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--l1-bg,#eef2ff) 28%)">
+            <div id="l1CharErr" style="min-height:20px;text-align:center;color:#dc2626;font-size:14px;font-weight:700;margin-bottom:4px"></div>
+            <button type="button" id="l1CharGo" style="width:100%;height:52px;border-radius:999px;border:0;font-weight:800;font-size:16px;color:#fff;background:var(--l1-primary,#4f46e5);box-shadow:0 12px 24px -12px rgba(47,107,255,.9);cursor:pointer${chosen ? "" : ";opacity:.55"}">${change ? "Saqlash" : "Tanlash"}</button>
+          </div>
         </div>`;
+      wrap.scrollTop = keepScroll;
       wrap.querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => { gender = b.dataset.g; render(); }));
       wrap.querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => { chosen = b.dataset.id; render(); }));
       const x = wrap.querySelector("[data-close]");

@@ -244,7 +244,7 @@
           row({ cls: "hub-week hub-week-practice", act: "wpractice", data: { week: w }, num: "🎯", name: `${w}-hafta so'zlari`, desc: `${weekCards(w).length} ta so'z bo'yicha 3 xil mashq` })).join("");
       }
     }
-    return `${shk(learnMode ? "glasses" : "desk", learnMode ? "learn" : "practice", 112)}
+    return `${shk(learnMode ? "glasses" : "desk", learnMode ? "learn" : "practice", 121)}
       <div class="hub-modes"><button type="button" data-act="mode" data-v="learn" class="${learnMode ? "is-active" : ""}">📖 O'rganish</button>
         <button type="button" data-act="mode" data-v="practice" class="${learnMode ? "" : "is-active"}">✍️ Mashq qilish</button></div>
       <div class="hub-tabs">${tabs.map(([k, n]) => `<button type="button" data-act="sub" data-v="${k}" class="${k === sub ? "is-active" : ""}">${n}</button>`).join("")}</div>
