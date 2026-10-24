@@ -260,7 +260,7 @@ html[data-theme="dark"] .hm-goal.is-done { background: rgba(34, 197, 94, .16); }
 .hm-ring .t { fill: none; stroke: rgba(120, 130, 180, .2); stroke-width: 7; }
 .hm-ring .p { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
 .hm-ring b { position: relative; margin: 0; font-size: 24px; line-height: 1; }
-.hm-goal.is-done .hm-ring b { color: #1f9d55; font-size: 28px; }
+.hm-goal.is-done .hm-ring b:not(.is-keep) { color: #1f9d55; font-size: 28px; }
 
 .hm-city { position: relative; padding: 14px; border-radius: 26px; color: #fff; overflow: hidden;
   background: linear-gradient(160deg, #22b36a 0%, #0e8f5a 62%, #0b7a5e 100%); box-shadow: 0 22px 40px -22px rgba(14, 143, 90, .85); }

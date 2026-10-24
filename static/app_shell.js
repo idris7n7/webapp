@@ -488,9 +488,10 @@
     { id: "listen", ref: "listen", name: "Listen and Survive", tag: "Tingla va omon qol", emoji: "🎧", bg: "linear-gradient(145deg,#0ea5e9 0%,#2563eb 100%)" },
   ];
   const RING_C = 2 * Math.PI * 26;
-  const ringHtml = (frac, color, icon) => `<span class="hm-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="t"/>
+  // A finished goal shows a tick instead of its icon, unless `keep` is set (the Pomidor tomato always stays).
+  const ringHtml = (frac, color, icon, keep) => `<span class="hm-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="t"/>
     <circle cx="32" cy="32" r="26" class="p" style="stroke:${color}" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - Math.min(1, Math.max(0, frac)))).toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
-    <b>${frac >= 1 ? "✓" : icon}</b></span>`;
+    <b${keep ? ' class="is-keep"' : ""}>${frac >= 1 && !keep ? "✓" : icon}</b></span>`;
 
   // Lessons the student marked as learned today (index.html writes the time of each into l1_learned_log_v1).
   function lessonsToday() {
@@ -508,7 +509,7 @@
     const lessonDone = lessonsToday() > 0;
     const hub = window.L1_Hub;
     const goals = [
-      { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
+      { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}`, keep: true },
     ];
     const allLearned = hub && !hub.nextLesson();
     goals.push({ key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
@@ -521,7 +522,7 @@
     return goals;
   }
   function goalsHtml() {
-    return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon)}
+    return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon, g.keep)}
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
   function goalCount() { const g = dailyGoals().filter((x) => !x.rest); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
@@ -705,7 +706,9 @@
     return window.L1_Facts ? window.L1_Facts.today(u.level || "A1") : null;
   }
   const goalsAllDone = () => { const g = dailyGoals().filter((x) => !x.rest); return g.length > 0 && g.every((x) => x.frac >= 1); };
-  // Shakespeare greeting: the picture is split in a body and a hand, and the hand waves (CSS, see tf_design.css).
+  // Shakespeare greeting. The waving picture draws him about 5% smaller inside its frame than the other poses, so its box is
+  // 5% bigger than the 121 px banners on the other tabs (polish.css .shk-banner) and he looks the same size everywhere.
+  const MASCOT_SIZE = 127;
   const wavingHtml = (size) => `<div class="hm-mascot" style="--hm-mascot:${size}px"><img src="/static/shakespeare/shakespeare-greeting.webp" alt="Shakespeare" draggable="false"></div>`;
   const FACT_KEY = "l1_fact_read_v1";
   const factRead = () => dailyRead(FACT_KEY);
@@ -764,7 +767,7 @@
             <div class="hm-sub">Keling, bugun bir soatgina dars qilamiz. Quyidagi pomidorning ustiga bosing.</div></div>
           <div class="hm-daily">${wordBtnHtml()}${factBtnHtml()}</div>
         </div>
-        ${wavingHtml(121)}
+        ${wavingHtml(MASCOT_SIZE)}
       </section>
 
       <section class="hm-card">

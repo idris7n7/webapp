@@ -89,6 +89,10 @@ body::before {
     radial-gradient(30vmax 30vmax at 4% 80%, rgba(251, 191, 36, .12), transparent 60%),
     linear-gradient(180deg, #f8f9ff 0%, transparent 45%, rgba(230, 233, 255, .9) 100%);
 }
+/* Asosiy is plain white (light theme only): no colour mesh behind its cards, and the top bar matches */
+html:not([data-theme="dark"]) body[data-l1-tab="home"] { background: #fff !important; }
+html:not([data-theme="dark"]) body[data-l1-tab="home"]::before { background: none; }
+html:not([data-theme="dark"]) body[data-l1-tab="home"] #l1AppBar { background: color-mix(in srgb, #fff 86%, transparent); }
 .hm-card, .l1-card, main .bg-white.rounded-2xl, main .bg-white.rounded-3xl, .pg-card, .hub-card, .hm-top-i {
   box-shadow: var(--l1-shadow);
 }
