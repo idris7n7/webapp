@@ -79,20 +79,21 @@ p { text-wrap: pretty; }
 /* =====================================================================================================
    3. BACKDROP + SURFACES — a drifting colour mesh, raised cards
    ===================================================================================================== */
+/* The mesh stands still: a moving full-screen layer under blurred bars made the phone re-blur every frame (the main lag). */
 body::before {
-  content: ""; position: fixed; inset: -20vmax; z-index: -1; pointer-events: none;
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
     radial-gradient(40vmax 40vmax at 12% 8%, rgba(139, 92, 246, .20), transparent 60%),
     radial-gradient(36vmax 36vmax at 92% 22%, rgba(236, 72, 153, .14), transparent 60%),
     radial-gradient(44vmax 44vmax at 70% 96%, rgba(85, 88, 238, .18), transparent 60%),
-    radial-gradient(30vmax 30vmax at 4% 80%, rgba(251, 191, 36, .12), transparent 60%);
-  animation: mod-drift 26s ease-in-out infinite alternate;
+    radial-gradient(30vmax 30vmax at 4% 80%, rgba(251, 191, 36, .12), transparent 60%),
+    linear-gradient(180deg, #f8f9ff 0%, transparent 45%, rgba(230, 233, 255, .9) 100%);
 }
-@keyframes mod-drift { from { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); } to { transform: translate3d(2vmax, -2vmax, 0) rotate(6deg) scale(1.08); } }
 .hm-card, .l1-card, main .bg-white.rounded-2xl, main .bg-white.rounded-3xl, .pg-card, .hub-card, .hm-top-i {
   box-shadow: var(--l1-shadow);
 }
-.hm-card, .pg-card { border-radius: 26px; background: color-mix(in srgb, var(--l1-card) 92%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+/* cards are nearly opaque, so they need no backdrop blur (blur on every card is costly while scrolling) */
+.hm-card, .pg-card { border-radius: 26px; background: color-mix(in srgb, var(--l1-card) 96%, transparent); }
 .hm-goal { border-radius: 20px; box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset; }
 .hm-goal.is-done { box-shadow: 0 0 0 1.5px rgba(34, 197, 94, .35) inset, 0 8px 18px -10px rgba(34, 197, 94, .5); }
 html .hm-count, html .hm-count.is-done, html[data-theme] .hm-count { background: #fff !important; color: #171b3d !important; border: 1px solid rgba(23, 27, 61, .12); box-shadow: 0 4px 10px -6px rgba(40, 50, 120, .35); }
@@ -100,12 +101,12 @@ html .hm-count, html .hm-count.is-done, html[data-theme] .hm-count { background:
 /* =====================================================================================================
    4. GLASS BARS — top bar and bottom navigation
    ===================================================================================================== */
-#l1AppBar { background: color-mix(in srgb, var(--l1-bg) 72%, transparent); backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+#l1AppBar { background: color-mix(in srgb, var(--l1-bg) 82%, transparent); backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4);
   border-bottom: 1px solid color-mix(in srgb, var(--l1-line) 70%, transparent); }
 /* floating glass dock (replaces the flat full-width bar; the raised round centre button stays) */
 #l1BottomNav { bottom: calc(8px + var(--l1-safe-bottom-total, 0px)); padding: 0 12px; background: none; border-top: 0; box-shadow: none; pointer-events: none; }
 #l1BottomNav .l1-nav { pointer-events: auto; max-width: 480px; height: 66px; padding: 0 6px; border-radius: 30px;
-  background: color-mix(in srgb, var(--l1-card) 68%, transparent); backdrop-filter: blur(22px) saturate(1.7); -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  background: color-mix(in srgb, var(--l1-card) 80%, transparent); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, .6); box-shadow: 0 24px 44px -18px rgba(85, 88, 238, .6), 0 1px 0 rgba(255, 255, 255, .8) inset; }
 #l1BottomNav button { height: 54px; border-radius: 22px; font-size: var(--fs-caption); }
 #l1BottomNav button.is-active { background: linear-gradient(180deg, rgba(139, 92, 246, .18), rgba(236, 72, 153, .10)); color: var(--mod-violet); box-shadow: 0 0 0 1px rgba(139, 92, 246, .18) inset; }
@@ -129,15 +130,13 @@ html .hm-count, html .hm-count.is-done, html[data-theme] .hm-count { background:
 .hm-hero { background: var(--mod-grad); color: #fff; border: 0; border-radius: 30px; min-height: 170px;
   box-shadow: 0 30px 50px -26px rgba(139, 92, 246, .85), 0 0 0 1px rgba(255, 255, 255, .25) inset; }
 .hm-hero::before { content: ""; position: absolute; z-index: -1; inset: 0;
-  background: radial-gradient(60% 80% at 100% 0%, rgba(255, 255, 255, .35), transparent 60%), radial-gradient(50% 60% at 0% 100%, rgba(251, 191, 36, .35), transparent 65%);
-  animation: mod-hero-glow 7s ease-in-out infinite alternate; }
-@keyframes mod-hero-glow { to { transform: translate(-6%, 6%) scale(1.15); opacity: .8; } }
+  background: radial-gradient(60% 80% at 100% 0%, rgba(255, 255, 255, .35), transparent 60%), radial-gradient(50% 60% at 0% 100%, rgba(251, 191, 36, .35), transparent 65%); }
 .hm-hero .hm-name, .hm-hero .hm-phrase { color: #fff; text-shadow: 0 2px 14px rgba(40, 20, 120, .35); }
 .hm-hero .hm-name { font-size: var(--fs-huge); }
 .hm-hero .hm-greet { grid-area: text; align-self: center; min-width: 0; }
 .hm-hero .hm-sub { margin-top: 8px; font-size: var(--fs-small); line-height: 1.4; font-weight: 500; color: rgba(255, 255, 255, .92); }
 .hm-hero .hm-kicker { color: rgba(255, 255, 255, .88); }
-.hm-hero .hm-fact { background: rgba(255, 255, 255, .22); color: #fff; border: 1px solid rgba(255, 255, 255, .4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.hm-hero .hm-fact { background: rgba(255, 255, 255, .24); color: #fff; border: 1px solid rgba(255, 255, 255, .4); }
 .hm-hero .hm-daily .hm-fact.is-read { background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .78); border-color: rgba(255, 255, 255, .25); }
 .hm-hero .hm-daily .hm-fact .hm-fact-ico { background: rgba(255, 255, 255, .9); }
 .hm-hero .hm-mascot img { filter: drop-shadow(0 14px 18px rgba(40, 20, 120, .45)); animation: mod-float 4.6s ease-in-out infinite; transform-origin: 50% 90%; }
@@ -164,20 +163,12 @@ button, a, [role="button"], .hm-game, .hm-goal, .hm-card, .hub-card, .section-na
 /* tilt: modern.js sets --rx / --ry on pointer move */
 .mod-tilt { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s var(--mod-out); will-change: transform; }
 .mod-tilt.is-tilting { transition: transform .06s linear; }
-/* staggered entrance: only right after a tab change (modern.js adds .mod-enter for ~1 s) */
-.mod-enter .l1-page > * { animation: mod-rise .6s var(--mod-spring) both; }
-.mod-enter .l1-page > *:nth-child(1) { animation-delay: 0s; } .mod-enter .l1-page > *:nth-child(2) { animation-delay: .06s; }
-.mod-enter .l1-page > *:nth-child(3) { animation-delay: .12s; } .mod-enter .l1-page > *:nth-child(4) { animation-delay: .18s; }
-.mod-enter .l1-page > *:nth-child(5) { animation-delay: .24s; } .mod-enter .l1-page > *:nth-child(6) { animation-delay: .30s; }
-.mod-enter .l1-page > *:nth-child(n + 7) { animation-delay: .36s; }
-@keyframes mod-rise { from { opacity: 0; transform: translateY(26px) scale(.96); } to { opacity: 1; transform: none; } }
-/* page transitions (View Transitions API, where the browser has it) */
-@supports (view-transition-name: x) {
-  ::view-transition-old(root) { animation: mod-vt-out .22s ease both; }
-  ::view-transition-new(root) { animation: mod-vt-in .38s var(--mod-out) both; }
-}
-@keyframes mod-vt-out { to { opacity: 0; transform: translateY(-8px) scale(.985); } }
-@keyframes mod-vt-in { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+/* staggered entrance: only the first time a tab is opened in a visit (modern.js adds .mod-enter for ~0.7 s);
+   short and small, so a page never looks like it is loading again */
+.mod-enter .l1-page > * { animation: mod-rise .32s var(--mod-out) both; }
+.mod-enter .l1-page > *:nth-child(2) { animation-delay: .03s; } .mod-enter .l1-page > *:nth-child(3) { animation-delay: .06s; }
+.mod-enter .l1-page > *:nth-child(n + 4) { animation-delay: .09s; }
+@keyframes mod-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 /* answers: wrong shakes harder, right pops and glows */
 .l1-opt.is-right, .l1-token.is-right, button.is-right { animation: mod-right .55s var(--mod-spring); box-shadow: 0 0 0 3px rgba(34, 197, 94, .35), 0 14px 26px -12px rgba(34, 197, 94, .7); }
 @keyframes mod-right { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
@@ -219,10 +210,10 @@ body.mod-quake { animation: mod-quake .4s linear; }
 .mod-badge[data-rarity="bronze"] .mod-badge-ico { background: linear-gradient(145deg, #f3c19a, #b9733a); }
 .mod-badge[data-rarity="silver"] .mod-badge-ico { background: linear-gradient(145deg, #f4f6fb, #a3acc2); }
 .mod-badge[data-rarity="gold"] .mod-badge-ico { background: linear-gradient(145deg, #ffe58a, #f1a208); box-shadow: 0 0 18px rgba(251, 191, 36, .75), 0 10px 18px -8px rgba(0, 0, 0, .35); }
-.mod-badge[data-rarity="holo"] .mod-badge-ico { background: conic-gradient(from 0deg, #ff7eb3, #ffd86b, #7bffb8, #6ac7ff, #b48bff, #ff7eb3); animation: mod-holo 5s linear infinite; box-shadow: 0 0 22px rgba(180, 139, 255, .85); }
+.mod-badge[data-rarity="holo"] .mod-badge-ico { background: conic-gradient(from 0deg, #ff7eb3, #ffd86b, #7bffb8, #6ac7ff, #b48bff, #ff7eb3); box-shadow: 0 0 22px rgba(180, 139, 255, .85); }
 .mod-badge[data-rarity="holo"] .mod-badge-ico::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: rgba(255, 255, 255, .55); z-index: -1; }
-@keyframes mod-holo { to { filter: hue-rotate(360deg); } }
-.mod-badge.is-locked .mod-badge-ico { background: rgba(120, 130, 170, .22); box-shadow: none; filter: grayscale(1); opacity: .6; animation: none; }
+/* a locked badge shows a full-colour 🔒 on a plain disc (the lock already says "not yet"; greying it made it look faded) */
+.mod-badge.is-locked .mod-badge-ico { background: rgba(120, 130, 170, .18); box-shadow: none; animation: none; }
 .mod-badge.is-locked .mod-badge-name { color: var(--l1-muted); }
 .mod-badge.is-new { animation: mod-right .8s var(--mod-spring); }
 
@@ -260,9 +251,12 @@ html[data-theme="dark"] {
   --l1-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 14px 34px -16px rgba(0, 0, 0, .85), 0 0 0 1px rgba(139, 141, 255, .06);
   --mod-glow: 0 0 0 1px rgba(255, 255, 255, .08) inset, 0 0 30px -6px rgba(139, 92, 246, .55);
 }
-html[data-theme="dark"] body { background: radial-gradient(120% 60% at 50% 0%, #1a1650 0%, var(--l1-bg) 55%, #06071a 100%) fixed !important; }
+/* the glow lives in the fixed ::before layer: a `background-attachment: fixed` body repaints the whole screen on every scroll */
+html[data-theme="dark"] body { background: var(--l1-bg) !important; }
 html[data-theme="dark"] body::before {
   background:
+    radial-gradient(120% 60% at 50% 0%, rgba(26, 22, 80, .95) 0%, transparent 55%),
+    linear-gradient(180deg, transparent 55%, rgba(6, 7, 26, .7) 100%),
     radial-gradient(40vmax 40vmax at 12% 8%, rgba(139, 92, 246, .30), transparent 60%),
     radial-gradient(36vmax 36vmax at 92% 22%, rgba(236, 72, 153, .20), transparent 60%),
     radial-gradient(44vmax 44vmax at 70% 96%, rgba(56, 189, 248, .14), transparent 60%);

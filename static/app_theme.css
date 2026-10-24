@@ -25,7 +25,8 @@
 html { -webkit-tap-highlight-color: transparent; }
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-  background: radial-gradient(120% 60% at 50% 0%, #f8f9ff 0%, var(--l1-bg) 60%, #e6e9ff 100%) fixed !important;
+  /* plain colour: the soft glow is drawn by the fixed body::before layer (modern.css); `fixed` here repainted on every scroll */
+  background: var(--l1-bg) !important;
   color: var(--l1-ink) !important;
   overscroll-behavior-y: none;
 }
@@ -615,7 +616,7 @@ html[data-theme="dark"] {
   --l1-danger-50: rgba(244, 63, 94, .15);
   --l1-shadow: 0 10px 30px -14px rgba(0, 0, 0, .7), 0 2px 6px -2px rgba(0, 0, 0, .35);
 }
-html[data-theme="dark"] body { background: radial-gradient(120% 60% at 50% 0%, #14203a 0%, var(--l1-bg) 60%, #0a111f 100%) fixed !important; color: var(--l1-ink) !important; }
+html[data-theme="dark"] body { background: var(--l1-bg) !important; color: var(--l1-ink) !important; }
 html[data-theme="dark"] #l1AppBar { background: linear-gradient(135deg, #16233d 0%, #1b2d52 100%); box-shadow: 0 6px 20px -10px rgba(0, 0, 0, .8); border-bottom: 1px solid var(--l1-line); }
 html[data-theme="dark"] #l1BottomNav .l1-nav { background: rgba(22, 34, 57, .94); border-color: var(--l1-line); }
 html[data-theme="dark"] #l1BottomNav button.is-active { color: #fff; background: #3f7bff; }

@@ -6,6 +6,15 @@
   const TABS = ["home", "tasks", "learn", "games", "rating"];
   const LEGACY = ["learnContainer", "practiceContainer", "gamesContainer", "dictionaryView", "myProgressView", "exerciseRunnerView"];
   const $ = (id) => document.getElementById(id);
+  // A page is drawn again only when its markup changed. Re-drawing an unchanged page (every tab switch and every data
+  // refresh did) re-decoded its pictures and replayed its animations, so it looked like the page reloaded.
+  const painted = new WeakMap();
+  function paint(el, markup) {
+    if (painted.get(el) === markup && el.firstElementChild) return false;
+    painted.set(el, markup);
+    el.innerHTML = markup;
+    return true;
+  }
 
   const Shell = {
     tab: "home",
@@ -747,7 +756,7 @@
     const phrase = greetingText(me);
     loadListenStars();
 
-    el.innerHTML = `<div class="l1-page space-y-4">
+    if (!paint(el, `<div class="l1-page space-y-4">
       <section class="hm-hero">
         <div class="hm-hero-text">
           <div class="hm-greet">${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
@@ -777,7 +786,7 @@
             <span class="hm-medal">${["🥇", "🥈", "🥉"][e.rank - 1] || e.rank}</span>${avatar(e, e.rank === 1 ? 60 : 52)}
             <b>${html((e.name || "").split(" ")[0])}</b><span>${e.points} ball</span></div>`).join("")}</div>
       </section>` : ""}
-    </div>`;
+    </div>`)) return;
     wireTaskButtons(el);
     el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();
@@ -849,7 +858,7 @@
     const plan = window.L1_Hub && all ? window.L1_Hub.plan() : [];
     const doneN = plan.filter((p) => p.hwDone).length;
     const banner = window.L1_Hub ? window.L1_Hub.shk("book", "homework", 121) : "";
-    el.innerHTML = `<div class="l1-page space-y-4">
+    if (!paint(el, `<div class="l1-page space-y-4">
       ${banner}
       ${all === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
       ${homeworkToday(plan)}
@@ -861,7 +870,7 @@
       <div class="hw-list">${homeworkRows(plan)}</div>` : ""}
       ${active.length ? `<div class="l1-h2 px-1 pt-2">O'qituvchi vazifalari</div>${active.map((a) => taskCard(a)).join("")}` : ""}
       ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan vazifalar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
-    </div>`;
+    </div>`)) return;
     wireTaskButtons(el);
     el.querySelectorAll("[data-hw-locked]").forEach((b) => b.addEventListener("click", () => {
       const k = b.dataset.hwLocked;
@@ -918,8 +927,8 @@
         <span class="lb-coins"><i class="lb-coin"></i>${e.points}</span></div>`;
     const timer = data && period === "week" && data.weekEnd ? `<div class="lb-timer">
         <span class="lb-clock">${CLOCK_ICON}</span>
-        <div><small>Reyting tugashiga qoldi</small><b class="lb-count" data-end="${data.weekEnd}">${fmtLeft(data.weekEnd - nowTs())}</b></div></div>` : "";
-    el.innerHTML = `<div class="lb space-y-4">
+        <div><small>Reyting tugashiga qoldi</small><b class="lb-count" data-end="${data.weekEnd}"></b></div></div>` : "";
+    const drawn = paint(el, `<div class="lb space-y-4">
       <div class="l1-seg"><button type="button" data-period="week" class="${period === "week" ? "is-active" : ""}">Bu hafta</button>
         <button type="button" data-period="all" class="${period === "all" ? "is-active" : ""}">Umumiy</button></div>
       ${!data ? `<div class="l1-skeleton" style="height:220px"></div>` : `
@@ -935,17 +944,19 @@
         <div class="lb-me-info"><b>${html(mine.name)}</b><span>${mine.points} ball · ${period === "week" ? "bu hafta" : "umumiy"}</span></div>
 </div>` : ""}
       <div class="l1-sub px-2 text-center" style="font-size:12px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
-    </div>`;
+    </div>`);
+    if (!drawn) return;
+    tickCountdowns(); // the countdown text is filled in here (and every second), so the markup above stays the same
     el.querySelectorAll("[data-period]").forEach((b) => b.addEventListener("click", () => onPeriod(b.dataset.period)));
   };
 
   function renderRating() {
     const el = $("l1Rating");
     if (!el || Shell.tab !== "rating") return;
-    el.innerHTML = `<div class="l1-page space-y-4">
+    paint(el, `<div class="l1-page space-y-4">
       ${window.L1_Hub ? window.L1_Hub.shk("trophy", "rating", 121) : ""}
       <div class="l1-sub hidden" id="l1RatingMe"></div>
-      <div id="l1RatingBox"></div></div>`;
+      <div id="l1RatingBox"></div></div>`);
     const box = $("l1RatingBox");
     const header = () => {
       const m = Shell.data.me;

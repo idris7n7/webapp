@@ -163,15 +163,19 @@
 
   const GREETING = "Assalomu alaykum, jigarlar! Bo'vottimi?";
   const greeterHtml = (size) => figHtml("wave", size, "l1-greeter");
+  const bannerQuotes = {};
 
   window.L1_Shakespeare = {
     portrait: function (size, pose) { return portraitHtml(size || 90, pose); },
     react: react,
     greeter: function (size) { return portraitHtml(size || 124); },
     greeting: GREETING,
-    // Shakespeare in the scene that fits the page, saying a line from QUOTES[mode] in a speech bubble.
+    // Shakespeare in the scene that fits the page, saying a line from QUOTES[mode] in a speech bubble. A page keeps its
+    // line for 10 minutes, so switching tabs back and forth does not make the bubble jump to a new line every time.
     banner: function (scene, mode, size) {
-      const q = QUOTES[mode] ? this.quote(mode) : "";
+      const keep = bannerQuotes[mode];
+      if (QUOTES[mode] && (!keep || Date.now() - keep.at > 10 * 60 * 1000)) bannerQuotes[mode] = { text: this.quote(mode), at: Date.now() };
+      const q = QUOTES[mode] ? bannerQuotes[mode].text : "";
       return `<div class="shk-banner">${portraitHtml(size || 112, scene)}${q ? `<div class="shk-bubble">${q.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>` : ""}</div>`;
     },
     quote: function (mode) { const a = QUOTES[mode]; return a[Math.floor(Math.random() * a.length)][0]; },

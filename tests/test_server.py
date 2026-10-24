@@ -1405,6 +1405,24 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(plain.headers.get("Content-Encoding"))
         self.assertIn("Level Up", await plain.text())
 
+    async def test_start_page_and_api_are_gzipped_and_versioned_files_are_kept(self):
+        page = await self.client.get("/", headers={"Accept-Encoding": "gzip"})
+        self.assertEqual(page.headers.get("Content-Encoding"), "gzip")
+        self.assertEqual(page.headers.get("Cache-Control"), "no-cache")
+        self.assertIn("Level Up", await page.text())
+        again = await self.client.get("/", headers={"Accept-Encoding": "gzip", "If-None-Match": page.headers["ETag"]})
+        self.assertEqual(again.status, 304)
+        versioned = await self.client.get("/static/app_shell.js?v=1")
+        self.assertIn("immutable", versioned.headers.get("Cache-Control", ""))
+        unversioned = await self.client.get("/static/app_shell.js")
+        self.assertEqual(unversioned.headers.get("Cache-Control"), "no-cache")
+        token, _ = await self.student_token()
+        state = await self.client.get("/api/state", headers={"Authorization": f"Bearer {token}", "Accept-Encoding": "gzip"})
+        self.assertEqual(state.status, 200)
+        self.assertEqual(state.headers.get("Content-Encoding"), "gzip")
+        self.assertEqual(state.headers.get("Cache-Control"), "no-store")
+        self.assertIsInstance(await state.json(), dict)
+
     async def test_static_files_cannot_be_read_outside_the_static_folder(self):
         for path in ("/static/../server.py", "/static/%2e%2e/server.py", "/static/..%2fserver.py"):
             resp = await self.client.get(path)

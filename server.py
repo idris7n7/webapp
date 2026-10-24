@@ -1071,7 +1071,10 @@ def csv_safe(value):
 # Web Server & REST API Handlers (aiohttp)
 # ---------------------------------------------------------------------------
 async def handle_index(request: web.Request) -> web.StreamResponse:
-    return web.FileResponse(STATIC_INDEX_PATH, headers={"Cache-Control": "no-cache"})
+    # gzipped like the other text files (300 KB -> about 60 KB), and revalidated on every start (a cheap 304)
+    resp = await serve_file(request, STATIC_INDEX_PATH)
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 async def handle_healthz(request: web.Request) -> web.Response:
@@ -3373,6 +3376,10 @@ async def handle_static(request: web.Request) -> web.StreamResponse:
     path = os.path.realpath(os.path.join(STATIC_DIR, rel))
     if os.path.commonpath([path, os.path.realpath(STATIC_DIR)]) != os.path.realpath(STATIC_DIR) or not os.path.isfile(path):
         raise web.HTTPNotFound()
+    return await serve_file(request, path)
+
+
+async def serve_file(request: web.Request, path: str) -> web.StreamResponse:
     st = os.stat(path)
     ext = os.path.splitext(path)[1].lower()
     etag = f'"{st.st_mtime_ns:x}-{st.st_size:x}"'
@@ -3486,6 +3493,14 @@ async def error_middleware(request: web.Request, handler):
         response.headers.setdefault("Strict-Transport-Security", "max-age=15552000")
     if request.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
+        # JSON over a slow link: /api/state is ~95 KB, about 15 KB gzipped
+        if (isinstance(response, web.Response) and not response.compression and response.body is not None
+                and len(response.body) > 1024 and "gzip" in request.headers.get("Accept-Encoding", "")):
+            response.enable_compression(web.ContentCoding.gzip)
+    elif request.path.startswith("/static/") and "v" in request.query and response.status in (200, 304):
+        # a ?v=N file never changes under the same N (index.html bumps N), so phones keep it and stop asking:
+        # Telegram on iPhone has no service worker, and every file it re-checked cost a round trip through the tunnel
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     elif request.path.startswith("/static/") and request.path.endswith((".js", ".css", ".html")):
         # Telegram's webview caches hard; make it revalidate code on every start (a cheap 304).
         response.headers["Cache-Control"] = "no-cache"

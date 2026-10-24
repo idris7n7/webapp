@@ -459,7 +459,8 @@ body:has(#authSection:not(.hidden)) #l1AuthTheme { display: none !important; }
 
 /* top bar: the flame opens the streak calendar */
 #l1BarStreak { font-size: 18px; line-height: 1; padding: 0; width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: 50%; }
-#l1BarStreak.is-cold { filter: grayscale(1); opacity: .55; }
+/* no lesson today yet: the flame is calmer, but still clearly a flame (a grey, see-through one looked broken) */
+#l1BarStreak.is-cold img.l1-emo { filter: saturate(.6); }
 .sc-sheet { padding: 4px 2px 2px; }
 .sc-loading { padding: 28px 8px; text-align: center; font-weight: 700; color: var(--l1-muted, #6b7194); }
 .sc-top { display: flex; align-items: center; gap: 12px; }
@@ -551,9 +552,10 @@ body:has(#authSection:not(.hidden)) #l1AuthTheme { display: none !important; }
 .hm-daily .hm-fact:active { transform: scale(.98); }
 .hm-daily .hm-tick { margin-left: auto; width: 16px; height: 16px; color: #16a34a; }
 
-/* emoji pictures (icons_ui.js) in the bottom bar: full colour when selected, softly greyed otherwise */
-#l1BottomNav button img.l1-emo { width: 26px; height: 26px; margin: 0; }
-#l1BottomNav button:not(.is-active):not([data-tab="learn"]) img.l1-emo { filter: grayscale(.85) opacity(.75); transition: filter .15s; }
+/* emoji pictures (icons_ui.js) in the bottom bar: always full colour (greyed icons read as faded / broken);
+   the selected tab is marked by its pill, its label colour and a slightly bigger icon */
+#l1BottomNav button img.l1-emo { width: 26px; height: 26px; margin: 0; transition: transform .15s; }
+#l1BottomNav button.is-active:not([data-tab="learn"]) img.l1-emo { transform: scale(1.1); }
 #l1BottomNav button[data-tab="learn"] img.l1-emo { width: 50px; height: 50px; padding: 11px; box-sizing: border-box; border-radius: 50%; margin-top: -22px; background: linear-gradient(145deg, #6a6df5, #5558ee); border: 4px solid #fff; box-shadow: 0 8px 16px -6px rgba(85, 88, 238, .7); }
 html[data-theme="dark"] #l1BottomNav button[data-tab="learn"] img.l1-emo { border-color: var(--l1-card); }
 

@@ -101,20 +101,22 @@
     document.addEventListener("pointerleave", () => { if (cur) { cur.style.setProperty("--rx", "0deg"); cur.style.setProperty("--ry", "0deg"); cur = null; } }, true);
   }
 
-  // ------------------------------------------------------------------ page transitions + staggered entrance
+  // ------------------------------------------------------------------ staggered entrance
+  // Only the first time a tab is opened in this visit. No View Transition: it froze the whole screen into a picture and
+  // faded it, so every tab switch looked like the page was reloading (and it was slow on phones).
+  const seenTabs = new Set();
   function wrapShell() {
     const S = window.L1_Shell;
     if (!S || S.__mod) return !!S;
     S.__mod = true;
+    seenTabs.add(S.tab);
     const go = S.go;
     S.go = function (tab) {
-      const args = arguments, self = this;
-      const changed = tab !== S.tab;
-      const run = () => { const r = go.apply(self, args); if (changed) enter(); return r; };
-      if (changed && !reduce() && document.startViewTransition) {
-        try { document.startViewTransition(run); return; } catch (e) { /* fall through */ }
-      }
-      return run();
+      const first = tab !== S.tab && !seenTabs.has(tab);
+      const r = go.apply(this, arguments);
+      seenTabs.add(S.tab);
+      if (first) enter();
+      return r;
     };
     return true;
   }
@@ -122,7 +124,7 @@
   function enter() {
     document.body.classList.add("mod-enter");
     clearTimeout(enterTimer);
-    enterTimer = setTimeout(() => document.body.classList.remove("mod-enter"), 1100);
+    enterTimer = setTimeout(() => document.body.classList.remove("mod-enter"), 700);
   }
 
   // ------------------------------------------------------------------ count-up numbers
@@ -138,13 +140,16 @@
     })(t0);
   }
   function watchNumbers() {
-    const seen = new WeakMap();
-    const check = (el) => {
+    // keyed by the number's place, not by the element: a page that is drawn again shows the same numbers without
+    // counting them up from 0 again; only a number that really grew counts up
+    const seen = new Map();
+    const check = (el, i) => {
       if (el.__counting) return;
       const txt = el.textContent.trim();
       if (!/^\d{1,6}$/.test(txt)) return;
-      const to = +txt, prev = seen.get(el);
-      seen.set(el, to);
+      const key = el.id || "sc-big:" + i;
+      const to = +txt, prev = seen.get(key);
+      seen.set(key, to);
       if (prev === to) return;
       if (prev === undefined && el.id !== "l1BarPointsNum" && to > 0) { countTo(el, to, 0, 900); return; }
       if (prev !== undefined && to > prev) {

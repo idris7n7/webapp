@@ -1,5 +1,6 @@
 /* Level Up - emoji as pictures (Apple-style set, the same one Telegram shows), so every emoji looks the same on every
- * phone and computer. Generated file: the build script fills in the tables below and copies the PNGs to /static/emoji/.
+ * phone and computer. Generated file: the build script fills in the tables below; the pictures in /static/emoji/ are the
+ * 160 px set (iamcal/emoji-data img-apple-160) saved as WebP, sharp up to ~52 px on a 3x phone screen.
  *   L1Icon("open-book")  ->  '<img class="l1-emo" ...>' string for templates
  * Every emoji that reaches the page (static HTML, or text the app writes later) is swapped for its picture by a
  * MutationObserver, so game code can keep using plain text. Text-only buttons and headings get an emoji in front
@@ -16,7 +17,7 @@
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
   const img = (file, alt, cls) =>
-    `<img class="l1-emo${cls ? " " + cls : ""}" src="/static/emoji/${file}.png" alt="${esc(alt || "")}" draggable="false" decoding="async">`;
+    `<img class="l1-emo${cls ? " " + cls : ""}" src="/static/emoji/${file}.webp" alt="${esc(alt || "")}" draggable="false" decoding="async">`;
   function fileFor(e) {
     const key = e.replace(/️/g, "");
     return SYMS[key] || MAP[key] || MAP[key.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "")] || (key.includes("‍") && MAP[key.split("‍")[0]]) || null;

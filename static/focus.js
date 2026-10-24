@@ -288,7 +288,13 @@
     }
   }
 
-  async function refreshState() {
+  // Callers that ask at the same moment (start-up, tab coming back, the sheet opening) share one request.
+  let stateLoading = null;
+  function refreshState() {
+    if (!stateLoading) stateLoading = loadState().finally(() => { stateLoading = null; });
+    return stateLoading;
+  }
+  async function loadState() {
     const r = await api("/api/focus/state");
     if (!r.ok) return false;
     const d = r.data;

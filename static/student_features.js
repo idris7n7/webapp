@@ -711,10 +711,11 @@
   // =========================================================================
   // 4. MAIN NAVIGATION CONTROLLER
   // =========================================================================
-  // The four games and the 3D engine are about 900 KB; they load the first time a game is opened (or when the browser is idle).
+  // The four games and the 3D engine are about 900 KB; they run the first time a game is opened. When the browser is idle
+  // they are only downloaded (prefetch), not run: running the 3D engine early froze the Home page for a moment on phones.
   const Lazy = {
     files: ["millionaire_data.js?v=2", "listen_data.js?v=2", "questions.js?v=3", "millionaire_music.js?v=2", "games_millionaire.js?v=10",
-      "l1_3d.js?v=2", "games_wordrace.js?v=3", "games_listen.js?v=5", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=31"],
+      "l1_3d.js?v=2", "games_wordrace.js?v=4", "games_listen.js?v=6", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=32"],
     ready: false,
     promise: null,
     games() {
@@ -729,12 +730,17 @@
       }
       return this.promise;
     },
+    // download into the cache one file after another, so opening a game later costs only the start-up, not the download
+    prefetch() {
+      if (this.promise) return;
+      this.files.reduce((chain, f) => chain.then(() => (this.promise ? null : fetch("/static/" + f, { credentials: "same-origin" }).then((r) => r.blob()).catch(() => null))), Promise.resolve());
+    },
   };
   window.L1_Lazy = Lazy;
   let inviteLink = false;
   try { inviteLink = new URLSearchParams(location.search).has("race"); } catch (e) {}
   if (inviteLink) Lazy.games();
-  else setTimeout(() => (window.requestIdleCallback || setTimeout)(() => Lazy.games()), 6000);
+  else setTimeout(() => (window.requestIdleCallback || setTimeout)(() => Lazy.prefetch()), 6000);
 
   const Nav = {
     currentMode: 'learn', // 'learn' | 'practice' | 'games'

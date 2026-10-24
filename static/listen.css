@@ -21,7 +21,7 @@
 
 /* the mission map */
 .ls-mission { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 18px; text-align: left; color: #ecfdf5; background: rgba(255, 255, 255, .07); border: 1.5px solid rgba(110, 231, 183, .25); }
-.ls-mission:disabled { opacity: .45; filter: grayscale(.6); }
+.ls-mission:disabled { opacity: .7; filter: grayscale(.3); }
 .ls-mission .n { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 900; color: #052e24; background: #6ee7b7; }
 .ls-mission .ic { flex: none; font-size: 32px; }
 .ls-mission .tx { flex: 1; min-width: 0; }

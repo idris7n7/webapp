@@ -1,7 +1,7 @@
 // Level Up service worker: the app opens even when the connection is weak or gone.
 // Versioned files (?v=N), fonts, pictures and sounds are cached and served from the cache first; the start page and
 // unversioned files go to the network first and fall back to the cache. /api/ and live games are never touched.
-const CACHE = "levelup-v1";
+const CACHE = "levelup-v2"; // v2: drops the old 64 px emoji PNGs and the copies of older ?v= files
 const SHELL = ["/"];
 
 self.addEventListener("install", (e) => {
@@ -12,8 +12,17 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
+// A new ?v= of a file replaces the older ones in the cache, so the cache does not grow with every update.
+const dropOlder = (c, req) => {
+  const url = new URL(req.url);
+  if (!url.searchParams.has("v")) return;
+  c.keys().then((keys) => keys.forEach((k) => {
+    const u = new URL(k.url);
+    if (u.pathname === url.pathname && u.search !== url.search) c.delete(k);
+  }));
+};
 const cacheFirst = (req) => caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-  if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+  if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy).then(() => dropOlder(c, req))); }
   return res;
 }));
 
