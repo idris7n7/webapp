@@ -32,6 +32,13 @@
       ["O'yin: «Bo'lish yoki bo'lmaslik» emas, «yutish yoki yana urinish»!", null, null],
       ["Diqqat bilan javob ber — to'p ham, ball ham sening tomonda bo'lsin!", null, null],
     ],
+    rating: [
+      ["Hamma g'olib bo'la olmaydi, lekin hamma harakat qila oladi. Reytingga qara!", null, null],
+      ["Men hech qachon reytingda birinchi bo'lmaganman, lekin 37 ta pyesa yozganman!", null, null],
+      ["Birinchi o'rin — taxt, ikkinchisi — tojsiz shahzoda. Sen qaysi birini tanlaysan?", null, null],
+      ["Reyting — katta sahna: ball to'plasang, olqish ham to'xtamaydi!", null, null],
+      ["Bugun ozgina ko'proq o'qisang, ertaga ro'yxatda bir pog'ona yuqorida bo'lasan!", null, null],
+    ],
   };
 
   // ---- Drawn Shakespeare: one body, a pose per situation (same pose names as the mascot code) ----
@@ -162,6 +169,11 @@
     react: react,
     greeter: function (size) { return portraitHtml(size || 124); },
     greeting: GREETING,
+    // Shakespeare in the scene that fits the page, saying a line from QUOTES[mode] in a speech bubble.
+    banner: function (scene, mode, size) {
+      const q = QUOTES[mode] ? this.quote(mode) : "";
+      return `<div class="shk-banner">${portraitHtml(size || 112, scene)}${q ? `<div class="shk-bubble">${q.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>` : ""}</div>`;
+    },
     quote: function (mode) { const a = QUOTES[mode]; return a[Math.floor(Math.random() * a.length)][0]; },
     quotes: function (mode) { return QUOTES[mode].map((q) => q[0]); },
   };

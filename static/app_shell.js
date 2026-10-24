@@ -81,7 +81,7 @@
       <div class="l1-hello"></div>
       <button type="button" id="l1BarStaff" class="l1-pill hidden">Panel</button>
       ${Theme.buttonHtml("", "l1BarTheme")}
-      <span id="l1BarStreak" class="l1-pill hidden"></span>
+      <button type="button" id="l1BarStreak" class="l1-pill hidden" aria-label="Doimiylik kalendari">🔥</button>
       <button type="button" id="l1BarPoints" class="l1-pill" aria-label="Haftalik ballar: 0. Reytingni ochish"><span class="l1-coin">★</span><span id="l1BarPointsNum">0</span></button>
     </div>`;
     document.body.insertBefore(bar, document.body.firstChild);
@@ -93,6 +93,7 @@
     Theme.bind(authTheme);
     Theme.bind(bar);
     $("l1BarAvatar").addEventListener("click", openProfile);
+    $("l1BarStreak").addEventListener("click", () => { Haptic.tap(); openStreakCalendar(); });
     $("l1BarBack").addEventListener("click", () => { Haptic.tap(); const go = backAction(); if (go) go(); setTimeout(syncBackButton, 120); });
     // The Back button follows what is on screen: re-check when the page changes (once per frame), plus a slow
     // fallback for games that start without touching the page.
@@ -137,6 +138,8 @@
     });
     const switcher = $("mainModeSwitcher");
     if (switcher) switcher.classList.toggle("hidden", tab !== "learn");
+    const hub = $("l1Hub");
+    if (hub) hub.classList.toggle("hidden", tab !== "learn");
     if (tab !== "learn" && tab !== "games") LEGACY.forEach((id) => { const el = $(id); if (el) el.classList.add("hidden"); });
     document.querySelectorAll("#l1BottomNav button").forEach((b) => {
       b.classList.toggle("is-active", b.dataset.tab === tab);
@@ -156,6 +159,7 @@
     if (tab === "learn") origSetMode(state.mainSection === "practice" ? "practice" : "learn");
     else if (tab === "games") origSetMode("games");
     setPageVisibility();
+    if (window.L1_Hub) window.L1_Hub.onTab(tab);
 
     if (tab !== "home" && !Shell.backToHome) Shell.backToHome = Back.push(() => { Shell.backToHome = null; Shell.go("home"); });
     if (tab === "home" && Shell.backToHome) { Back.remove(Shell.backToHome); Shell.backToHome = null; }
@@ -305,10 +309,17 @@
     if (Shell.tab === "tasks") renderTasks();
     if (Shell.tab === "rating") renderRating();
     const dot = $("l1TasksDot");
-    if (dot) dot.classList.toggle("hidden", !activeTasks().some((a) => !a.my.done));
+    if (dot) dot.classList.toggle("hidden", !(activeTasks().some((a) => !a.my.done) || (!isSunday() && openHomework() && !homeworkDoneToday())));
   };
   const nowTs = () => Shell.data.now + (Date.now() / 1000 - (Shell.data.fetchedAt || Date.now() / 1000));
-  const activeTasks = () => (Shell.data.assignments || []).filter((a) => a.deadline > nowTs());
+  // hw_<lesson> are the permanent daily homeworks (Vazifalar); everything else is a teacher's assignment
+  const isHw = (a) => String(a.id).startsWith("hw_");
+  const activeTasks = () => (Shell.data.assignments || []).filter((a) => !isHw(a) && a.deadline > nowTs());
+  const isSunday = () => new Date().getDay() === 0;
+  const dayStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime() / 1000; };
+  const homeworkDoneToday = () => (Shell.data.assignments || []).some((a) => isHw(a) && a.my && a.my.done && a.my.finishedAt >= dayStart());
+  // the next homework that can be started right now, if there is one
+  const openHomework = () => { const p = window.L1_Hub && window.L1_Hub.nextHomework(); return p && p.hwOpen ? p : null; };
 
   // ------------------------------------------------------------------ header
   function renderBar() {
@@ -324,11 +335,10 @@
     $("l1BarPointsNum").textContent = me ? me.weekPoints : "0";
     $("l1BarPoints").setAttribute("aria-label", `Haftalik ballar: ${me ? me.weekPoints : 0}. Reytingni ochish`);
     const streak = $("l1BarStreak");
-    if (me && me.streak > 0 && isStudentMode()) {
-      streak.classList.remove("hidden");
-      streak.textContent = `🔥 ${me.streak}`;
-      streak.title = `${me.streak} kun ketma-ket`;
-    } else streak.classList.add("hidden");
+    const days = me ? me.streak || 0 : 0;
+    streak.classList.toggle("hidden", !isStudentMode());
+    streak.classList.toggle("is-cold", days === 0);
+    streak.title = `Doimiylik: ${days} kun`;
     $("l1BarPoints").classList.toggle("hidden", !isStudentMode());
   }
 
@@ -475,28 +485,39 @@
     } catch (e) { return 0; }
   }
 
-  // Today's three goals: Pomodoros, lessons and homework questions.
+  // Today's three goals. Pomodoros have a target (3); a lesson and the daily homework have none: the student can do as many as
+  // they like, the goal is met by doing one. Sunday is the day off for homework.
   function dailyGoals() {
     const f = window.L1_Focus ? window.L1_Focus.summary() : { today: 0 };
-    const tasks = activeTasks();
-    const total = tasks.reduce((n, a) => n + (a.my ? a.my.total : 0), 0);
-    const done = tasks.reduce((n, a) => n + (a.my ? a.my.resolved : 0), 0);
-    const lessons = lessonsToday();
+    const lessonDone = lessonsToday() > 0;
+    const hub = window.L1_Hub;
     const goals = [
       { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
-      { key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessons / LESSON_GOAL, text: `${Math.min(lessons, LESSON_GOAL)}/${LESSON_GOAL}` },
     ];
-    // No homework means no goal: an empty goal must not count as done.
-    if (total) goals.push({ key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: done / total, text: `${done}/${total}` });
+    const allLearned = hub && !hub.nextLesson();
+    goals.push({ key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
+    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", color: "#4f5bf0", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
+    else {
+      const left = hub && hub.nextHomework();
+      const done = homeworkDoneToday() || (hub && !left);
+      goals.push({ key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
+    }
     return goals;
   }
   function goalsHtml() {
     return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon)}
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
-  function goalCount() { const g = dailyGoals(); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
+  function goalCount() { const g = dailyGoals().filter((x) => !x.rest); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
   function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalCount"); if (h) h.innerHTML = goalCount(); }
+  // "Vazifa" goes straight to the next homework when it is open, otherwise to the page that says what is missing.
+  function startHomework() {
+    const p = openHomework();
+    if (p && window.L1_Tasks) window.L1_Tasks.open(p.asg.id);
+    else Shell.go("tasks");
+  }
   window.addEventListener("l1:lesson-learned", () => { paintGoals(); });
+  window.addEventListener("l1:progress-changed", () => { paintGoals(); if (Shell.tab === "tasks") renderTasks(); });
 
   // Listen and Survive stars (out of 3 per mission, 5 missions) come from the server; fetched once, then the home is drawn again.
   function loadListenStars() {
@@ -526,17 +547,14 @@
   // The hero greets with a different phrase depending on how the student has been doing (no name in these phrases).
   const GREET = {
     newcomer: [
-      "Assalomu alaykum, jigar!", "O'hoo, kimlarni ko'ryapmiz!", "Assalomu alaykum, bo'lajak Shekispir!",
       "Qarsaklar! Bugungi kunning bosh qahramoni keldi!", "Salom! ChatGPT bugun dam olsin. Endi o'zingiz ishlang.",
       "Band 9 sizni kutyapti. Faqat uxlab qolmang.", "Voy, mehmon kelibdi! Lekin choy yo'q, vazifa bor!",
       "Ana, mijozimiz keldi! Bugun miyangizga xizmat ko'rsatamiz.",
     ],
     away: [
-      "O-ho, tirik ekansiz-ku!", "Sizni sog'indik. Ingliz tili ham xafa bo'lib yurgandi.",
+      "Sizni sog'indik. Ingliz tili ham xafa bo'lib yurgandi.",
       "Tirikmisiz? Ingliz tili sizni bedarak yo'qolganlar ro'yxatiga kiritay dedi!",
     ],
-    great: ["Voy, professor keldi!"],
-    best: ["Yana sizmi? Zo'r!"],
   };
   const DAY = 86400000;
   // Worked out once per page load and student: how long the student was away and on how many different days they visited.
@@ -564,8 +582,6 @@
     const streak = me ? me.streak || 0 : 0;
     const weekPoints = me ? me.weekPoints || 0 : 0;
     if (visit().awayDays >= 3 && !(streak > 0)) return "away";
-    if ((streak >= 7 && me && me.weekRank && me.weekRank <= 3 && weekPoints > 0) || (streak >= 5 && total > 0 && done >= total)) return "best";
-    if (streak >= 3 || weekPoints >= 150 || f.today >= 3) return "great";
     if (visit().visitDays <= 3) return "newcomer";
     return "";
   }
@@ -589,6 +605,128 @@
     return cur.text;
   }
 
+  // ------------------------------------------------------------------ Word of the day (greeting card)
+  // One word a day from "4000 Essential English Words" (books 1-6, 600 words each), in book order: book 1 unit 1 first, then on
+  // through every unit and book. Uzbek meaning, definition, example and the book picture live in /static/words4000/b<N>.json.
+  const WORD_START = Date.UTC(2026, 9, 23) / 86400000;   // 23 Oct 2026 = word no. 1
+  const WORD_BOOKS = 6, WORD_PER_BOOK = 600, WORD_PER_UNIT = 20;
+  const WORD_POS = { n: "ot", v: "fe'l", adj: "sifat", adv: "ravish", prep: "predlog", conj: "bog'lovchi", pron: "olmosh", interj: "undov", det: "aniqlovchi" };
+  const wordCache = {};
+  function wordIndex() {
+    const d = new Date();
+    const day = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+    const total = WORD_BOOKS * WORD_PER_BOOK;
+    return (((day - WORD_START) % total) + total) % total;
+  }
+  // The picture is drawn here (emoji scene on a coloured card), so no book images are used.
+  function wordHue(t) { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+  function todaysWord() {
+    const i = wordIndex(), book = Math.floor(i / WORD_PER_BOOK) + 1, at = i % WORD_PER_BOOK;
+    const load = wordCache[book] || (wordCache[book] = fetch(`/static/words4000/b${book}.json?v=2`).then((r) => { if (!r.ok) throw new Error("words"); return r.json(); }));
+    load.catch(() => { delete wordCache[book]; });
+    return load.then((list) => (list[at] ? { ...list[at], book, unit: Math.floor(at / WORD_PER_UNIT) + 1, no: i + 1 } : null));
+  }
+  function speakWord(text) {
+    try { if ("speechSynthesis" in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; u.rate = 0.9; speechSynthesis.speak(u); } } catch (e) { /* no speech */ }
+  }
+  const TICK_SVG = '<svg class="hm-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" pathLength="1"/></svg>';
+  // a daily card (word / fact) shows a tick once the student has read it today
+  const dailyRead = (key) => { try { return localStorage.getItem(key) === new Date().toDateString(); } catch (e) { return false; } };
+  function markDailyRead(key, sel) {
+    if (dailyRead(key)) return;
+    try { localStorage.setItem(key, new Date().toDateString()); } catch (e) {}
+    const b = document.querySelector(sel);
+    if (!b) return;
+    Sound.ok && Sound.ok();
+    b.classList.add("is-read", "is-just-read");
+    b.insertAdjacentHTML("beforeend", TICK_SVG);
+    setTimeout(() => b.classList.remove("is-just-read"), 1200);
+  }
+  const WORD_KEY = "l1_word_read_v1";
+  function wordBtnHtml() {
+    todaysWord().catch(() => {});   // warm the cache so the card opens at once
+    const read = dailyRead(WORD_KEY);
+    return `<button type="button" class="hm-fact hm-wordpill${read ? " is-read" : ""}" data-word aria-label="Bugungi so'z"><span class="hm-fact-ico">${L1Icon("open-book")}</span><b>Bugungi so'z</b>${read ? TICK_SVG : ""}</button>`;
+  }
+  async function openWord() {
+    let w = null;
+    try { w = await todaysWord(); } catch (e) { /* offline */ }
+    if (!w) { (typeof showToast === "function") && showToast("So'z yuklanmadi, internetni tekshiring"); return; }
+    Haptic.tap();
+    const back = document.createElement("div");
+    back.className = "l1-sheet-backdrop";
+    const sheet = document.createElement("div");
+    sheet.className = "l1-sheet l1-sheet-center";
+    const pos = WORD_POS[(w.pos || "").replace(/\.$/, "")] || "";
+    sheet.innerHTML = `<div class="l1-grip"></div>
+      <div class="wd-sheet">
+        <div class="wd-pic" style="--wd-h:${wordHue(w.word)}"><span>${html(w.em || "📘")}</span></div>
+        <div class="wd-kicker">Bugungi so'z · ${w.book}-kitob · ${w.unit}-unit</div>
+        <div class="wd-row"><h3>${html(w.word)}</h3><button type="button" class="wd-say" data-act="say" aria-label="Eshitish">🔊</button></div>
+        <div class="wd-meta">${pos ? html(pos) + " · " : ""}${w.no} / ${WORD_BOOKS * WORD_PER_BOOK}</div>
+        <div class="wd-uz">${html(w.uz)}</div>
+        <p class="wd-def">${html(w.def)}</p>
+        <button type="button" class="wd-ex" data-act="say-ex"><b>${html(w.ex)}</b><span>${html(w.exuz)}</span></button>
+        <button type="button" class="l1-btn l1-btn-soft w-full" data-act="close">Yopish</button>
+      </div>`;
+    const close = () => { back.remove(); sheet.remove(); Back.remove(handler); try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } markDailyRead(WORD_KEY, "[data-word]"); };
+    const handler = Back.push(close);
+    back.addEventListener("click", close);
+    sheet.addEventListener("click", (ev) => {
+      const a = ev.target.closest("[data-act]");
+      if (!a) return;
+      if (a.dataset.act === "close") close();
+      else if (a.dataset.act === "say") speakWord(w.word);
+      else if (a.dataset.act === "say-ex") speakWord(w.ex);
+    });
+    document.body.appendChild(back);
+    document.body.appendChild(sheet);
+  }
+
+  // ------------------------------------------------------------------ Daily fact (greeting card)
+  function todaysFact() {
+    const u = user() || {};
+    return window.L1_Facts ? window.L1_Facts.today(u.level || "A1") : null;
+  }
+  const goalsAllDone = () => { const g = dailyGoals().filter((x) => !x.rest); return g.length > 0 && g.every((x) => x.frac >= 1); };
+  // Shakespeare greeting: the picture is split in a body and a hand, and the hand waves (CSS, see tf_design.css).
+  const wavingHtml = (size) => `<div class="hm-mascot" style="--hm-mascot:${size}px"><img src="/static/shakespeare/shakespeare-greeting.webp" alt="Shakespeare" draggable="false"></div>`;
+  const FACT_KEY = "l1_fact_read_v1";
+  const factRead = () => dailyRead(FACT_KEY);
+  function factBtnHtml() {
+    const f = todaysFact();
+    if (!f) return "";
+    const read = factRead();
+    return `<button type="button" class="hm-fact${read ? " is-read" : ""}" data-fact aria-label="Kunning fakti"><span class="hm-fact-ico">${f.icon}</span><b>Kunning fakti</b>${read ? TICK_SVG : ""}</button>`;
+  }
+  function openFact() {
+    const f = todaysFact();
+    if (!f) return;
+    Haptic.tap();
+    const back = document.createElement("div");
+    back.className = "l1-sheet-backdrop";
+    const sheet = document.createElement("div");
+    sheet.className = "l1-sheet l1-sheet-center";
+    sheet.innerHTML = `<div class="l1-grip"></div>
+      <div class="hm-fact-sheet">
+        <div class="hm-fact-big">${f.icon}</div>
+        <div class="hm-fact-kicker">Kunning fakti</div>
+        <h3>${html(f.title)}</h3>
+        <p>${html(f.text)}</p>
+        <button type="button" class="l1-btn l1-btn-soft w-full" data-act="close">${f.english ? "Got it!" : "Tushunarli!"}</button>
+      </div>`;
+    const close = () => { back.remove(); sheet.remove(); Back.remove(handler); };
+    const handler = Back.push(close);
+    back.addEventListener("click", close);
+    sheet.addEventListener("click", (ev) => {
+      if (!ev.target.closest('[data-act="close"]')) return;
+      close();
+      markDailyRead(FACT_KEY, "[data-fact]");
+    });
+    document.body.appendChild(back);
+    document.body.appendChild(sheet);
+  }
+
   function renderHome() {
     const el = $("l1Home");
     if (!el || Shell.tab !== "home") return;
@@ -607,12 +745,9 @@
         <div class="hm-hero-text">
           ${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
             : `<div class="hm-kicker">${hello},</div><div class="hm-name">${html(first)}!</div>`}
-          <div class="hm-chips">
-            <span>🏅 Hafta: ${me && me.weekPoints ? `${me.weekRank}-o'rin` : "–"}</span>
-            <span>🏆 Oy: ${me && me.monthPoints ? `${me.monthRank}-o'rin` : "–"}</span>
-          </div>
+          <div class="hm-daily">${wordBtnHtml()}${factBtnHtml()}</div>
         </div>
-        ${Idris.html("greet", 128, "")}
+        ${wavingHtml(150)}
       </section>
 
       <section class="hm-card">
@@ -639,8 +774,13 @@
     el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();
       if (b.dataset.hm === "pomo") window.L1_Focus && window.L1_Focus.open();
-      else Shell.go(b.dataset.hm === "lessons" ? "learn" : "tasks");
+      else if (b.dataset.hm === "lessons") { if (window.L1_Hub) window.L1_Hub.openNextLesson(); else Shell.go("learn"); }
+      else startHomework();
     }));
+    const fb = el.querySelector("[data-fact]");
+    if (fb) fb.addEventListener("click", openFact);
+    const wb = el.querySelector("[data-word]");
+    if (wb) wb.addEventListener("click", openWord);
     el.querySelectorAll("[data-game]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();
       Shell.go("games");
@@ -649,27 +789,81 @@
   }
 
   // ------------------------------------------------------------------ Tasks
+  // Kunlik vazifalar: one homework per lesson, in lesson order. A homework opens once its lesson is learned, the lesson's
+  // practice is done and the homework before it is finished. Sunday is a day off; the student may still catch up or play.
+  const NEED_TEXT = {
+    lesson: (p) => `Avval ${p.lesson.n}-darsni o'zlashtiring.`,
+    practice: (p) => `${p.lesson.n}-dars mashqlarini tugating (3 ta mashq, har biri kamida 60%).`,
+    prev: () => "Avval oldingi vazifani tugating.",
+    loading: () => "Yuklanmoqda…",
+  };
+  function homeworkToday(plan) {
+    const nh = plan.find((p) => !p.hwDone);
+    const rest = isSunday();
+    if (!plan.length) return "";
+    if (!nh) return `<div class="hw-today"><div class="hw-kicker">Barakalla!</div><h2>🎉 Barcha kunlik vazifalar bajarilgan</h2>
+      <p>Yangi darslar qo'shilganda yangi vazifalar ham chiqadi. Hozircha o'yin o'ynab, so'zlarni takrorlang.</p></div>`;
+    const t = nh.asg ? `${nh.lesson.n}-dars: ${nh.lesson.title}` : nh.lesson.title;
+    const info = nh.asg ? `${nh.asg.exercises.length} ta mashq · ${nh.asg.questionCount} ta savol` : "";
+    const btn = nh.hwOpen
+      ? `<button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-open-task="${html(nh.asg.id)}">${nh.asg.my.started ? "Davom etish" : "Boshlash"} →</button>`
+      : nh.need.includes("lesson") ? `<button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-hub="lesson" data-id="${html(nh.lesson.id)}">Darsga o'tish →</button>`
+      : nh.need.includes("practice") ? `<button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-hub="practice" data-id="${html(nh.lesson.id)}">Mashq qilish →</button>` : "";
+    if (rest) return `<div class="hw-today is-rest"><div class="hw-kicker">Yakshanba</div><h2>🌴 Bugun dam olish kuni</h2>
+      <p>Bugun yangi vazifa yo'q. Xohlasangiz o'yin o'ynang${nh.hwOpen ? " yoki bajarilmagan vazifani bajaring" : ""}.</p>
+      <div class="flex flex-wrap gap-2"><button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-go="games">🎮 O'yinlar</button>${nh.hwOpen ? btn : ""}</div></div>`;
+    return `<div class="hw-today"><div class="hw-kicker">${nh.hwOpen ? "Bugungi vazifa" : "Bugungi vazifa · hali yopiq"}</div><h2>${html(t)}</h2>
+      <p>${nh.hwOpen ? html(info) : html((NEED_TEXT[nh.need[0]] || (() => ""))(nh))}</p>${btn}</div>`;
+  }
+  function homeworkRows(plan) {
+    return plan.map((p) => {
+      const a = p.asg;
+      const state = p.hwDone ? "is-done" : p.hwOpen ? "is-open" : "is-locked";
+      const sub = p.hwDone ? `Bajarildi ✓ · ${a.my.points} ball`
+        : p.hwOpen ? (a.my.started ? `${a.my.resolved}/${a.my.total} savol bajarilgan` : `${a.exercises.length} ta mashq · ${a.questionCount} ta savol`)
+        : html((NEED_TEXT[p.need[0]] || (() => ""))(p));
+      const num = p.hwDone ? "✓" : p.hwOpen ? p.lesson.n : "🔒";
+      return `<div class="hw-row ${state}" ${a && (p.hwOpen || p.hwDone) ? `data-open-task="${html(a.id)}" role="button" tabindex="0"` : `data-hw-locked="${html(p.need[0] || "")}"`}>
+        <span class="hub-num ${p.hwDone ? "is-done" : p.hwOpen ? "" : "is-locked"}">${num}</span>
+        <span class="hub-body"><span class="hub-name">${html(p.lesson.title)}</span><span class="hub-desc" style="display:block">${sub}</span></span>
+        <span class="hub-side">${p.hwDone ? "" : p.hwOpen ? "›" : ""}</span></div>`;
+    }).join("");
+  }
+
   function renderTasks() {
     const el = $("l1Tasks");
     if (!el || Shell.tab !== "tasks") return;
-    const tasks = Shell.data.assignments;
+    const all = Shell.data.assignments;
+    const teacher = (all || []).filter((a) => !isHw(a));
     const now = nowTs();
-    const active = (tasks || []).filter((a) => a.deadline > now).sort((a, b) => a.deadline - b.deadline);
-    const past = (tasks || []).filter((a) => a.deadline <= now);
+    const active = teacher.filter((a) => a.deadline > now).sort((a, b) => a.deadline - b.deadline);
+    const past = teacher.filter((a) => a.deadline <= now);
+    const plan = window.L1_Hub && all ? window.L1_Hub.plan() : [];
+    const doneN = plan.filter((p) => p.hwDone).length;
+    const banner = window.L1_Hub ? window.L1_Hub.shk("book", "homework", 121) : "";
     el.innerHTML = `<div class="l1-page space-y-4">
-      <div class="flex items-end justify-between gap-3 px-1">
-        <div><div class="l1-h1">Haftalik vazifalar</div><div class="l1-sub">O'qituvchingiz bergan mashqlar va muddatlar</div></div>
-      </div>
-      ${tasks && tasks.length ? `<div class="l1-card p-3 text-[13px] font-bold leading-relaxed">
+      ${banner}
+      ${all === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
+      ${homeworkToday(plan)}
+      ${plan.length ? `<div class="l1-card p-3 text-[13px] font-bold leading-relaxed">
         <b class="text-[color:var(--l1-success)]">1-urinishda 25 ball</b> · 2-urinishda 15 · 3–4-urinishda 5
-        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Muddatdan keyin ball 2 baravar kam.</div></div>` : ""}
-      ${tasks === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
-      ${tasks && !tasks.length ? `<div class="l1-card l1-empty">${Idris.html("wave", 120)}
-        <div class="l1-h2 mt-2">Hozircha vazifa yo'q</div><div class="l1-sub mt-1">Yangi vazifa chiqqanda Telegram bot xabar beradi.</div></div>` : ""}
-      ${active.length ? `<div class="l1-h2 px-1">Faol</div>${active.map((a) => taskCard(a)).join("")}` : ""}
-      ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan haftalar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
+        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Vazifa dars → mashq → vazifa tartibida ochiladi, o'tkazib bo'lmaydi.</div></div>
+      <div class="flex items-center justify-between px-1"><div class="l1-h2">Barcha vazifalar</div><span class="l1-chip l1-chip-blue">${doneN}/${plan.length}</span></div>
+      <div class="hw-list">${homeworkRows(plan)}</div>` : ""}
+      ${active.length ? `<div class="l1-h2 px-1 pt-2">O'qituvchi vazifalari</div>${active.map((a) => taskCard(a)).join("")}` : ""}
+      ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan vazifalar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
     </div>`;
     wireTaskButtons(el);
+    el.querySelectorAll("[data-hw-locked]").forEach((b) => b.addEventListener("click", () => {
+      const k = b.dataset.hwLocked;
+      if (typeof showToast === "function") showToast(k === "lesson" ? "🔒 Avval shu dars mavzusini o'zlashtiring." : k === "practice" ? "🔒 Avval dars mashqlarini tugating." : "🔒 Avval oldingi vazifani tugating.");
+    }));
+    el.querySelectorAll("[data-hub]").forEach((b) => b.addEventListener("click", () => {
+      Haptic.tap();
+      if (!window.L1_Hub) return;
+      Shell.go("learn");
+      if (b.dataset.hub === "lesson") window.L1_Hub.openLesson(b.dataset.id); else window.L1_Hub.openPractice(b.dataset.id);
+    }));
   }
 
   // ------------------------------------------------------------------ Rating
@@ -739,8 +933,9 @@
   function renderRating() {
     const el = $("l1Rating");
     if (!el || Shell.tab !== "rating") return;
-    el.innerHTML = `<div class="l1-page space-y-4"><div class="px-1"><div class="l1-h1">Reyting</div>
-      <div class="l1-sub" id="l1RatingMe">Eng faol talabalar</div></div>
+    el.innerHTML = `<div class="l1-page space-y-4">
+      ${window.L1_Hub ? window.L1_Hub.shk("trophy", "rating", 123) : ""}
+      <div class="l1-sub hidden" id="l1RatingMe"></div>
       <div id="l1RatingBox"></div></div>`;
     const box = $("l1RatingBox");
     const header = () => {
@@ -767,6 +962,174 @@
     };
     show(Shell.ratingPeriod);
   }
+  // ------------------------------------------------------------------ Progress page (graph)
+  function progressChart(pts, labels) {
+    const W = 320, H = 190, padL = 8, padR = 8, padT = 22, padB = 30;
+    const n = pts.length, max = Math.max(10, ...pts);
+    const slot = (W - padL - padR) / n, bw = Math.max(4, Math.min(26, slot * 0.62));
+    const y = (v) => padT + (H - padT - padB) * (1 - v / max);
+    const showVal = n <= 14, step = n <= 7 ? 1 : n <= 14 ? 2 : 5;
+    let bars = "", xs = "", line = [];
+    pts.forEach((v, i) => {
+      const cx = padL + slot * i + slot / 2, top = y(v), h = H - padB - top;
+      bars += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h, v > 0 ? 3 : 0).toFixed(1)}" rx="${Math.min(6, bw / 2)}" fill="url(#pgBar)" opacity="${i === n - 1 ? 1 : 0.85}"/>`;
+      if (showVal && v > 0) bars += `<text x="${cx.toFixed(1)}" y="${(top - 5).toFixed(1)}" text-anchor="middle" class="pg-val">${v}</text>`;
+      if ((n - 1 - i) % step === 0) xs += `<text x="${cx.toFixed(1)}" y="${H - 10}" text-anchor="middle" class="pg-x">${labels[i]}</text>`;
+      line.push(`${cx.toFixed(1)},${top.toFixed(1)}`);
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" class="pg-svg" role="img" aria-label="Kunlik ballar grafigi">
+      <defs><linearGradient id="pgBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a18"/><stop offset="1" stop-color="#7b2ff7"/></linearGradient></defs>
+      <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" class="pg-axis"/>
+      ${bars}<polyline points="${line.join(" ")}" class="pg-line"/>${xs}</svg>`;
+  }
+  const progressGraphHtml = () => `<div class="pg-card">
+          <div class="pg-tabs"><button type="button" data-days="7" class="is-on">7 kun</button><button type="button" data-days="14">14 kun</button><button type="button" data-days="30">30 kun</button><button type="button" data-days="60">60 kun</button></div>
+          <div class="pg-title">Kunlik ballar</div>
+          <div id="pgChart" class="pg-chart"><div class="pg-empty">Yuklanmoqda…</div></div>
+          <div id="pgSum" class="pg-sum"></div>
+        </div>`;
+  // fills the graph card inside `page`; returns the day-range switcher (call it with 7 first)
+  function wireProgressGraph(page) {
+    const MONTHS = ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avg", "sen", "okt", "noy", "dek"];
+    const show = async (days) => {
+      page.querySelectorAll("[data-days]").forEach((b) => b.classList.toggle("is-on", +b.dataset.days === days));
+      const box = page.querySelector("#pgChart"), sum = page.querySelector("#pgSum");
+      let d = null;
+      try { d = await api("/api/progress/history?days=" + days); } catch (e) { d = null; }
+      if (!d || !Array.isArray(d.points)) { box.innerHTML = '<div class="pg-empty">Ma\'lumotni yuklab bo\'lmadi.</div>'; sum.innerHTML = ""; return; }
+      const pts = d.points.map((v) => +v || 0), total = pts.reduce((a, b) => a + b, 0);
+      const labels = pts.map((_, i) => { const t = new Date(Date.now() - (pts.length - 1 - i) * 86400000); return days <= 7 ? ["Yak", "Dush", "Sesh", "Chor", "Pay", "Jum", "Shan"][t.getDay()] : `${t.getDate()} ${MONTHS[t.getMonth()]}`; });
+      if (!total) { box.innerHTML = '<div class="pg-empty">Hali ball yo\'q. Bugun birinchi vazifani bajaring! 🚀</div>'; sum.innerHTML = ""; return; }
+      const best = Math.max(...pts), active = pts.filter((v) => v > 0).length;
+      box.innerHTML = progressChart(pts, labels);
+      sum.innerHTML = `<span>Jami: <b>${total}</b></span><span>O'rtacha: <b>${Math.round(total / pts.length)}</b>/kun</span><span>Eng yaxshi kun: <b>${best}</b></span><span>Faol kunlar: <b>${active}</b>/${pts.length}</span>`;
+    };
+    page.addEventListener("click", (ev) => {
+      const t = ev.target.closest("[data-days]");
+      if (t) { Haptic.tap(); show(+t.dataset.days); }
+    });
+    return show;
+  }
+  // Level graph: every right practice/homework answer lifts the line, every mistake drops it.
+  const levelGraphHtml = () => `<div class="pg-card lv-card">
+          <div class="pg-title">Mening darajam</div>
+          <div class="lv-sub">To'g'ri javob — grafik ko'tariladi, xato — pasayadi</div>
+          <div class="lv-chart"><div class="pg-empty">Yuklanmoqda…</div></div>
+          <div class="lv-sum"></div>
+        </div>`;
+  function levelChart(d) {
+    const ev = d.events, n = ev.length, W = 320, H = 170, padL = 26, padR = 10, padT = 14, padB = 16;
+    const levels = [d.start, ...ev.map((e) => e.level)];
+    const max = Math.max(5, ...levels), x = (i) => padL + ((W - padL - padR) * i) / Math.max(1, n);
+    const y = (v) => padT + (H - padT - padB) * (1 - v / max);
+    let segs = "", dots = "";
+    for (let i = 0; i < n; i++) {
+      const up = ev[i].ok;
+      segs += `<line x1="${x(i).toFixed(1)}" y1="${y(levels[i]).toFixed(1)}" x2="${x(i + 1).toFixed(1)}" y2="${y(levels[i + 1]).toFixed(1)}" class="lv-seg ${up ? "is-up" : "is-down"}"/>`;
+      if (n <= 60) dots += `<circle cx="${x(i + 1).toFixed(1)}" cy="${y(levels[i + 1]).toFixed(1)}" r="2.6" class="lv-dot ${up ? "is-up" : "is-down"}"/>`;
+    }
+    const area = `${x(0).toFixed(1)},${(H - padB).toFixed(1)} ` + levels.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ") + ` ${x(n).toFixed(1)},${(H - padB).toFixed(1)}`;
+    const grid = [0, 0.5, 1].map((f) => { const v = Math.round(max * f); return `<line x1="${padL}" x2="${W - padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="lv-grid"/><text x="${padL - 5}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="pg-x">${v}</text>`; }).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" class="pg-svg" role="img" aria-label="Daraja grafigi">${grid}<polygon points="${area}" class="lv-area"/>${segs}${dots}</svg>`;
+  }
+  async function wireLevelGraph(page) {
+    const box = page.querySelector(".lv-chart"), sum = page.querySelector(".lv-sum");
+    let d = null;
+    try { d = await api("/api/progress/level?n=50"); } catch (e) { d = null; }
+    if (!d || !Array.isArray(d.events)) { box.innerHTML = '<div class="pg-empty">Ma\'lumotni yuklab bo\'lmadi.</div>'; return; }
+    if (!d.events.length) { box.innerHTML = '<div class="pg-empty">Hali javob yo\'q. Mashq yoki vazifani boshlang! 🚀</div>'; return; }
+    box.innerHTML = levelChart(d);
+    sum.innerHTML = `<span>Daraja: <b>${d.level}</b></span><span class="is-up">To'g'ri: <b>${d.right}</b></span><span class="is-down">Xato: <b>${d.wrong}</b></span>`;
+  }
+  async function openProgressPage() {
+    const u = user();
+    if (!u) return;
+    const me = Shell.data.me || {};
+    const page = document.createElement("div");
+    page.className = "pg-page";
+    page.innerHTML = `<div class="pg-head"><button type="button" class="pg-back" data-pg="close" aria-label="Orqaga">←</button><h2>Mening natijalarim</h2></div>
+      <div class="pg-body">
+        <div class="pg-stats">
+          <div><b>${me.weekPoints || 0}</b><span>Haftalik ball</span></div>
+          <div><b>${me.allPoints || 0}</b><span>Umumiy ball</span></div>
+          <div><b>🔥 ${me.streak || 0}</b><span>Doimiylik (kun)</span></div>
+        </div>
+        ${progressGraphHtml()}
+      </div>`;
+    document.body.appendChild(page);
+    const close = () => { page.remove(); Back.remove(handler); };
+    const handler = Back.push(close);
+    page.addEventListener("click", (ev) => { if (ev.target.closest('[data-pg="close"]')) close(); });
+    wireProgressGraph(page)(7);
+  }
+  Shell.openProgressPage = openProgressPage;
+
+  // ------------------------------------------------------------------ Streak calendar (the flame in the top bar)
+  const MONTHS_UZ = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
+  const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const parseYmd = (t) => { const [y, m, d] = t.split("-").map(Number); return new Date(y, m - 1, d); };
+  function doLogout() {
+    if (!confirm("Haqiqatan ham tizimdan chiqmoqchimisiz?")) return false;
+    try { localStorage.removeItem("l1_auto_v1"); } catch (e) { /* ignore */ }
+    window.L1_LOGOUT();
+    updateAuthView();
+    if (typeof showToast === "function") showToast("Tizimdan chiqdingiz.");
+    return true;
+  }
+  async function openStreakCalendar() {
+    const u = user();
+    if (!u) return;
+    const sheet = document.createElement("div");
+    sheet.className = "pg-page";
+    sheet.innerHTML = `<div class="pg-head"><button type="button" class="pg-back" data-pg="close" aria-label="Orqaga">←</button><h2>Doimiylik</h2></div>
+      <div class="pg-body"><div class="pg-card sc-sheet"><div class="sc-loading">Yuklanmoqda…</div></div>${levelGraphHtml()}${progressGraphHtml()}<button type="button" class="l1-btn l1-btn-danger w-full" data-act="logout">Chiqish</button></div>`;
+    const close = () => { sheet.remove(); Back.remove(handler); };
+    const handler = Back.push(close);
+    sheet.addEventListener("click", (ev) => { if (ev.target.closest('[data-pg="close"]')) close(); });
+    document.body.appendChild(sheet);
+    wireProgressGraph(sheet)(7);
+    wireLevelGraph(sheet);
+    const box = sheet.querySelector(".sc-sheet");
+    let d = null;
+    try { d = await api("/api/progress/calendar"); } catch (e) { d = null; }
+    if (!d || !Array.isArray(d.days)) {
+      box.innerHTML = `<div class="sc-loading">Ma'lumotni yuklab bo'lmadi.</div>`;
+    } else {
+      const studied = new Set(d.days), start = parseYmd(d.start), today = parseYmd(d.today);
+      const missed = Math.max(0, Math.round((today - start) / 86400000) + 1 - studied.size);
+      let view = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startFmt = `${start.getDate()}-${MONTHS_UZ[start.getMonth()].toLowerCase()}, ${start.getFullYear()}`;
+      const draw = () => {
+        const first = new Date(view.getFullYear(), view.getMonth(), 1);
+        const lead = (first.getDay() + 6) % 7, dim = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+        let cells = "";
+        for (let i = 0; i < lead; i++) cells += '<i class="sc-c is-empty"></i>';
+        for (let n = 1; n <= dim; n++) {
+          const dt = new Date(view.getFullYear(), view.getMonth(), n), key = ymd(dt);
+          let cls = "is-off", mark = "";
+          if (studied.has(key)) { cls = "is-on"; mark = "🔥"; }
+          else if (dt >= start && dt < today) { cls = "is-miss"; mark = "✕"; }
+          if (key === d.today) cls += " is-today";
+          cells += `<span class="sc-c ${cls}"><b>${n}</b><em>${mark}</em></span>`;
+        }
+        const canNext = view < new Date(today.getFullYear(), today.getMonth(), 1);
+        const canPrev = view > new Date(start.getFullYear(), start.getMonth(), 1);
+        box.innerHTML = `<div class="sc-top"><div class="sc-flame">🔥</div><div><div class="sc-big">${d.streak || 0} kun</div><div class="sc-sub">Ketma-ket doimiylik</div></div></div>
+          <div class="sc-stats"><div><b>${studied.size}</b><span>Dars qilgan kun</span></div><div><b>${missed}</b><span>Qilmagan kun</span></div></div>
+          <div class="sc-start">📅 Boshlagan kun: <b>${startFmt}</b></div>
+          <div class="sc-nav"><button type="button" data-nav="-1" ${canPrev ? "" : "disabled"} aria-label="Oldingi oy">‹</button><b>${MONTHS_UZ[view.getMonth()]} ${view.getFullYear()}</b><button type="button" data-nav="1" ${canNext ? "" : "disabled"} aria-label="Keyingi oy">›</button></div>
+          <div class="sc-grid">${["Du", "Se", "Cho", "Pa", "Ju", "Sha", "Ya"].map((w) => `<span class="sc-w">${w}</span>`).join("")}${cells}</div>
+          <div class="sc-legend"><span><i class="lg-on"></i>Dars qilgan</span><span><i class="lg-miss"></i>Qilmagan</span></div>`;
+      };
+      draw();
+      sheet.addEventListener("click", (ev) => {
+        const n = ev.target.closest("[data-nav]");
+        if (n && !n.disabled) { Haptic.tap(); view = new Date(view.getFullYear(), view.getMonth() + (+n.dataset.nav), 1); draw(); }
+      });
+    }
+    sheet.addEventListener("click", (ev) => { if (ev.target.closest('[data-act="logout"]') && doLogout()) close(); });
+  }
+
   // ------------------------------------------------------------------ Profile sheet
   function openProfile() {
     const u = user();
@@ -787,7 +1150,7 @@
       ${staff && state.mode === "teacher" ? "" : `<div class="grid grid-cols-3 gap-2 mt-4 text-center">
         <div class="l1-card p-3"><b class="text-[18px]">${me.weekPoints || 0}</b><div class="l1-sub" style="font-size:12px">Haftalik</div></div>
         <div class="l1-card p-3"><b class="text-[18px]">${me.allPoints || 0}</b><div class="l1-sub" style="font-size:12px">Umumiy</div></div>
-        <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:12px">Kun ketma-ket</div></div>
+        <div class="l1-card p-3"><b class="text-[18px]">🔥 ${me.streak || 0}</b><div class="l1-sub" style="font-size:12px">Doimiylik (kun)</div></div>
       </div>`}
       </div>
       <div class="mt-4 space-y-2">
@@ -805,7 +1168,7 @@
       if (!act) return;
       const a = act.dataset.act;
       if (a === "photo") { close(); if (window.L1_Characters) window.L1_Characters.open(); }
-      if (a === "progress") { close(); Shell.go("learn"); const b = $("tabBtnMyProgress"); if (b) b.click(); }
+      if (a === "progress") { close(); if (window.L1_Hub) window.L1_Hub.openProgress(); }
       if (a === "level") { close(); openLevelPicker(); }
       if (a === "sound") { Sound.muted = !Sound.muted; act.textContent = Sound.muted ? "🔇 Ovoz o'chirilgan — yoqish" : "🔊 Ovoz yoqilgan — o'chirish"; }
       if (a === "mode") { close(); const b = $("btnModeToggle"); if (b) b.click(); }

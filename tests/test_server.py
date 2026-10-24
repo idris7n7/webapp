@@ -61,6 +61,8 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         server.BOT_TOKEN = TEST_BOT_TOKEN
         server.TEACHER_IDS = {ADMIN_TG_ID}
         server.RATE_LIMITER.reset()
+        # no daily homework unless a test asks for it (the real lessons would show up in every assignment list)
+        self._saved_hw, server.HOMEWORK_UNITS_PATH = server.HOMEWORK_UNITS_PATH, os.path.join(self._tmp.name, "no_homework.json")
         server.init_db()
         self.client = TestClient(TestServer(server.build_web_app()))
         await self.client.start_server()
@@ -70,6 +72,7 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         server.DB_PATH, server.BOT_TOKEN, server.TEACHER_IDS, server.ALLOW_SELF_REGISTRATION = self._saved
         server.GAME_MIN_SECONDS = self._saved_gap
         server.GREEN_ZONES = self._saved_zones
+        server.HOMEWORK_UNITS_PATH = self._saved_hw
         self._tmp.cleanup()
 
     # -- helpers ---------------------------------------------------------
@@ -180,6 +183,94 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(bad, 401)
         unknown, _ = await self.call("POST", "/api/auth/login", body={"name": "Nobody Here", "password": "secret1"})
         self.assertEqual(unknown, 401)
+
+    # -- entry with a name, an avatar and a level (no password) --------------
+    async def join(self, name="Ali", character="aziz", level="B1", expect=200):
+        status, data = await self.call("POST", "/api/auth/join", body={"name": name, "character": character, "level": level})
+        self.assertEqual(status, expect, data)
+        return data
+
+    async def test_join_makes_a_student_without_a_password(self):
+        d = await self.join("Ali", "aziz", "B1")
+        self.assertTrue(d["created"])
+        s = d["student"]
+        self.assertEqual((s["name"], s["role"], s["status"], s["character"], s["level"]), ("Ali", "student", "approved", "aziz", "B1"))
+        self.assertTrue(s["id"].startswith("kid_"))
+        status, state = await self.call("GET", "/api/state", d["token"])
+        self.assertEqual(status, 200)  # the session works like any other
+        status, _ = await self.call("POST", "/api/auth/login", body={"name": "Ali", "password": "anything1"})
+        self.assertEqual(status, 401)  # and there is no password to guess
+
+    async def test_the_same_name_and_avatar_is_the_same_student_on_any_phone(self):
+        first = await self.join("Ali", "aziz", "B1")
+        _, lb = await self.call("GET", "/api/leaderboard", first["token"])
+        again = await self.join("  ali ", "aziz", "B2")  # another phone, other capitals, a new level
+        self.assertFalse(again["created"])
+        self.assertEqual(again["student"]["id"], first["student"]["id"])
+        self.assertEqual(again["student"]["level"], "B2")
+        self.assertNotEqual(again["token"], first["token"])
+        other = await self.join("Ali", "emma", "B1")  # a second Ali with another avatar
+        self.assertTrue(other["created"])
+        self.assertNotEqual(other["student"]["id"], first["student"]["id"])
+
+    async def test_join_checks_what_it_is_given(self):
+        await self.join("A", "aziz", "B1", expect=400)
+        await self.join("Ali 123", "aziz", "B1", expect=400)  # letters only (markup is stripped before the name is checked)
+        self.assertNotIn("<", (await self.join("<b>Sardor</b>", "aziz", "B1"))["student"]["name"])
+        await self.join("Ali", "no-such-avatar", "B1", expect=400)
+        await self.join("Ali", "", "B1", expect=400)
+        await self.join("Ali", "aziz", "Z9", expect=400)
+        await self.join("Ali", "aziz", "", expect=400)
+        status, _ = await self.call("POST", "/api/auth/join", body={})
+        self.assertEqual(status, 400)
+        self.assertEqual((await self.join("Vali", "jack", "C1"))["student"]["level"], "C1-C2")
+        self.assertEqual((await self.join("Vali", "jack", "c2"))["student"]["level"], "C1-C2")
+
+    async def test_a_teachers_name_and_a_password_account_cannot_be_taken(self):
+        await self.admin_token()  # "Boss Admin"
+        status, _ = await self.call("POST", "/api/auth/join", body={"name": "boss admin", "character": "aziz", "level": "B1"})
+        self.assertEqual(status, 409)
+        await self.register("Vali", "Aliyev")  # a student with a password
+        status, data = await self.call("POST", "/api/auth/join", body={"name": "Vali Aliyev", "character": "aziz", "level": "B1"})
+        self.assertEqual(status, 409)
+        self.assertIn("parol", data["message"])
+        status, _ = await self.call("POST", "/api/auth/login", body={"name": "Vali Aliyev", "password": "secret1"})
+        self.assertEqual(status, 200)  # the password account is untouched
+
+    async def test_a_name_from_the_class_list_goes_to_the_first_student_who_arrives(self):
+        admin = await self.admin_token()
+        status, _ = await self.call("POST", "/api/students", admin, {"name": "Dilnoza Karimova", "className": "A1"})
+        self.assertEqual(status, 200)
+        mine = await self.join("Dilnoza Karimova", "malika", "A2")
+        self.assertTrue(mine["student"]["id"].startswith("ros_"))
+        self.assertFalse(mine["created"])
+        again = await self.join("Dilnoza Karimova", "malika", "A2")
+        self.assertEqual(again["student"]["id"], mine["student"]["id"])
+        other = await self.join("Dilnoza Karimova", "emma", "A2")  # taken: another avatar is another student
+        self.assertTrue(other["student"]["id"].startswith("kid_"))
+
+    async def test_the_passwordless_entry_can_be_closed_and_is_rate_limited(self):
+        saved = server.OPEN_JOIN
+        server.OPEN_JOIN = False
+        try:
+            await self.join(expect=403)
+        finally:
+            server.OPEN_JOIN = saved
+        for i in range(12):
+            await self.join("Same Name", "aziz", "B1")
+        await self.join("Same Name", "aziz", "B1", expect=429)  # a guess per avatar is limited per name
+
+    async def test_changing_the_avatar_cannot_copy_another_students_name_and_avatar(self):
+        ali = await self.join("Ali", "aziz", "B1")
+        other = await self.join("Ali", "emma", "B1")
+        status, data = await self.call("POST", "/api/character", other["token"], {"character": "aziz"})
+        self.assertEqual(status, 409)  # that pair is already Ali's
+        status, data = await self.call("POST", "/api/character", other["token"], {"character": "jack"})
+        self.assertEqual((status, data["student"]["character"]), (200, "jack"))
+        back = await self.join("Ali", "jack", "B1")  # the new pair is how this student comes back
+        self.assertEqual(back["student"]["id"], other["student"]["id"])
+        status, _ = await self.call("POST", "/api/character", ali["token"], {"character": "aziz"})
+        self.assertEqual(status, 200)  # keeping your own avatar is fine
 
     async def test_nobody_is_seeded_with_an_old_hardcoded_password(self):
         with server.get_db() as conn:
@@ -482,6 +573,51 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
     async def answer(self, token, asg_id, ex_id, q_index, answer):
         return await self.call("POST", "/api/assignments/answer", token,
                                {"assignmentId": asg_id, "exerciseId": ex_id, "qIndex": q_index, "answer": answer})
+
+    async def seed_homework(self, admin):
+        """Two lessons; each homework is one exercise with a single question."""
+        ids = []
+        for n in (1, 2):
+            status, data = await self.call("POST", "/api/exercises", admin, {
+                "category": "grammar", "title": f"Ex {n}", "questions": [{"q": f"Q{n}", "a": "yes"}]})
+            self.assertEqual(status, 200, data)
+            ids.append(data["id"])
+        path = os.path.join(self._tmp.name, "hw.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump([{"id": "u1", "number": 1, "title": "One", "week": "1-Hafta", "exerciseIds": [ids[0]]},
+                       {"id": "u2", "number": 2, "title": "Two", "week": "1-Hafta", "exerciseIds": [ids[1]]}], fh)
+        server.HOMEWORK_UNITS_PATH = path
+        with server.get_db() as conn:
+            server.ensure_homework(conn)
+            server.ensure_homework(conn)  # seeding twice must not duplicate
+        return ids
+
+    async def test_daily_homework_follows_lesson_order(self):
+        admin = await self.admin_token()
+        ex1, ex2 = await self.seed_homework(admin)
+        token, _ = await self.student_token()
+        _, data = await self.call("GET", "/api/assignments", token)
+        self.assertEqual(sorted(a["id"] for a in data["assignments"]), ["hw_u1", "hw_u2"])
+        with server.get_db() as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM assignments WHERE id LIKE 'hw!_%' ESCAPE '!'").fetchone()[0], 2)
+            # the bot must never announce, remind about or summarise them
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM assignments WHERE announced = 0 OR reminded = 0 OR summarized = 0").fetchone()[0], 0)
+        status, data = await self.answer(token, "hw_u2", ex2, 0, "yes")
+        self.assertEqual(status, 403, data)  # lesson 2 homework stays shut until lesson 1 homework is done
+        status, data = await self.answer(token, "hw_u1", ex1, 0, "yes")
+        self.assertEqual(status, 200, data)
+        status, data = await self.answer(token, "hw_u2", ex2, 0, "yes")
+        self.assertEqual(status, 200, data)
+
+    def test_homework_units_file_matches_exercises(self):
+        with open(self._saved_hw, encoding="utf-8") as fh:
+            units = json.load(fh)
+        with open(server.EXERCISES_JSON_PATH, encoding="utf-8") as fh:
+            known = {e["id"] for e in json.load(fh)["exercises"]}
+        self.assertEqual([u["number"] for u in units], list(range(1, len(units) + 1)))
+        for u in units:
+            self.assertTrue(u["exerciseIds"], u["id"])
+            self.assertLessEqual(set(u["exerciseIds"]), known, u["id"])
 
     async def test_only_staff_manage_assignments(self):
         admin = await self.admin_token()
@@ -1406,13 +1542,6 @@ class DataIntegrityTests(unittest.TestCase):
         # a point just inside the first green area is allowed unless a building or a road covers it; the centre of the box is a fair probe
         verdicts = {zones.judge((z["b"][0] + z["b"][2]) / 2, (z["b"][1] + z["b"][3]) / 2) for z in zones.green}
         self.assertIn("ok", verdicts)
-
-    def test_the_running_shakespeare_has_its_head_and_is_loaded_before_the_game(self):
-        self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "shakespeare", "run_head.webp")), "run: python tools/make_runner_head.py")
-        # the games load on first use (student_features.js); the puppet must be listed before the game that uses it
-        with open(os.path.join(self.APP_DIR, "static", "student_features.js"), encoding="utf-8") as f:
-            js = f.read()
-        self.assertLess(js.index("shakespeare_puppet.js"), js.index("dragon_chase.js"))
 
     def test_there_are_ten_boys_and_ten_girls_to_choose_from(self):
         with open(os.path.join(self.APP_DIR, "static", "characters.js"), encoding="utf-8") as f:

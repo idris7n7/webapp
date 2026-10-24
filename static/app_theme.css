@@ -492,6 +492,7 @@ html[data-theme="dark"] .l1-pomo-steps span.is-done { background: rgba(34, 197, 
 /* Compact question card so the stage + all 4 answers fit on one phone screen */
 .dc-qcard .l1-qtext { font-size: 19px; font-weight: 600; line-height: 1.3; letter-spacing: 0; }
 .dc-opts .l1-opt { min-height: 50px; padding: 10px 10px; font-size: 15px; font-weight: 600; border-radius: 16px; }
+.dc-opts > :last-child:nth-child(odd) { grid-column: 1 / -1; } /* three answers: the last one takes the full row */
 #dragonResultTitle { font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {

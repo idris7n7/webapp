@@ -1,0 +1,135 @@
+[
+ {
+  "id": "sec1_top1",
+  "number": 1,
+  "title": "Birlik va koʻplik",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_plural_1",
+   "g1_plural_2",
+   "g1_plural_3",
+   "g1_plural_4",
+   "g1_plural_5"
+  ]
+ },
+ {
+  "id": "sec1_top2",
+  "number": 2,
+  "title": "Noaniq artikli (A va An)",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_artA_1",
+   "g1_artA_2",
+   "g1_artA_3"
+  ]
+ },
+ {
+  "id": "sec2_top3",
+  "number": 3,
+  "title": "TO BE fe'li",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_tobe_1",
+   "g1_tobe_2",
+   "g1_tobe_3",
+   "g1_tobe_4"
+  ]
+ },
+ {
+  "id": "sec2_top4",
+  "number": 4,
+  "title": "AM, IS, ARE + OT",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_noun_1",
+   "g1_noun_2",
+   "g1_noun_3"
+  ]
+ },
+ {
+  "id": "sec2_top5",
+  "number": 5,
+  "title": "AM, IS, ARE + SIFAT",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_adj_1",
+   "g1_adj_2",
+   "g1_adj_3",
+   "g1_adj_4",
+   "g1_adj_5"
+  ]
+ },
+ {
+  "id": "sec2_top6",
+  "number": 6,
+  "title": "HAVE va HAS",
+  "week": "1-Hafta",
+  "exerciseIds": [
+   "g1_have_1",
+   "g1_have_2",
+   "g1_have_3"
+  ]
+ },
+ {
+  "id": "sec3_top1",
+  "number": 7,
+  "title": "SOʻROQ SHAKLI",
+  "week": "2-Hafta",
+  "exerciseIds": [
+   "g2_quest_1",
+   "g2_quest_2",
+   "g2_quest_3",
+   "g2_quest_4",
+   "g2_quest_5"
+  ]
+ },
+ {
+  "id": "sec3_top2",
+  "number": 8,
+  "title": "INKOR SHAKLI",
+  "week": "2-Hafta",
+  "exerciseIds": [
+   "g2_neg_1",
+   "g2_neg_2",
+   "g2_neg_3"
+  ]
+ },
+ {
+  "id": "sec4_top3",
+  "number": 9,
+  "title": "KISHILIK OLMOSHLARI",
+  "week": "2-Hafta",
+  "exerciseIds": [
+   "g2_pron_1",
+   "g2_pron_2",
+   "g2_pron_3",
+   "g2_pron_4",
+   "g2_pron_5"
+  ]
+ },
+ {
+  "id": "sec4_top4",
+  "number": 10,
+  "title": "EGALIK OLMOSHLARI",
+  "week": "2-Hafta",
+  "exerciseIds": [
+   "g2_poss_1",
+   "g2_poss_2",
+   "g2_poss_3",
+   "g2_poss_4"
+  ]
+ },
+ {
+  "id": "sec4_top5",
+  "number": 11,
+  "title": "SOʻROQ SOʻZLAR",
+  "week": "2-Hafta",
+  "exerciseIds": [
+   "g2_wh_1",
+   "g2_wh_2",
+   "g2_wh_3",
+   "g2_wh_4",
+   "g2_wh_5"
+  ]
+ }
+]

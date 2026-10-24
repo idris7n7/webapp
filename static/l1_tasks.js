@@ -426,7 +426,7 @@
     renderWeekly();
     try {
       const data = await api("/api/assignments");
-      T.list = data.assignments;
+      T.list = data.assignments.filter((a) => !String(a.id).startsWith("hw_")); // the permanent daily homeworks are not weekly assignments
       T.now = data.now;
     } catch (e) {
       T.error = e.message;

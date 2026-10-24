@@ -125,6 +125,10 @@ PORT = int(os.getenv("PORT", "8080"))
 
 DB_PATH = os.getenv("DB_PATH") or os.path.join(BASE_DIR, "level_one.db")
 EXERCISES_JSON_PATH = os.path.join(BASE_DIR, "exercises_data.json")
+# The grammar lessons in teaching order, each with the workbook exercises that become its daily homework.
+HOMEWORK_UNITS_PATH = os.path.join(BASE_DIR, "homework_units.json")
+HOMEWORK_PREFIX = "hw_"
+HOMEWORK_DEADLINE = 4102444800  # 2100-01-01: daily homework never expires
 # Windows' registry has no entry for .webp (the book pages and photos), and aiohttp keeps its own MimeTypes table.
 mimetypes.add_type("image/webp", ".webp")
 mimetypes.add_type("application/manifest+json", ".webmanifest")
@@ -171,6 +175,8 @@ GAME_MIN_SECONDS = 15
 # Self-registration is closed by default: students sign in through Telegram or take over a roster entry a teacher
 # created. Set ALLOW_SELF_REGISTRATION=1 to let anyone create an account with the register API.
 ALLOW_SELF_REGISTRATION = os.getenv("ALLOW_SELF_REGISTRATION", "").strip().lower() in ("1", "true", "yes")
+# Students come in with a name, an avatar and a level, no password (POST /api/auth/join). Set OPEN_JOIN=0 to close that door.
+OPEN_JOIN = os.getenv("OPEN_JOIN", "1").strip().lower() not in ("0", "false", "no", "off")
 # Extra proxy addresses (comma separated) whose CF-Connecting-IP / X-Forwarded-For headers are believed.
 TRUSTED_PROXIES = {x.strip() for x in os.getenv("TRUSTED_PROXIES", "").split(",") if x.strip()}
 # Weeks (Monday 00:00) and deadlines are shown in this zone. Uzbekistan is UTC+5.
@@ -378,6 +384,50 @@ async def run_blocking(func, *args):
     return await asyncio.get_running_loop().run_in_executor(None, func, *args)
 
 
+def homework_units() -> list:
+    try:
+        with open(HOMEWORK_UNITS_PATH, encoding="utf-8") as fh:
+            return [u for u in json.load(fh) if u.get("id") and u.get("exerciseIds")]
+    except (OSError, ValueError):
+        return []
+
+
+def ensure_homework(conn: sqlite3.Connection) -> None:
+    """One permanent, server-graded homework per lesson (id hw_<lesson id>); students meet them in lesson order."""
+    for unit in homework_units():
+        asg_id = HOMEWORK_PREFIX + unit["id"]
+        fields = (
+            f"{unit['number']}-dars: {unit['title']}", f"{unit.get('week', '')} · {unit['number']}-dars",
+            json.dumps(unit["exerciseIds"]),
+        )
+        if conn.execute("SELECT 1 FROM assignments WHERE id = ?", (asg_id,)).fetchone():
+            conn.execute(
+                "UPDATE assignments SET title = ?, week_label = ?, exercise_ids_json = ? WHERE id = ?", (*fields, asg_id)
+            )
+        else:
+            # announced / reminded / summarized = 1: the bot never sends messages for these
+            conn.execute(
+                "INSERT INTO assignments (id, title, week_label, note, exercise_ids_json, starts_at, deadline, created_by, "
+                "created_at, announced, reminded, summarized) VALUES (?, ?, ?, '', ?, 0, ?, 'system', ?, 1, 1, 1)",
+                (asg_id, fields[0], fields[1], fields[2], HOMEWORK_DEADLINE, int(time.time())),
+            )
+
+
+def previous_homework_open(conn: sqlite3.Connection, student_id: str, asg_id: str) -> bool:
+    """True when the homework before this one (in lesson order) is not finished yet."""
+    order = [HOMEWORK_PREFIX + u["id"] for u in homework_units()]
+    if asg_id not in order or order.index(asg_id) == 0:
+        return False
+    prev = get_assignment(conn, order[order.index(asg_id) - 1])
+    if prev is None:
+        return False
+    exercises = assignment_exercises(prev, exercises_by_id(conn))
+    rows = conn.execute(
+        "SELECT * FROM answer_log WHERE student_id = ? AND assignment_id = ?", (student_id, prev["id"])
+    ).fetchall()
+    return not progress_for(rows, exercises, prev["deadline"])["done"]
+
+
 def init_db() -> None:
     parent = os.path.dirname(os.path.abspath(DB_PATH))
     os.makedirs(parent, exist_ok=True)
@@ -463,6 +513,16 @@ def init_db() -> None:
                 points INTEGER NOT NULL,
                 created_at INTEGER NOT NULL
             );
+
+            -- Every practice and homework answer (right or wrong), for the level graph on the streak page.
+            CREATE TABLE IF NOT EXISTS answer_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT NOT NULL,
+                source TEXT NOT NULL,
+                ok INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_answer_events_student ON answer_events (student_id, id);
 
             -- Pomodoro focus blocks. The server keeps the clock, so a tree can only be planted after the full time.
             CREATE TABLE IF NOT EXISTS focus_sessions (
@@ -622,6 +682,7 @@ def init_db() -> None:
             )
 
         conn.execute("DELETE FROM sessions WHERE expires_at < ?", (int(time.time()),))
+        ensure_homework(conn)
 
 
 # ---------------------------------------------------------------------------
@@ -1473,6 +1534,8 @@ async def handle_assignment_answer(request: web.Request) -> web.Response:
         exercise_id = clean_text(data.get("exerciseId"), 120)
         if exercise_id not in json.loads(asg["exercise_ids_json"]):
             raise ApiError("Bu mashq vazifada yo'q.", 404)
+        if asg["id"].startswith(HOMEWORK_PREFIX) and previous_homework_open(conn, user["id"], asg["id"]):
+            raise ApiError("Avval oldingi vazifani tugating.", 403)
         ex_map = exercises_by_id(conn)
         ex = ex_map.get(exercise_id)
         questions = (ex or {}).get("questions") or []
@@ -1508,6 +1571,10 @@ async def handle_assignment_answer(request: web.Request) -> web.Response:
                     updated_at = excluded.updated_at
                 """,
                 (*key, tries, int(correct), points, "" if correct else answer, now),
+            )
+            conn.execute(
+                "INSERT INTO answer_events (student_id, source, ok, created_at) VALUES (?, 'homework', ?, ?)",
+                (user["id"], int(correct), now),
             )
             if points:
                 conn.execute(
@@ -1641,6 +1708,82 @@ def ranked(students, points: dict) -> list:
     return entries
 
 
+async def handle_progress_history(request: web.Request) -> web.Response:
+    """Points per day for the last N days (oldest first), for the student's progress graph."""
+    try:
+        days = max(1, min(60, int(request.query.get("days", "7"))))
+    except ValueError:
+        days = 7
+    now = int(time.time())
+    today = day_start_ts(now)
+    with get_db() as conn:
+        user = require_user(conn, request)
+        points = []
+        for i in range(days - 1, -1, -1):
+            start = today - i * 86400
+            row = conn.execute(
+                "SELECT COALESCE(SUM(points), 0) FROM points_log WHERE student_id = ? AND created_at >= ? AND created_at < ?",
+                (user["id"], start, start + 86400),
+            ).fetchone()
+            points.append(int(row[0]))
+    return web.json_response({"points": points, "days": days})
+
+
+async def handle_progress_events(request: web.Request) -> web.Response:
+    """The practice runner tells the server how many answers of a finished practice were right and wrong."""
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"events:{user['id']}", 60, 3600)
+        data = await read_json(request)
+        correct, wrong = as_int(data.get("correct"), "correct"), as_int(data.get("wrong"), "wrong")
+        if not (0 <= correct <= 60 and 0 <= wrong <= 60):
+            raise ApiError("Natija noto'g'ri.")
+        # wrong answers first, so a finished practice ends on the student's best foot
+        rows = [(user["id"], "practice", 0, now)] * wrong + [(user["id"], "practice", 1, now)] * correct
+        conn.executemany("INSERT INTO answer_events (student_id, source, ok, created_at) VALUES (?, ?, ?, ?)", rows)
+    return web.json_response({"saved": len(rows)})
+
+
+async def handle_progress_level(request: web.Request) -> web.Response:
+    """Running level: +1 for a right practice/homework answer, -1 for a wrong one (never below 0). Last N answers."""
+    try:
+        limit = max(10, min(200, int(request.query.get("n", "50"))))
+    except ValueError:
+        limit = 50
+    with get_db() as conn:
+        user = require_user(conn, request)
+        rows = conn.execute(
+            "SELECT ok, created_at FROM answer_events WHERE student_id = ? ORDER BY id", (user["id"],)
+        ).fetchall()
+    level, path = 0, []
+    for r in rows:
+        level = level + 1 if r["ok"] else max(0, level - 1)
+        path.append({"ok": bool(r["ok"]), "level": level, "t": r["created_at"]})
+    recent = path[-limit:]
+    before = path[-limit - 1]["level"] if len(path) > limit else 0
+    right = sum(1 for p in path if p["ok"])
+    return web.json_response({"start": before, "events": recent, "level": level, "right": right, "wrong": len(path) - right})
+
+
+async def handle_progress_calendar(request: web.Request) -> web.Response:
+    """Days the student earned points (studied), the day they started, and the streak: for the streak calendar."""
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        rows = conn.execute("SELECT created_at FROM points_log WHERE student_id = ?", (user["id"],)).fetchall()
+        days = sorted({local_dt(r["created_at"]).date().isoformat() for r in rows})
+        start = days[0] if days else local_dt(now).date().isoformat()
+        joined = str(user["created_at"] or "")[:10]
+        try:
+            datetime.strptime(joined, "%Y-%m-%d")
+            start = min(start, joined)
+        except ValueError:
+            pass
+        streak = activity_streak(conn, user["id"], now)
+    return web.json_response({"start": start, "today": local_dt(now).date().isoformat(), "days": days, "streak": streak})
+
+
 async def handle_leaderboard(request: web.Request) -> web.Response:
     now = int(time.time())
     period = request.query.get("period", "week")
@@ -1703,6 +1846,15 @@ async def handle_set_character(request: web.Request) -> web.Response:
         character = str(data.get("character") or "")
         if not re.fullmatch(r"[a-z0-9_]{2,32}", character):
             raise ApiError("Personaj noto'g'ri.")
+        if user["password_hash"] is None and (user["id"].startswith("kid_") or user["id"].startswith("ros_")):
+            # name + avatar is how this student gets back in: two students cannot hold the same pair
+            clash = conn.execute(
+                "SELECT 1 FROM students WHERE name_key = ? AND character = ? AND id != ? AND password_hash IS NULL "
+                "AND (id LIKE 'kid\\_%' ESCAPE '\\' OR id LIKE 'ros\\_%' ESCAPE '\\')",
+                (user["name_key"], character, user["id"]),
+            ).fetchone()
+            if clash:
+                raise ApiError("Bu ism bilan bu avatar band. Boshqa avatar tanlang.", 409)
         conn.execute("UPDATE students SET character = ? WHERE id = ?", (character, user["id"]))
         row = conn.execute("SELECT * FROM students WHERE id = ?", (user["id"],)).fetchone()
     return web.json_response({"status": "ok", "student": student_public(row)})
@@ -2932,6 +3084,98 @@ async def handle_auth_register(request: web.Request) -> web.Response:
     return web.json_response({"status": "ok", "message": message, "student": student, "token": token})
 
 
+_CHARACTER_IDS = {"mtime": None, "ids": frozenset()}
+
+
+def load_character_ids() -> frozenset:
+    """The avatar ids a student may pick (the list in static/characters.js)."""
+    path = os.path.join(STATIC_DIR, "characters.js")
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return frozenset()
+    if _CHARACTER_IDS["mtime"] != mtime:
+        try:
+            with open(path, encoding="utf-8") as f:
+                ids = frozenset(re.findall(r'\{\s*id:\s*"([a-z0-9_]+)"\s*,\s*name:', f.read()))
+        except OSError:
+            ids = frozenset()
+        _CHARACTER_IDS.update(mtime=mtime, ids=ids)
+    return _CHARACTER_IDS["ids"]
+
+
+def join_level(value):
+    """The level a student picks on the entry screen (A1 ... C2) as the platform stores it, or None."""
+    v = str(value or "").strip().upper()
+    if v in ("C1", "C2"):
+        v = "C1-C2"
+    return v if v in LEVELS else None
+
+
+async def handle_auth_join(request: web.Request) -> web.Response:
+    """A student comes in with a name, an avatar and a level - no password.
+
+    Name + avatar identify the account: the same pair on another phone (or after "Chiqish") is the same student, the same
+    name with another avatar is another student. A teacher's name, and the name of an account that has a password,
+    cannot be taken this way.
+    """
+    if not OPEN_JOIN:
+        raise ApiError("Parolsiz kirish yopilgan. O'qituvchingizga murojaat qiling yoki Telegram orqali kiring.", 403)
+    data = await read_json(request)
+    name = " ".join(clean_text(data.get("name"), 60).split())
+    character = str(data.get("character") or "")
+    level = join_level(data.get("level"))
+    if not is_valid_person_name(name):
+        raise ApiError("Ismingizni yozing (kamida 2 ta harf, faqat harflar).")
+    if character not in load_character_ids():
+        raise ApiError("Avatarni tanlang.")
+    if level is None:
+        raise ApiError("Darajangizni tanlang.")
+
+    key = name_key(name)
+    ip = client_ip(request)
+    enforce_rate_limit(f"join:ip:{ip}", 60, 300)
+    enforce_rate_limit(f"join:name:{key}", 12, 300)
+    now = now_str()
+    created = False
+    with get_db() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        everyone = conn.execute("SELECT * FROM students WHERE name_key = ?", (key,)).fetchall()
+        if any((r["role"] or "student") in ("teacher", "admin") for r in everyone):  # Telegram accounts too: that is how teachers come in
+            raise ApiError(f"'{name}' nomi band. Boshqa ism yozing.", 409)
+        rows = [r for r in everyone if not r["id"].startswith("tg_")]  # a Telegram student never blocks a name
+        passwordless = [r for r in rows if r["password_hash"] is None and (r["id"].startswith("kid_") or r["id"].startswith("ros_"))]
+        same = [r for r in passwordless if (r["character"] or "") == character]
+        unclaimed = [r for r in passwordless if r["id"].startswith("ros_") and not (r["character"] or "")]
+        if same:
+            row = same[0]
+        elif unclaimed:  # a teacher put this name on the class list: the first student to arrive takes it
+            row = unclaimed[0]
+            conn.execute("UPDATE students SET character = ? WHERE id = ?", (character, row["id"]))
+        elif any(r["password_hash"] is not None for r in rows):
+            raise ApiError(f"'{name}' nomli hisob parol bilan himoyalangan. Parol bilan kiring yoki boshqa ism yozing.", 409)
+        else:
+            enforce_rate_limit(f"join:new:{ip}", 15, 3600)
+            sid = f"kid_{int(time.time() * 1000)}_{secrets.token_hex(3)}"
+            conn.execute(
+                """
+                INSERT INTO students (id, name, first_name, last_name, role, level, status, class_name, created_at, name_key, character)
+                VALUES (?, ?, ?, '', 'student', ?, 'approved', ?, ?, ?, ?)
+                """,
+                (sid, name, name, level, level, now, key, character),
+            )
+            created = True
+            row = conn.execute("SELECT * FROM students WHERE id = ?", (sid,)).fetchone()
+        if row["status"] == "declined":
+            raise ApiError("Sizning hisobingiz administrator tomonidan rad etilgan.", 403)
+        if not created and (row["level"] or "") != level:
+            conn.execute("UPDATE students SET level = ? WHERE id = ?", (level, row["id"]))
+        token = create_session(conn, row["id"])
+        row = conn.execute("SELECT * FROM students WHERE id = ?", (row["id"],)).fetchone()
+        student = student_public(row)
+    return web.json_response({"status": "ok", "created": created, "student": student, "token": token})
+
+
 async def handle_auth_login(request: web.Request) -> web.Response:
     data = await read_json(request)
     first_name = " ".join(clean_text(data.get("firstName"), 60).split())
@@ -3239,6 +3483,10 @@ def build_web_app() -> web.Application:
     web_app.router.add_post("/api/assignments/update", handle_update_assignment)
     web_app.router.add_post("/api/assignments/delete", handle_delete_assignment)
     web_app.router.add_get("/api/leaderboard", handle_leaderboard)
+    web_app.router.add_get("/api/progress/history", handle_progress_history)
+    web_app.router.add_get("/api/progress/calendar", handle_progress_calendar)
+    web_app.router.add_get("/api/progress/level", handle_progress_level)
+    web_app.router.add_post("/api/progress/events", handle_progress_events)
     web_app.router.add_post("/api/game/finish", handle_game_finish)
     web_app.router.add_post("/api/listen/finish", handle_listen_finish)
     web_app.router.add_get("/api/listen/progress", handle_listen_progress)
@@ -3260,6 +3508,7 @@ def build_web_app() -> web.Application:
     web_app.router.add_post("/api/green/restore", handle_green_restore)
     web_app.router.add_post("/api/green/zones", handle_green_zone_add)
     web_app.router.add_post("/api/green/zones/delete", handle_green_zone_delete)
+    web_app.router.add_post("/api/auth/join", handle_auth_join)
     web_app.router.add_post("/api/character", handle_set_character)
     web_app.router.add_get("/avatars/{student_id}.jpg", handle_avatar)
     return web_app

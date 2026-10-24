@@ -99,7 +99,6 @@
       const best = parseInt(localStorage.getItem(BEST_KEY) || "0", 10);
       area.innerHTML = `<div class="ml-stage ml-intro">
         ${logoHtml(false)}
-        <div class="ml-hostbar"><div id="mlIdrisHost"></div><div id="mlBubble" class="idris-bubble">Qani, millioner bo'lamizmi? 😄</div></div>
         <div class="ml-memory">
           <span class="is-ok">⭐ ${c.mastered || 0} o'zlashtirilgan</span>
           <span class="is-warn">🔁 ${c.review || 0} takrorlash kerak</span>
@@ -110,7 +109,6 @@
         <button type="button" class="ml-start" id="mlStart">▶ Boshlash</button>
         ${hallHtml()}
       </div>`;
-      if (kit()) { kit().mountIdris("mlIdrisHost", "wave", 84); }
       $("mlStart").addEventListener("click", () => this.init());
       if (window.L1_Words) window.L1_Words.load().then(() => { if (!this.active && $("mlStart")) this.refreshIntroMemory(); });
     },
@@ -158,7 +156,7 @@
         <button type="button" class="ml-life" data-ml="phone" id="mlPhone" aria-label="Idris ustozga qo'ng'iroq">📞</button>
         <button type="button" class="ml-life" data-ml="crowd" id="mlCrowd" aria-label="Zaldan so'rash">👥</button>
       </div>
-      <div class="ml-hostbar"><div id="mlIdrisHost"></div><div id="mlBubble" class="idris-bubble"></div></div>
+      <div class="ml-hostbar"><div id="mlBubble" class="idris-bubble"></div></div>
       <div class="ml-qwrap"><div class="ml-qcard" id="mlQcard"><div class="ml-cat" id="mlCat"></div><div class="ml-qtext" id="mlQtext"></div></div></div>
       <div class="ml-opts" id="mlOpts"></div>
       <div class="ml-confirm" id="mlConfirm" hidden></div>
@@ -166,12 +164,11 @@
       ${hallHtml()}
       <div class="ml-ladderpanel" id="mlLadderPanel" data-ml="ladder-close" hidden></div>
     </div>`;
-    if (kit()) kit().mountIdris("mlIdrisHost", "pointing", 84);
     area.querySelector("#mlStage").addEventListener("click", onClick);
   }
 
   function say(text, kind) { if (kit()) kit().say("mlBubble", text, kind); }
-  function react(pose, mood) { if (kit()) kit().idrisReact("mlIdrisHost", pose, mood); }
+  function react() { /* no host picture in this game: only the bubble speaks */ }
   const options = () => [...document.querySelectorAll("#mlOpts .ml-opt")];
 
   function renderLadder() {
@@ -381,11 +378,10 @@
     const word = (id) => cards().find((c) => c.id === id);
     await flushWords(); // so the word list below shows the new status of each word
     const title = kind === "win" ? "Siz millionersiz!" : kind === "cash" ? "Siz pulni oldingiz" : prize ? "Xavfsiz yutuq sizniki" : "Bu safar omad kelmadi";
-    const mood = kind === "win" ? "celebrate" : "thumbsup";
     const area = $("gameMillionaireArea");
     area.innerHTML = `<div class="ml-stage ml-result">
       ${logoHtml(true)}
-      <div class="ml-hostbar"><div id="mlIdrisHost"></div><div id="mlBubble" class="idris-bubble">${title}. ${kind === "win" ? "Ajoyib! Hammasini topdingiz!" : correct >= 10 ? "Juda yaxshi natija!" : correct >= 5 ? "Yomon emas! Yana urinib ko'ring." : "Hechqisi yo'q, mashq qilsangiz bo'ladi."}</div></div>
+      <div class="ml-hostbar"><div id="mlBubble" class="idris-bubble">${title}. ${kind === "win" ? "Ajoyib! Hammasini topdingiz!" : correct >= 10 ? "Juda yaxshi natija!" : correct >= 5 ? "Yomon emas! Yana urinib ko'ring." : "Hechqisi yo'q, mashq qilsangiz bo'ladi."}</div></div>
       <div class="ml-won"><small>Yutug'ingiz</small><b>🪙 ${fmt(prize)}</b><span>${correct}/${q.length} ta to'g'ri javob</span></div>
       ${wordIds.length ? `<div class="ml-words"><b>Bu o'yindagi so'zlar</b>${wordIds.slice(0, 10).map((id) => {
         const w = word(id), st = window.L1_Words ? window.L1_Words.statusOf(id) : "new";
@@ -396,8 +392,7 @@
       <button type="button" class="ml-start" id="mlAgain">Qaytadan o'ynash 🔄</button>
       ${hallHtml()}
     </div>`;
-    if (kit()) { kit().mountIdris("mlIdrisHost", mood === "celebrate" ? "celebrate" : "thumbsup", 84); }
-    if (kind === "win") { if (L1()) L1().Fx.confetti($("mlIdrisHost"), 40); crowdMood("is-cheer", 4500); }
+    if (kind === "win") { if (L1()) L1().Fx.confetti($("mlBubble"), 40); crowdMood("is-cheer", 4500); }
     else if (kind === "cash") { sfx.cash(); crowdMood("is-cheer", 2200); }
     $("mlAgain").addEventListener("click", () => game.init());
     const tries = Array(correct).fill(1);

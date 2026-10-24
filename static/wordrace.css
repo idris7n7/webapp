@@ -60,7 +60,9 @@
 .wr-car.is-boost svg { filter: drop-shadow(0 0 7px rgba(251, 191, 36, .85)); }
 .wr-car .wr-fire { position: absolute; right: 100%; bottom: 8px; width: 34px; height: 9px; opacity: 0; border-radius: 9px 0 0 9px; background: linear-gradient(270deg, #fde047, #fb923c 45%, transparent); transition: opacity .15s; }
 .wr-car.is-boost .wr-fire { opacity: .95; }
-.wr-car.is-done::after { content: "🏁"; position: absolute; right: -4px; top: -14px; font-size: 15px; }
+.wr-car.is-done::after { content: ""; position: absolute; right: -4px; top: -14px; width: 15px; height: 15px; background: #f8fafc;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 22V4m0 0h13l-2.5 4.5L17 13H4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 22V4m0 0h13l-2.5 4.5L17 13H4'/%3E%3C/svg%3E") center / contain no-repeat; }
 .wr-lane.is-good { animation: wr-good .5s ease-out; }
 .wr-lane.is-bad { animation: wr-bad .5s ease-out; }
 @keyframes wr-good { 0% { box-shadow: inset 0 0 0 3px #4ade80; } 100% { box-shadow: inset 0 0 0 0 #4ade80; } }

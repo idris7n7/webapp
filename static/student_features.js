@@ -432,8 +432,12 @@
         console.error("Exercise not found:", exId);
         return;
       }
+      this.startData(ex);
+    },
 
-      this.activeExerciseId = exId;
+    // Runs any exercise object { id, category, type, title, questions: [{ q, options?, a, hint? }], meta? } (the learning hub builds its own).
+    startData: function(ex) {
+      this.activeExerciseId = ex.id;
       this.exerciseData = ex;
       this.userAnswers = {};
 
@@ -444,10 +448,11 @@
       if (runnerContainer) runnerContainer.classList.remove("hidden");
 
       this.renderRunner();
-      window.scrollTo({ top: runnerContainer.offsetTop - 30, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
 
     backToMenu: function() {
+      const wasRunning = !!this.activeExerciseId;
       this.activeExerciseId = null;
       this.exerciseData = null;
       this.userAnswers = {};
@@ -457,6 +462,7 @@
 
       if (listContainer) listContainer.classList.remove("hidden");
       if (runnerContainer) runnerContainer.classList.add("hidden");
+      if (wasRunning && typeof this.onBack === "function") this.onBack();
     },
 
     renderRunner: function() {
@@ -487,7 +493,7 @@
         itemCard.className = "bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-3";
 
         // Dispatch based on question type
-        if (ex.type === "mcq" || ex.type === "match" || ex.type === "complete") {
+        if (ex.type !== "correct_mistake" && qObj.options && qObj.options.length) {
           // Multiple Choice / Options
           const opts = qObj.options || ["A", "B", "C"];
           itemCard.innerHTML = `
@@ -498,8 +504,8 @@
               <span id="suite_icon_${idx}" class="text-base shrink-0">⚪</span>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-              ${opts.map(opt => `
-                <button type="button" onclick="window.L1_PracticeSuite.selectOption(${idx}, '${opt.replace(/'/g, "\\'")}', this)" class="suite-opt-btn-${idx} p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 text-xs sm:text-sm font-bold text-slate-800 transition text-left flex items-center justify-between">
+              ${opts.map((opt, oi) => `
+                <button type="button" onclick="window.L1_PracticeSuite.selectOption(${idx}, ${oi}, this)" class="suite-opt-btn-${idx} p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-400 text-xs sm:text-sm font-bold text-slate-800 transition text-left flex items-center justify-between">
                   <span>${opt}</span>
                   <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[12px] radio-indicator"></span>
                 </button>
@@ -507,7 +513,7 @@
             </div>
             <div id="suite_exp_${idx}" class="hidden text-xs p-2.5 rounded-xl"></div>
           `;
-        } else if (ex.type === "fill" || ex.type === "type_word") {
+        } else if (ex.type !== "correct_mistake") {
           // Input Blank / Typing
           const placeholder = ex.type === "type_word" ? "Inglizcha so'zni yozing..." : "Javobingizni yozing...";
           itemCard.innerHTML = `
@@ -523,7 +529,7 @@
             </div>
             <div id="suite_exp_${idx}" class="hidden text-xs p-2.5 rounded-xl"></div>
           `;
-        } else if (ex.type === "correct_mistake") {
+        } else {
           // Error Correction
           itemCard.innerHTML = `
             <div class="flex items-start justify-between gap-3">
@@ -547,8 +553,9 @@
       });
     },
 
-    selectOption: function(idx, opt, btnEl) {
-      this.userAnswers[idx] = opt;
+    selectOption: function(idx, optIndex, btnEl) {
+      const q = this.exerciseData && this.exerciseData.questions[idx];
+      this.userAnswers[idx] = q && q.options ? q.options[optIndex] : optIndex;
 
       // Styling active button
       const allBtns = document.querySelectorAll(`.suite-opt-btn-${idx}`);
@@ -690,6 +697,7 @@
         console.warn("Attempt save error:", e);
       }
 
+      window.dispatchEvent(new CustomEvent("l1:practice-submitted", { detail: { exId: ex.id, meta: ex.meta || null, score, total, pct } }));
       window.scrollTo({ top: resultBox.offsetTop - 50, behavior: "smooth" });
     },
 
@@ -705,8 +713,8 @@
   // =========================================================================
   // The four games and the 3D engine are about 900 KB; they load the first time a game is opened (or when the browser is idle).
   const Lazy = {
-    files: ["millionaire_data.js?v=2", "listen_data.js?v=2", "questions.js?v=3", "millionaire_music.js?v=2", "games_millionaire.js?v=8",
-      "l1_3d.js?v=2", "games_wordrace.js?v=3", "games_listen.js?v=5", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=24"],
+    files: ["millionaire_data.js?v=2", "listen_data.js?v=2", "questions.js?v=3", "millionaire_music.js?v=2", "games_millionaire.js?v=10",
+      "l1_3d.js?v=2", "games_wordrace.js?v=3", "games_listen.js?v=5", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=31"],
     ready: false,
     promise: null,
     games() {

@@ -38,24 +38,27 @@
     .backface-hidden { backface-visibility: hidden; }
   </style>
 
-  <link rel="stylesheet" href="/static/app_theme.css?v=36">
-  <link rel="stylesheet" href="/static/tf_design.css?v=18">
+  <link rel="stylesheet" href="/static/app_theme.css?v=38">
+  <link rel="stylesheet" href="/static/tf_design.css?v=45">
+  <link rel="stylesheet" href="/static/learn_hub.css?v=1">
   <link rel="stylesheet" href="/static/focus.css?v=8">
   <link rel="stylesheet" href="/static/green_map.css?v=5">
-  <link rel="stylesheet" href="/static/millionaire.css?v=5">
-  <link rel="stylesheet" href="/static/wordrace.css?v=3">
+  <link rel="stylesheet" href="/static/millionaire.css?v=6">
+  <link rel="stylesheet" href="/static/wordrace.css?v=4">
+
   <link rel="stylesheet" href="/static/listen.css?v=3">
   <link rel="stylesheet" href="/static/polish.css?v=6">
   <!-- Tailwind goes last, like the old CDN style tag did, so its utilities keep winning over the app CSS. -->
   <link rel="stylesheet" href="/static/tailwind.css?v=5">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/l1_core.js?v=23"></script>
+  <script src="/static/icons_ui.js?v=10"></script>
+  <script src="/static/l1_core.js?v=24"></script>
   <script src="/static/units_data.js?v=4"></script>
   <script src="/static/flashcards_data.js?v=5"></script>
   <script src="/static/practicing_suite.js?v=3"></script>
-  <script src="/static/games_engine.js?v=14"></script>
+  <script src="/static/games_engine.js?v=15"></script>
   <script src="/static/words.js?v=3"></script>
-  <script src="/static/student_features.js?v=13"></script>
+  <script src="/static/student_features.js?v=21"></script>
   <script src="/static/tree_art.js?v=2"></script>
   <script src="/static/green_map.js?v=8" defer></script>
   <script src="/static/focus.js?v=10" defer></script>
@@ -82,6 +85,10 @@
           .forEach(function(k) { localStorage.removeItem(k); });
       } catch (e) {}
     };
+    // "Meni eslab qoling" off: the session only lives while this tab/browser session is open.
+    try {
+      if (localStorage.getItem("l1_remember_v1") === "0" && !sessionStorage.getItem("l1_tab_alive")) window.l1ClearSession();
+    } catch (e) {}
     window.l1Fetch = function(url, options) {
       options = options || {};
       var headers = Object.assign({}, options.headers || {});
@@ -180,7 +187,18 @@
             LU
           </div>
           <h2 id="authTitle" class="text-xl font-bold text-slate-900 tracking-tight">Level Up</h2>
-          <p id="authSubtitle" class="text-xs text-slate-500">Platformaga kirish</p>
+          <p id="authSubtitle" class="text-xs text-slate-500">Boshlash</p>
+        </div>
+
+        <!-- Entry hero: shown only with the join form (see tf_design.css) -->
+        <div class="jn-hero" aria-hidden="true">
+          <i class="jn-orb o1"></i><i class="jn-orb o2"></i>
+          <span class="jn-fl f1">A</span><span class="jn-fl f2">⭐</span><span class="jn-fl f3">B</span>
+          <span class="jn-fl f4">✨</span><span class="jn-fl f5">Z</span><span class="jn-fl f6">⭐</span>
+          <div class="jn-rocket">🚀</div>
+          <div class="jn-title">Level <em>Up!</em></div>
+          <div class="jn-tag">Ingliz tilini zavq bilan o'rganing!</div>
+          <div class="jn-xp"><b>LVL</b><span><i></i></span><b>★</b></div>
         </div>
 
         <div class="tf-auth-art" aria-hidden="true">
@@ -220,8 +238,27 @@
         <div id="authAlert" class="hidden rounded-xl p-3 text-xs sm:text-sm font-semibold flex items-center gap-2"></div>
 
 
-        <!-- Kirish Form -->
-        <form id="formLogin" class="space-y-4" onsubmit="return false;">
+        <!-- Boshlash: a name, an avatar and a level - no password -->
+        <form id="formJoin" class="jn" onsubmit="return false;">
+          <div>
+            <label class="jn-label" for="joinName">Ismingiz</label>
+            <input id="joinName" class="jn-input" type="text" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="Masalan: Ali" />
+          </div>
+          <div>
+            <div class="jn-label">Avatar</div>
+            <div class="jn-gender"><button type="button" data-g="m" class="is-on">O'g'il bola</button><button type="button" data-g="f">Qiz bola</button></div>
+            <div class="jn-avatars" id="joinAvatars"></div>
+          </div>
+          <div>
+            <div class="jn-label">Darajangiz</div>
+            <div class="jn-levels" id="joinLevels"></div>
+          </div>
+          <label class="jn-remember"><input type="checkbox" id="joinRemember" checked /><span>Meni eslab qoling</span></label>
+          <button id="btnJoin" type="submit" class="jn-go" disabled>Boshlash 🚀</button>
+        </form>
+
+        <!-- Kirish Form (teachers and accounts that have a password) -->
+        <form id="formLogin" class="space-y-4 hidden" onsubmit="return false;">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-slate-700">Ism</label>
@@ -247,6 +284,8 @@
               <span>🔑 Kirish</span>
             </button>
           </div>
+          <button type="button" id="btnShowJoin" class="jn-link">← Avatar bilan kirish</button>
+        </form>
 
 
         <!-- Pending Approval Waiting View -->
@@ -1279,7 +1318,9 @@
       const formReg = document.getElementById("formRegister");
       if (formReg) formReg.classList.add("hidden");
       const formLog = document.getElementById("formLogin");
-      if (formLog) formLog.classList.remove("hidden");
+      if (formLog) formLog.classList.add("hidden");
+      const formJoin = document.getElementById("formJoin");
+      if (formJoin) formJoin.classList.remove("hidden");
     }
 
     window.L1_ON_UNAUTHORIZED = function() {
@@ -1323,6 +1364,24 @@
       if (state.authStudent && window.l1GetToken()) {
         state.mode = isStaffRole(state.authStudent.role) ? "teacher" : "student";
         await window.L1_REFRESH_STATE();
+      } else {
+        // Ticked "Meni eslab qoling" earlier: enter again with the saved name, avatar and level.
+        const auto = loadStorage("l1_auto_v1", null);
+        if (auto && auto.name && auto.character && auto.level) {
+          try {
+            const resp = await fetch("/api/auth/join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: auto.name, character: auto.character, level: auto.level }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.status === "ok" && data.student && data.token) {
+              try { localStorage.setItem("l1_cefr_level_" + data.student.id, auto.level); } catch (err) { /* ignore */ }
+              await completeLogin(data.student, data.token, "Qaytib kelganingiz bilan!");
+              return;
+            }
+          } catch (err) { /* offline: show the form */ }
+        }
       }
       updateAuthView();
     }
@@ -2062,9 +2121,108 @@
         const alert = document.getElementById("authAlert");
         if (alert) alert.classList.add("hidden");
         if (pendingCard) pendingCard.classList.add("hidden");
-        if (formLog) formLog.classList.remove("hidden");
-        if (authTitle) authTitle.textContent = "Kirish";
-        if (authSub) authSub.textContent = "Ism, familiya va parolingizni kiriting.";
+        if (formLog) formLog.classList.add("hidden");
+        const fj = document.getElementById("formJoin");
+        if (fj) fj.classList.remove("hidden");
+        if (authTitle) authTitle.textContent = "Level Up";
+        if (authSub) authSub.textContent = "Boshlash";
+      }
+
+      // 5. Entry with a name, an avatar and a level (no password). Name + avatar make the account, see POST /api/auth/join.
+      const formJoin = document.getElementById("formJoin");
+      if (formJoin) {
+        const CEFR_UI = [["A1", "Beginner"], ["A2", "Elementary"], ["A2+", "Elementary+"], ["B1", "Intermediate"], ["B1+", "Intermediate+"],
+                         ["B2", "Upper-Int."], ["B2+", "Upper-Int.+"], ["C1", "Advanced"], ["C2", "Proficiency"]];
+        const nameInput = document.getElementById("joinName");
+        const goBtn = document.getElementById("btnJoin");
+        const pick = { gender: "m", character: "", level: "" };
+        const rememberBox = document.getElementById("joinRemember");
+        try { rememberBox.checked = localStorage.getItem("l1_remember_v1") !== "0"; } catch (err) { /* stays ticked */ }
+        const last = loadStorage("l1_join_last_v1", null); // what this device entered the last time
+        if (last && typeof last === "object") {
+          nameInput.value = String(last.name || "").slice(0, 40);
+          pick.character = String(last.character || "");
+          pick.level = String(last.level || "");
+        }
+        const validName = () => nameInput.value.trim().length >= 2;
+        const paintJoin = () => {
+          const chars = window.L1_Characters;
+          const box = document.getElementById("joinAvatars");
+          if (!chars || !chars.list) { setTimeout(paintJoin, 150); return; } // characters.js loads after this script
+          const mine = chars.list.find((c) => c.id === pick.character);
+          if (mine) pick.gender = mine.g;
+          formJoin.querySelectorAll(".jn-gender button").forEach((b) => b.classList.toggle("is-on", b.dataset.g === pick.gender));
+          box.innerHTML = chars.list.filter((c) => c.g === pick.gender).map((c) =>
+            `<button type="button" class="jn-av${c.id === pick.character ? " is-on" : ""}" data-id="${c.id}" aria-label="${c.name}" aria-pressed="${c.id === pick.character}">
+               <span class="jn-av-art">${chars.svg(c.id)}</span></button>`).join("");
+          document.getElementById("joinLevels").innerHTML = CEFR_UI.map(([k, en]) =>
+            `<button type="button" class="jn-lv${k === pick.level ? " is-on" : ""}" data-lv="${k}" aria-pressed="${k === pick.level}"><b>${k}</b><small>${en}</small></button>`).join("");
+          goBtn.disabled = !(validName() && pick.character && pick.level);
+        };
+        formJoin.addEventListener("click", (e) => {
+          const g = e.target.closest(".jn-gender button");
+          const a = e.target.closest(".jn-av");
+          const l = e.target.closest(".jn-lv");
+          if (g) { pick.gender = g.dataset.g; if (window.L1_Characters) { const c = window.L1_Characters.list.find((x) => x.id === pick.character); if (c && c.g !== pick.gender) pick.character = ""; } }
+          else if (a) pick.character = a.dataset.id;
+          else if (l) pick.level = l.dataset.lv;
+          else return;
+          paintJoin();
+        });
+        nameInput.addEventListener("input", () => { goBtn.disabled = !(validName() && pick.character && pick.level); });
+        paintJoin();
+
+        formJoin.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = nameInput.value.trim();
+          if (!validName()) { showAuthAlert("Ismingizni yozing (kamida 2 ta harf)."); return; }
+          if (!pick.character) { showAuthAlert("Avatarni tanlang."); return; }
+          if (!pick.level) { showAuthAlert("Darajangizni tanlang."); return; }
+          goBtn.disabled = true;
+          goBtn.textContent = "⏳ Kirilmoqda...";
+          try {
+            const resp = await fetch("/api/auth/join", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, character: pick.character, level: pick.level }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.status === "ok" && data.student && data.token) {
+              const keep = rememberBox.checked;
+              try {
+                localStorage.setItem("l1_remember_v1", keep ? "1" : "0");
+                sessionStorage.setItem("l1_tab_alive", "1");
+              } catch (err) { /* private mode: the session simply ends with the tab */ }
+              if (keep) {
+                saveStorage("l1_join_last_v1", { name, character: pick.character, level: pick.level });
+                saveStorage("l1_auto_v1", { name, character: pick.character, level: pick.level }); // used to enter without typing
+              } else {
+                try { localStorage.removeItem("l1_join_last_v1"); localStorage.removeItem("l1_auto_v1"); } catch (err) { /* ignore */ }
+              }
+              try { localStorage.setItem("l1_cefr_level_" + data.student.id, pick.level); } catch (err) { /* asked again next time */ }
+              await completeLogin(data.student, data.token, data.created ? `Xush kelibsiz, ${data.student.name}!` : "Qaytib kelganingiz bilan!");
+            } else {
+              showAuthAlert(data.message || "Kirib bo'lmadi. Qayta urinib ko'ring.");
+            }
+          } catch (err) {
+            showAuthAlert("Server bilan bog'lanishda xatolik yuz berdi.");
+          } finally {
+            goBtn.textContent = "Boshlash 🚀";
+            goBtn.disabled = !(validName() && pick.character && pick.level);
+          }
+        });
+
+        const toLogin = (staff) => {
+          const alert = document.getElementById("authAlert");
+          if (alert) alert.classList.add("hidden");
+          formJoin.classList.toggle("hidden", staff);
+          if (formLog) formLog.classList.toggle("hidden", !staff);
+          if (authSub) authSub.textContent = staff ? "Parol bilan kirish" : "Boshlash";
+        };
+        // no visible link any more; teachers open the password form with /#staff
+        if (location.hash === "#staff") toLogin(true);
+        const back = document.getElementById("btnShowJoin");
+        if (back) back.addEventListener("click", () => toLogin(false));
       }
 
 
@@ -3684,6 +3842,7 @@
       const btnTopLogout = document.getElementById("btnTopLogout");
       if (btnTopLogout) {
         btnTopLogout.addEventListener("click", () => {
+          try { localStorage.removeItem("l1_auto_v1"); } catch (err) { /* ignore */ } // signing out on purpose: no automatic entry next time
           window.L1_LOGOUT();
           updateAuthView();
           showToast("Tizimdan chiqildi.");
@@ -3919,11 +4078,13 @@
     });
   </script>
   <script src="/static/icons3d.js?v=2"></script>
-  <script src="/static/app_shell.js?v=54"></script>
-  <script src="/static/l1_tasks.js?v=3"></script>
-  <script src="/static/shakespeare.js?v=23"></script>
+  <script src="/static/daily_facts.js?v=1"></script>
+  <script src="/static/app_shell.js?v=76"></script>
+  <script src="/static/l1_tasks.js?v=4"></script>
+  <script src="/static/shakespeare.js?v=26"></script>
+  <script src="/static/learn_hub.js?v=5"></script>
 
-  <script src="/static/characters.js?v=5"></script>
+  <script src="/static/characters.js?v=6"></script>
   <script>
     // Offline support: only on https (or localhost), never blocks the page.
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {

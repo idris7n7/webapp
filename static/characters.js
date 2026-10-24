@@ -182,6 +182,11 @@
           await window.L1.api("/api/character", { character: chosen });
           const u = student();
           if (u) u.character = chosen;
+          // name + avatar is how a student gets back in (index.html, #formJoin): remember the new avatar on this device too
+          try {
+            const last = JSON.parse(localStorage.getItem("l1_join_last_v1") || "null");
+            if (last && typeof last === "object" && chosen !== "tg") { last.character = chosen; localStorage.setItem("l1_join_last_v1", JSON.stringify(last)); }
+          } catch (e) { /* only a convenience */ }
           location.reload();
         } catch (e) {
           btn.disabled = false; btn.style.opacity = "1";

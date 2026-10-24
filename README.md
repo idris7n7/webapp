@@ -61,13 +61,13 @@ haptics, sounds, Teacher Idris: a canvas rig that breathes, blinks and moves the
 ## Accounts and roles
 | Role | How you get it | What you can do |
 |------|----------------|-----------------|
-| `student` | register in the app, or open the Mini App from Telegram | solve exercises, see **your own** results |
+| `student` | write a name, pick an avatar and a level (no password), or open the Mini App from Telegram | solve exercises, see **your own** results |
 | `teacher` | register as teacher, then an **admin approves** (bot button or Roster tab) | see all students' results, add exercises and roster entries |
 | `admin` | your Telegram id is listed in `TEACHER_IDS` | everything above + approve/decline/delete users |
 
 The server decides the role from the database; the browser is never trusted. Inside Telegram the
 app signs in through `/api/auth/telegram`, which verifies Telegram's signature (`initData`).
-Outside Telegram, users sign in with name + password (minimum 6 characters).
+Outside Telegram a **student** comes in with a name, an avatar and a level, without a password (`POST /api/auth/join`): the pair name + avatar is the account, so the same pair on another phone is the same student, and the same name with another avatar is another student. A teacher's name and the name of an account that has a password cannot be taken this way. **Teachers and older accounts** sign in with name + password (minimum 6 characters) from the link under the entry form.
 
 ## Setup
 1. `pip install -r requirements.txt`
@@ -115,7 +115,8 @@ otherwise the data disappears on every redeploy. The Dockerfile expects a volume
 - Login attempts are rate limited per IP and per name (in memory, per process).
 
 ## Security notes
-- **Registration is closed by default.** Set `ALLOW_SELF_REGISTRATION=1` to let anyone create an account; otherwise only roster entries made by a teacher can be claimed, and Telegram sign-in works as before.
+- **Anyone who has the link can create a student account** (name, avatar, level): a student account holds no secret, so this is meant for a class that trusts each other. It is limited by address (15 new accounts an hour) and by name (12 tries in 5 minutes). Set `OPEN_JOIN=0` to close that door; students then come in through Telegram or a teacher's class list (a name a teacher added is taken by the first student who arrives with it).
+- **Registration with a password is closed by default.** Set `ALLOW_SELF_REGISTRATION=1` to let anyone create an account; otherwise only roster entries made by a teacher can be claimed, and Telegram sign-in works as before.
 - **Client IP for rate limits** is taken from `CF-Connecting-IP` / `X-Forwarded-For` only when the request comes from this machine or a private network (tunnel, Render, Docker); direct callers cannot forge it. Add other proxies in `TRUSTED_PROXIES`.
 - **/static/** serves only real site file types; backup files are refused. Old backups now live in `_old_backups` outside the app folder.
 

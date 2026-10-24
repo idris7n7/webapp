@@ -42,7 +42,7 @@
 .ml-life.is-used::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 30px; font-weight: 900; color: #ef4444; text-shadow: 0 0 6px #000; }
 
 /* ---- the host ---- */
-.ml-hostbar { display: flex; align-items: flex-end; gap: 8px; min-height: 84px; }
+.ml-hostbar { display: flex; align-items: flex-end; gap: 8px; }
 .ml-hostbar #mlIdrisHost, .ml-hostbar .ml-hostimg { flex: none; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .5)); }
 .ml-hostbar .idris-bubble { flex: 1; min-width: 0; margin-bottom: 8px; font-size: 14px; font-weight: 700; line-height: 1.4; }
 

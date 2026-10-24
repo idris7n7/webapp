@@ -101,11 +101,11 @@
     const suite = [];
     const D = typeof PRACTICING_SUITE_DATA !== "undefined" ? PRACTICING_SUITE_DATA : null;
     if (D) {
-      ((D.gram_mcq && D.gram_mcq.questions) || []).forEach((q) => suite.push({ category: "Grammar", q: q.q, options: q.options || ["am", "is", "are"], a: q.a }));
+      ((D.gram_mcq && D.gram_mcq.questions) || []).forEach((q) => suite.push({ category: "Grammar", q: String(q.q).replace(/^\s*\d+\.\s*/, ""), options: q.options || ["am", "is", "are"], a: q.a }));
       ((D.vocab_match_meaning && D.vocab_match_meaning.questions) || []).forEach((q) => suite.push({
         category: "Vocabulary", q: `"${String(q.q).replace(/^\d+\.\s*/, "")}" so'zining tarjimasi nima?`, options: q.options, a: q.a,
       }));
-      ((D.vocab_complete_sentence && D.vocab_complete_sentence.questions) || []).forEach((q) => suite.push({ category: "Vocabulary", q: q.q, options: q.options || ["baker", "judge", "nurse"], a: q.a }));
+      ((D.vocab_complete_sentence && D.vocab_complete_sentence.questions) || []).forEach((q) => suite.push({ category: "Vocabulary", q: String(q.q).replace(/^\s*\d+\.\s*/, ""), options: q.options || ["baker", "judge", "nurse"], a: q.a }));
     }
     let pool = week.length >= 5 ? shuffle(week).concat(shuffle(suite)) : shuffle(week.concat(suite));
     pool = pool.filter((q) => q.options && q.options.length >= 2 && q.options.some((o) => correct(o, q.a)));
