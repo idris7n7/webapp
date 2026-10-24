@@ -15,6 +15,20 @@
     el.innerHTML = markup;
     return true;
   }
+  // Asosiy draws two of its parts again on their own (the goals and the Pomidor card, when the Pomodoro or a lesson
+  // changes). The part is swapped in place and the page's remembered markup gets the same swap, so the next full paint
+  // neither skips a real change nor redraws the whole page for nothing. `part` records what a page paint put there.
+  const parts = {};
+  const part = (id, markup) => (parts[id] = markup);
+  function repaintPart(page, id, markup) {
+    const el = $(id), before = parts[id];
+    if (!el || markup === before) return;
+    el.outerHTML = markup;
+    parts[id] = markup;
+    const m = page && painted.get(page);
+    if (m === undefined) return;
+    if (before && m.includes(before)) painted.set(page, m.replace(before, () => markup)); else painted.delete(page);
+  }
 
   const Shell = {
     tab: "home",
@@ -443,11 +457,18 @@
   const Pomo = (() => {
     const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { city: 0, mine: 0, unplanted: 0, today: 0, daily: 12, status: "idle", left: 1500000 });
     const art = (kind, stage) => (window.L1_TreeArt ? window.L1_TreeArt.svg(kind, stage, false) : "");
-    // idle: "🍅 Pomidor"; running: the live time with a pause icon (tap = pause), paused: a play icon (tap = continue)
+    // idle: "🍅 Pomidor"; running: a pause icon and the live time (tap = pause), paused: a play icon (tap = continue).
+    // The time is not in the markup: tickTime fills it in after a paint and on every tick, so nothing is redrawn each second.
     function btnLabel(f) {
       if (f.status === "idle") return "🍅 Pomidor";
-      const sec = Math.max(0, Math.ceil(f.left / 1000));
-      return `${f.status === "paused" ? "▶" : "⏸"} ${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+      return `${f.status === "paused" ? "▶" : "⏸"} <span id="l1PomoTime"></span>`;
+    }
+    function tickTime() {
+      const t = $("l1PomoTime");
+      if (!t) return;
+      const sec = Math.max(0, Math.ceil(stats().left / 1000));
+      const text = `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+      if (t.textContent !== text) t.textContent = text;
     }
     function html() {
       const f = stats();
@@ -463,7 +484,7 @@
           </div>
         </div></section>`;
     }
-    function paint() { const card = $("l1Pomo"); if (card) card.outerHTML = html(); paintGoals(); }
+    function paint() { repaintPart($("l1Home"), "l1Pomo", html()); tickTime(); paintGoals(); }
     document.addEventListener("click", (ev) => {
       const b = ev.target.closest("[data-pomo]");
       if (!b || !window.L1_Focus) return;
@@ -474,8 +495,8 @@
     });
     window.addEventListener("l1:focus-summary", paint);
     // the clock ticks every second, whatever page the student has been on
-    window.addEventListener("l1:focus-tick", () => { const b = $("l1PomoBtn"); if (b) b.textContent = btnLabel(stats()); });
-    return { html };
+    window.addEventListener("l1:focus-tick", tickTime);
+    return { html, tickTime };
   })();
 
   // ------------------------------------------------------------------ Home
@@ -526,7 +547,19 @@
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
   function goalCount() { const g = dailyGoals().filter((x) => !x.rest); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
-  function paintGoals() { const el = $("hmGoals"); if (el) el.innerHTML = goalsHtml(); const h = $("hmGoalCount"); if (h) h.innerHTML = goalCount(); }
+  const goalsBlock = () => `<div class="hm-goals" id="hmGoals">${goalsHtml()}</div>`;
+  const countBlock = () => `<span id="hmGoalCount">${goalCount()}</span>`;
+  function paintGoals() { const page = $("l1Home"); repaintPart(page, "hmGoals", goalsBlock()); repaintPart(page, "hmGoalCount", countBlock()); }
+  // The goal buttons are drawn again on their own (paintGoals), so their taps are caught once for the whole page. A listener
+  // put on each button was lost with every redraw, and then the goal (the Pomidor most of all) did nothing when tapped.
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest && ev.target.closest("[data-hm]");
+    if (!b) return;
+    Haptic.tap();
+    if (b.dataset.hm === "pomo") window.L1_Focus && window.L1_Focus.open();
+    else if (b.dataset.hm === "lessons") { if (window.L1_Hub) window.L1_Hub.openNextLesson(); else Shell.go("learn"); }
+    else startHomework();
+  });
   // "Vazifa" goes straight to the next homework when it is open, otherwise to the page that says what is missing.
   function startHomework() {
     const p = openHomework();
@@ -759,7 +792,7 @@
     const phrase = greetingText(me);
     loadListenStars();
 
-    if (!paint(el, `<div class="l1-page space-y-4">
+    const drawn = paint(el, `<div class="l1-page space-y-4">
       <section class="hm-hero">
         <div class="hm-hero-text">
           <div class="hm-greet">${phrase ? `<div class="hm-phrase">${html(phrase)}</div>`
@@ -771,11 +804,11 @@
       </section>
 
       <section class="hm-card">
-        <div class="hm-card-head"><h2>Bugungi maqsadlar</h2><span id="hmGoalCount">${goalCount()}</span></div>
-        <div class="hm-goals" id="hmGoals">${goalsHtml()}</div>
+        <div class="hm-card-head"><h2>Bugungi maqsadlar</h2>${part("hmGoalCount", countBlock())}</div>
+        ${part("hmGoals", goalsBlock())}
       </section>
 
-      ${Pomo.html()}
+      ${part("l1Pomo", Pomo.html())}
 
       <section>
         <div class="hm-card-head px-1"><h2>O'yinlar</h2><button type="button" class="hm-more" data-go="games">Hammasi ›</button></div>
@@ -789,14 +822,10 @@
             <span class="hm-medal">${["🥇", "🥈", "🥉"][e.rank - 1] || e.rank}</span>${avatar(e, e.rank === 1 ? 60 : 52)}
             <b>${html((e.name || "").split(" ")[0])}</b><span>${e.points} ball</span></div>`).join("")}</div>
       </section>` : ""}
-    </div>`)) return;
+    </div>`);
+    Pomo.tickTime();
+    if (!drawn) return;
     wireTaskButtons(el);
-    el.querySelectorAll("[data-hm]").forEach((b) => b.addEventListener("click", () => {
-      Haptic.tap();
-      if (b.dataset.hm === "pomo") window.L1_Focus && window.L1_Focus.open();
-      else if (b.dataset.hm === "lessons") { if (window.L1_Hub) window.L1_Hub.openNextLesson(); else Shell.go("learn"); }
-      else startHomework();
-    }));
     const fb = el.querySelector("[data-fact]");
     if (fb) fb.addEventListener("click", openFact);
     const wb = el.querySelector("[data-word]");
@@ -905,8 +934,10 @@
     const p2 = (n) => String(n).padStart(2, "0");
     return `${d}d : ${p2(h)}h : ${p2(m)}m : ${p2(s)}s`;
   }
+  // Only a countdown on screen ticks: one in a hidden tab changed the page every second for nothing.
   function tickCountdowns() {
-    document.querySelectorAll(".lb-count[data-end]").forEach((n) => { n.textContent = fmtLeft(Number(n.dataset.end) - nowTs()); });
+    if (document.hidden) return;
+    document.querySelectorAll(".lb-count[data-end]").forEach((n) => { if (!n.closest(".hidden")) n.textContent = fmtLeft(Number(n.dataset.end) - nowTs()); });
   }
   setInterval(tickCountdowns, 1000);
 
@@ -948,8 +979,8 @@
 </div>` : ""}
       <div class="l1-sub px-2 text-center" style="font-size:12px">Ball: vazifadagi har bir savol 25 / 15 / 5 · o'yinlardan kuniga ko'pi bilan 50 ball</div>`}
     </div>`);
-    if (!drawn) return;
     tickCountdowns(); // the countdown text is filled in here (and every second), so the markup above stays the same
+    if (!drawn) return;
     el.querySelectorAll("[data-period]").forEach((b) => b.addEventListener("click", () => onPeriod(b.dataset.period)));
   };
 

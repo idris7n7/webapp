@@ -516,13 +516,14 @@ body:has(#authSection:not(.hidden)) #l1AuthTheme { display: none !important; }
 
 /* daily cards: lively until read, then calm with a tick */
 .hm-fact { position: relative; overflow: hidden; }
-.hm-fact::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent); transform: skewX(-18deg); animation: hmShine 3.6s ease-in-out 1.4s infinite; pointer-events: none; }
+.hm-fact::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent); transform: translateX(0) skewX(-18deg); animation: hmShine 3.6s ease-in-out 1.4s infinite; pointer-events: none; }
 .hm-fact .hm-fact-ico { display: inline-block; animation: hmIcoBob 1.8s ease-in-out infinite; }
 .hm-fact.is-read::after, .hm-fact.is-read .hm-fact-ico { animation: none; display: none; }
 .hm-fact.is-read .hm-fact-ico { display: inline-block; }
 .hm-wordpill { color: #14532d; background: linear-gradient(135deg, #bbf7d0, #86efac); box-shadow: 0 6px 12px -7px rgba(22, 163, 74, .8); animation-delay: 2.2s; }
 .hm-wordpill.is-read { color: #15803d; background: #dcfce7; box-shadow: none; }
-@keyframes hmShine { 0% { left: -40%; } 35%, 100% { left: 130%; } }
+/* the shine moves with transform (567% of its 30% width = from -40% to 130%), not `left`, which re-laid out the page every frame */
+@keyframes hmShine { 0% { transform: translateX(0) skewX(-18deg); } 35%, 100% { transform: translateX(567%) skewX(-18deg); } }
 @keyframes hmIcoBob { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-3px) rotate(-10deg); } 50% { transform: translateY(0); } 75% { transform: translateY(-2px) rotate(10deg); } }
 @media (prefers-reduced-motion: reduce) { .hm-fact::after, .hm-fact .hm-fact-ico { animation: none !important; } }
 

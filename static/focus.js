@@ -14,6 +14,10 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const pad2 = (n) => String(n).padStart(2, "0");
   const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}`; };
+  // The clock ticks 4 times a second but its text changes once: only a real change is written, so the page is left alone.
+  const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+  const setRing = (el, frac) => { const v = (CIRC * (1 - frac)).toFixed(1); if (el && el.getAttribute("stroke-dashoffset") !== v) el.setAttribute("stroke-dashoffset", v); };
+  const setTitle = (text) => { if (document.title !== text) document.title = text; };
 
   const R = 52, CIRC = 2 * Math.PI * R;
   const POS_KEY = "l1_gv_pos";
@@ -164,8 +168,8 @@
     if (!widget || widget.hidden) return;
     const t = $("gvTime"), ring = $("gvRing");
     if (St.status !== "idle") {
-      if (t) t.textContent = mmss(leftMs());
-      if (ring) ring.setAttribute("stroke-dashoffset", (CIRC * (1 - progress())).toFixed(1));
+      setText(t, mmss(leftMs()));
+      setRing(ring, progress());
       if (treeStage() !== lastStage) { lastStage = treeStage(); const tr = $("gvTree"); if (tr) tr.innerHTML = growingTree(); }
     }
   }
@@ -258,10 +262,10 @@
   function tickSheet() {
     if (!sheetOpen || sheetView !== "main" || St.status === "idle") return;
     const big = $("gvBigTime"), ring = $("gvBigRing");
-    if (big) big.textContent = mmss(leftMs());
-    if (ring) ring.setAttribute("stroke-dashoffset", (CIRC * (1 - progress())).toFixed(1));
+    setText(big, mmss(leftMs()));
+    setRing(ring, progress());
     const line = $("gvPauseLine");
-    if (line && St.status === "paused") line.innerHTML = `Pauza tugashiga <b>${mmss(St.pauseEndsAt - now())}</b>`;
+    if (line && St.status === "paused") { const h = `Pauza tugashiga <b>${mmss(St.pauseEndsAt - now())}</b>`; if (line.innerHTML !== h) line.innerHTML = h; }
     const g = $("gvGrow"); if (g && g.dataset.stage !== String(treeStage())) { g.dataset.stage = String(treeStage()); g.innerHTML = growingTree(); }
   }
 
@@ -275,11 +279,11 @@
     if (St.status !== "idle") window.dispatchEvent(new CustomEvent("l1:focus-tick", { detail: { left: leftMs(), status: St.status } }));
     if (St.status === "running") {
       const left = leftMs();
-      document.title = `🍅 ${mmss(left)}`;
+      setTitle(`🍅 ${mmss(left)}`);
       tickWidget(); tickSheet();
       if (left <= 0) finishBlock();
     } else if (St.status === "paused") {
-      document.title = `⏸ ${mmss(leftMs())}`;
+      setTitle(`⏸ ${mmss(leftMs())}`);
       tickWidget(); tickSheet();
       if (now() >= St.pauseEndsAt && !resyncing) { // the 10 minutes of pause are used up: the server has resumed the clock
         resyncing = true;

@@ -10,6 +10,8 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } },
   };
   const me = () => (window.L1_Shell && window.L1_Shell.data && window.L1_Shell.data.me) || null;
+  // Page watchers run their check at most once a frame, however many changes the page had in it (a game changes it a lot).
+  const onceAFrame = (fn) => { let queued = false; return () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; fn(); }); }; };
   const uid = () => { try { const u = state.authStudent; return u ? (u.id || u.name) : "anon"; } catch (e) { return "anon"; } };
 
   // ------------------------------------------------------------------ confetti (canvas, gravity, spin)
@@ -159,11 +161,11 @@
       }
     };
     const scan = () => document.querySelectorAll("#l1BarPointsNum, .sc-big").forEach(check);
-    new MutationObserver(() => requestAnimationFrame(scan)).observe(document.body, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(onceAFrame(scan)).observe(document.body, { childList: true, subtree: true, characterData: true });
     scan();
   }
 
-  // ------------------------------------------------------------------ XP ring, level, streak flame
+  // ------------------------------------------------------------------ XP ring, level
   const levelOf = (pts) => Math.floor(Math.sqrt(Math.max(0, pts) / 40)) + 1;
   const levelStart = (l) => 40 * (l - 1) * (l - 1);
   function paintXp() {
@@ -177,15 +179,15 @@
         <circle class="t" cx="24" cy="24" r="22"/><circle class="p" cx="24" cy="24" r="22" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg><span class="mod-level"></span>`);
       ring = $(".mod-xp", av);
     }
-    $(".mod-level", av).textContent = lv;
-    requestAnimationFrame(() => { $(".p", ring).style.strokeDashoffset = String(100 - Math.max(2, Math.min(100, frac * 100))); });
+    // runs every 2 s: only a real change is written, so the page watchers are not woken for nothing
+    const chip = $(".mod-level", av), arc = $(".p", ring), off = String(Math.round(1000 - Math.max(20, Math.min(1000, frac * 1000))) / 10);
+    if (chip.textContent !== String(lv)) chip.textContent = lv;
+    if (arc.style.strokeDashoffset !== off) requestAnimationFrame(() => { arc.style.strokeDashoffset = off; });
     // level-up: first sighting only stores the level, later increases celebrate
     const key = "mod_lvl_" + uid(), saved = parseInt(store.get(key) || "0", 10);
     if (!saved) store.set(key, String(lv));
     else if (lv > saved) { store.set(key, String(lv)); levelUp(lv); }
-    // streak flame tier
-    const sb = $("#l1BarStreak"), days = m.streak || 0;
-    if (sb) { if (days > 0) { sb.dataset.days = days; if (!sb.querySelector('.mod-days')) sb.insertAdjacentHTML('beforeend', '<span class="mod-days"></span>'); sb.querySelector('.mod-days').textContent = days; } else { delete sb.dataset.days; const d = sb.querySelector('.mod-days'); if (d) d.remove(); } }
+    // the streak flame in the top bar shows no day count: the number is in the calendar it opens
   }
   function levelUp(lv) {
     if ($(".mod-lvlup")) return;
@@ -240,7 +242,7 @@
     initTilt(); watchNumbers();
     const iv = setInterval(() => { tick(); if (++tries > 8) clearInterval(iv); }, 400);
     setInterval(tick, 2000);
-    new MutationObserver(() => { if (window.L1_Shell && window.L1_Shell.tab === "home" && !$("#l1Home .mod-badges")) requestAnimationFrame(paintBadges); })
+    new MutationObserver(onceAFrame(() => { if (window.L1_Shell && window.L1_Shell.tab === "home") paintBadges(); }))
       .observe(document.body, { childList: true, subtree: true });
     enter();
   }
