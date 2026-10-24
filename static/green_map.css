@@ -148,3 +148,16 @@ html[data-theme="dark"] .gm-mapwrap, html[data-theme="dark"] .gm-map { backgroun
 @media (prefers-reduced-motion: reduce) {
   .gm-tree.is-new svg, .gm-tree.is-new::after, .gm-ghost svg, .gm-burst i, .gm-fly span, .gm-bird, .gm-petal, .gm-sheet, .gm-root.is-planting path.gm-zone { animation: none; }
 }
+
+/* ---- the tree shop (prices under the trees you do not own yet) ---- */
+.gm-kinds-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; }
+.gm-points { padding: 3px 11px; border-radius: 999px; background: #fff4cc; color: #8a5a00; font-weight: 900; }
+html[data-theme="dark"] .gm-points { background: rgba(245, 184, 46, .18); color: #ffd36b; }
+.gm-kind.is-shop { opacity: .9; border-style: dashed; }
+.gm-kind.is-shop.is-poor { opacity: .6; filter: grayscale(.6); }
+.gm-buy { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 6px 4px 4px; }
+.gm-buy-art svg { width: 88px; height: 106px; }
+.gm-buy h2 { margin: 0; font-size: 20px; font-weight: 900; }
+.gm-buy p { margin: 0; font-size: 15px; font-weight: 600; color: var(--l1-muted); }
+.gm-buy-bad { color: #c2410c !important; }
+.gm-buy .gm-btn { width: 100%; flex: none; margin-top: 6px; }

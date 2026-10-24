@@ -16,17 +16,21 @@ MIN_DISTANCE_M = 2.0
 NEAR_WINDOW_M = 40.0  # how far the "nearest tree" search looks when a position is previewed
 
 COMMON_KINDS = ("oak", "pine", "cherry", "poplar", "apple", "plane")
-# rare species a student unlocks by finishing this many Pomodoros (only the picture differs)
-RARE_KINDS = (("blossom", 10), ("gold", 25), ("magic", 50))
-ALL_KINDS = COMMON_KINDS + tuple(k for k, _ in RARE_KINDS)
+FREE_KIND = "oak"  # every student may plant this one for nothing; the others are bought once with points
+# price in points (what the student earned in games, homework and lessons)
+PRICES = {"pine": 30, "poplar": 40, "cherry": 60, "apple": 80, "plane": 100, "blossom": 200, "gold": 400, "magic": 800}
+RARE_KINDS = (("blossom", 200), ("gold", 400), ("magic", 800))
+ALL_KINDS = (FREE_KIND,) + tuple(PRICES)
 
 ZONES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "green_zones.json")
 CELL = 0.005  # degrees (~550 m) of the lookup grid
 _M_PER_DEG_LAT = 111320.0
 
 
-def unlocked_kinds(finished: int) -> list:
-    return list(COMMON_KINDS) + [k for k, need in RARE_KINDS if finished >= need]
+def owned_kinds(bought) -> list:
+    """The free tree plus every kind the student has bought, in shop order."""
+    bought = set(bought)
+    return [FREE_KIND] + [k for k in PRICES if k in bought]
 
 
 def meters_between(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

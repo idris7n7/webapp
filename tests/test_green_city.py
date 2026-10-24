@@ -34,11 +34,10 @@ class GeometryTests(unittest.TestCase):
         self.assertIn("atigi 1,4 metr", msg)
         self.assertIn("kamida 2 metr", msg)
 
-    def test_rare_kinds_unlock_with_finished_blocks(self):
-        self.assertEqual(green_city.unlocked_kinds(0), list(green_city.COMMON_KINDS))
-        self.assertIn("blossom", green_city.unlocked_kinds(10))
-        self.assertNotIn("gold", green_city.unlocked_kinds(24))
-        self.assertIn("magic", green_city.unlocked_kinds(50))
+    def test_only_the_free_tree_is_owned_until_others_are_bought(self):
+        self.assertEqual(green_city.owned_kinds([]), ["oak"])
+        self.assertEqual(green_city.owned_kinds(["gold", "pine", "nope"]), ["oak", "pine", "gold"])
+        self.assertNotIn(green_city.FREE_KIND, green_city.PRICES)
 
     def test_degree_box_covers_the_distance(self):
         dlat, dlon = green_city.degree_box(40.6, 40)

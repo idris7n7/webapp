@@ -1,0 +1,59 @@
+/* The full-page screens around a Pomodoro: intro, "tree earned", break and stretching (pomo_flow.js). */
+.pl-root {
+  position: fixed; inset: 0; z-index: 9300; display: flex; align-items: center; justify-content: center; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(18px + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))) 16px calc(18px + var(--l1-safe-bottom-total, 0px));
+  background: radial-gradient(120% 80% at 50% 0%, var(--l1-primary-50) 0%, var(--l1-bg) 62%); color: var(--l1-ink);
+  animation: pl-in .28s ease both;
+}
+.pl-root[hidden] { display: none; }
+body.pl-open { overflow: hidden; }
+body.pl-open .gv-pomo { display: none; }
+@keyframes pl-in { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+.pl-card { position: relative; width: 100%; max-width: 440px; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.pl-hero { display: block; width: auto; max-width: 78%; max-height: 40vh; object-fit: contain; filter: drop-shadow(0 18px 18px rgba(30, 40, 110, .22)); animation: pl-float 4.5s ease-in-out infinite; }
+.is-done .pl-hero { max-height: 44vh; }
+@keyframes pl-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.pl-bubble { position: relative; width: 100%; padding: 14px 16px 16px; border-radius: 22px; background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: 0 16px 30px -18px rgba(30, 40, 110, .5); }
+.pl-bubble::before { content: ""; position: absolute; left: 50%; top: -8px; width: 16px; height: 16px; transform: translateX(-50%) rotate(45deg); background: var(--l1-card); border-left: 1px solid var(--l1-line); border-top: 1px solid var(--l1-line); }
+.pl-who { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--l1-primary); }
+.pl-bubble h2 { margin: 0; font-size: 19px; line-height: 1.3; font-weight: 900; }
+.pl-bubble p { margin: 6px 0 0; font-size: 15px; line-height: 1.45; font-weight: 600; color: var(--l1-muted); }
+.pl-pts { color: #1f9d55; white-space: nowrap; }
+.pl-note { margin: 0; padding: 10px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45; font-weight: 600; color: var(--l1-muted); background: var(--l1-primary-50); text-align: left; }
+.pl-btn { width: 100%; min-height: 54px; padding: 0 20px; border-radius: 18px; font-size: 17px; font-weight: 900; color: #fff; background: var(--l1-primary); box-shadow: 0 14px 24px -12px rgba(79, 91, 240, .9); transition: transform .12s ease; }
+.pl-btn:active { transform: scale(.97); }
+.pl-btn.is-green { background: #1f9d55; box-shadow: 0 14px 24px -12px rgba(31, 157, 85, .9); }
+.pl-btn.is-quiet { color: var(--l1-ink); background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: none; }
+.pl-link { padding: 8px 14px; font-size: 14px; font-weight: 800; color: var(--l1-muted); text-decoration: underline; text-underline-offset: 3px; }
+.pl-x { position: absolute; right: 14px; top: calc(12px + var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))); width: 40px; height: 40px; border-radius: 50%; font-size: 18px; font-weight: 800; color: var(--l1-muted); background: var(--l1-card); border: 1px solid var(--l1-line); }
+.pl-spark { position: absolute; font-size: 22px; color: #ffc928; animation: pl-twinkle 1.8s ease-in-out infinite; }
+.pl-spark.s1 { left: 8%; top: 10%; } .pl-spark.s2 { right: 10%; top: 4%; animation-delay: .5s; } .pl-spark.s3 { right: 16%; top: 30%; animation-delay: 1s; }
+@keyframes pl-twinkle { 0%, 100% { opacity: .2; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.2) rotate(30deg); } }
+
+/* break */
+.pl-clock { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.pl-clock-label { font-size: 13px; font-weight: 800; color: var(--l1-muted); }
+.pl-clock b { font-size: 46px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: #1f9d55; }
+
+/* stretching */
+.pl-card.is-ex { gap: 10px; }
+.pl-ex-top { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; color: var(--l1-muted); }
+.pl-ex-count { padding: 4px 12px; border-radius: 999px; background: var(--l1-primary-50); color: var(--l1-primary); }
+.pl-ex-total b { font-variant-numeric: tabular-nums; color: var(--l1-ink); }
+.pl-ex-stage { position: relative; width: 100%; display: flex; justify-content: center; }
+.pl-ex-img { max-height: 34vh; max-width: 70%; object-fit: contain; filter: drop-shadow(0 14px 14px rgba(30, 40, 110, .22)); animation: pl-float 2.2s ease-in-out infinite; }
+.pl-ex-stage.is-break .pl-ex-img { opacity: .55; animation: none; filter: grayscale(.4); }
+.pl-ex-ring { position: absolute; right: 0; top: 0; width: 76px; height: 76px; display: grid; place-items: center; border-radius: 50%; background: var(--l1-card); box-shadow: 0 10px 20px -10px rgba(30, 40, 110, .5); }
+.pl-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pl-ring-track { fill: none; stroke: rgba(120, 130, 190, .2); stroke-width: 9; }
+.pl-ring-bar { fill: none; stroke: #1f9d55; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .3s linear; }
+.is-break .pl-ring-bar { stroke: #f59e0b; }
+.pl-ex-sec { position: relative; font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pl-ex-state { font-size: 14px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: #1f9d55; }
+.pl-ex-stage.is-break + .pl-ex-state { color: #d97706; }
+.pl-ex-name { margin: 0; font-size: 21px; font-weight: 900; line-height: 1.25; }
+.pl-ex-text { margin: 0; padding: 12px 14px; border-radius: 16px; font-size: 15px; line-height: 1.5; font-weight: 600; text-align: left; background: var(--l1-card); border: 1px solid var(--l1-line); }
+.pl-ex-actions { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pl-ex-actions .pl-btn { min-height: 48px; font-size: 15px; }
+@media (max-height: 640px) { .pl-hero, .pl-ex-img { max-height: 26vh; } }
+@media (prefers-reduced-motion: reduce) { .pl-root, .pl-hero, .pl-ex-img, .pl-spark { animation: none; } }

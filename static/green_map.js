@@ -26,8 +26,8 @@
 
   // ------------------------------------------------------------------ data
   const G = {
-    trees: new Map(), since: 0, meId: "", loaded: false, isAdmin: false, minDistance: 2, rare: [],
-    sum: { cityTrees: 0, cityWilted: 0, unplanted: 0, planted: 0, wilted: 0, finished: 0, kinds: ["oak"], today: 0, daily: 12 },
+    trees: new Map(), since: 0, meId: "", loaded: false, isAdmin: false, minDistance: 2, prices: {},
+    sum: { cityTrees: 0, cityWilted: 0, unplanted: 0, planted: 0, wilted: 0, finished: 0, kinds: ["oak"], points: 0, today: 0, daily: 12 },
     week: [], all: [], zones: [], boardMode: "week",
   };
   let zonesData = null, zonesPromise = null;
@@ -55,8 +55,8 @@
     G.meId = d.meId || G.meId;
     for (const t of d.trees || []) G.trees.set(t.id, t);
     Object.assign(G.sum, { cityTrees: d.cityTrees, cityWilted: d.cityWilted, unplanted: d.unplanted, planted: d.planted, wilted: d.wilted,
-      finished: d.finished, kinds: d.kinds, today: d.todayTrees, daily: d.dailyTrees });
-    G.week = d.week; G.all = d.all; G.zones = d.zones || []; G.isAdmin = !!d.isAdmin; G.minDistance = d.minDistance || 2; G.rare = d.rare || [];
+      finished: d.finished, kinds: d.kinds, points: d.points, today: d.todayTrees, daily: d.dailyTrees });
+    G.week = d.week; G.all = d.all; G.zones = d.zones || []; G.isAdmin = !!d.isAdmin; G.minDistance = d.minDistance || 2; G.prices = d.prices || {};
     G.since = Math.max(0, (d.now || 0) - 5);
     G.loaded = true;
     if (window.L1_Focus) { window.L1_Focus.setCity(d.cityTrees); window.L1_Focus.setCounts({ unplanted: d.unplanted, planted: d.planted, wilted: d.wilted, finished: d.finished, todayTrees: d.todayTrees, dailyTrees: d.dailyTrees }); }
@@ -304,7 +304,7 @@
   }
 
   // ------------------------------------------------------------------ the screen
-  let root = null, mode = "browse", cand = null, checkSeq = 0, checkTimer = 0, poll = 0, openFlag = false, draw = null, busy = false;
+  let flowPlant = false, root = null, mode = "browse", cand = null, checkSeq = 0, checkTimer = 0, poll = 0, openFlag = false, draw = null, busy = false;
 
   function ensureRoot() {
     if (root) return root;
@@ -337,11 +337,13 @@
   }
   function chooseKind(k) { try { localStorage.setItem(KIND_KEY, k); } catch (e) {} }
 
+  // the free tree and the ones bought before can be chosen; the others show their price and open the shop
   function speciesRow() {
     const cur = chosenKind();
-    const open = G.sum.kinds.map((k) => `<button type="button" class="gm-kind${k === cur ? " is-on" : ""}" data-gm="kind" data-kind="${k}" aria-label="${esc(Art().name(k))}" aria-pressed="${k === cur}">${Art().svg(k, 3, false)}<span>${esc(Art().name(k))}</span></button>`);
-    const locked = G.rare.filter((r) => !G.sum.kinds.includes(r.kind)).map((r) => `<span class="gm-kind is-locked" title="${r.need} ta pomidordan keyin">${Art().svg(r.kind, 3, false)}<span>🔒 ${r.need}</span></span>`);
-    return `<div class="gm-kinds">${open.join("")}${locked.join("")}</div>`;
+    const owned = G.sum.kinds.map((k) => `<button type="button" class="gm-kind${k === cur ? " is-on" : ""}" data-gm="kind" data-kind="${k}" aria-label="${esc(Art().name(k))}" aria-pressed="${k === cur}">${Art().svg(k, 3, false)}<span>${esc(Art().name(k))}</span></button>`);
+    const shop = Object.keys(G.prices).filter((k) => !G.sum.kinds.includes(k)).sort((x, y) => G.prices[x] - G.prices[y]).map((k) =>
+      `<button type="button" class="gm-kind is-shop${G.prices[k] > G.sum.points ? " is-poor" : ""}" data-gm="shop" data-kind="${k}" aria-label="${esc(Art().name(k))}: ${G.prices[k]} ball">${Art().svg(k, 3, false)}<span>🔒 ${G.prices[k]}</span></button>`);
+    return `<div class="gm-kinds-head"><b>Daraxt turini tanlang</b><span class="gm-points">⭐ ${G.sum.points} ball</span></div><div class="gm-kinds">${owned.join("")}${shop.join("")}</div>`;
   }
 
   function paintBanner() {
@@ -429,14 +431,30 @@
     }
   }
 
+  // Planting starts close up (street level, not the whole district): at the student's latest tree, else in the green
+  // area nearest the middle of Asaka town.
+  const ASAKA = [40.6417, 72.2383];
+  function plantSpot() {
+    const mine = [...G.trees.values()].filter((t) => t.ownerId === G.meId && t.state === "planted").sort((a, b) => (b.at || 0) - (a.at || 0))[0];
+    if (mine) return [mine.lat, mine.lon];
+    let best = null, bd = Infinity;
+    if (zonesData) for (const z of zonesData.green) {
+      const c = [(z.b[0] + z.b[2]) / 2, (z.b[1] + z.b[3]) / 2], d = meters(c[0], c[1], ASAKA[0], ASAKA[1]);
+      if (d < bd) { bd = d; best = c; }
+    }
+    return best || ASAKA;
+  }
   function enterPlant() {
     if (G.sum.unplanted <= 0) { toast("Ekadigan daraxtingiz yo'q. Avval pomidorni tugating."); return; }
     mode = "plant"; cand = null; M.clearGhost(); M.refreshTrees(); markZones(true); paintPanel();
-    if (M.ready && M.map.getZoom() < 16 && M.boundsAll) M.map.flyToBounds(M.boundsAll, { padding: [30, 30], maxZoom: 16, duration: 0.8 });
+    if (M.ready) {
+      M.map.setMinZoom(15); // no zooming out to the whole district while planting
+      if (M.map.getZoom() < 16) M.map.flyTo(plantSpot(), 17, { duration: 0.8 });
+    }
   }
   function leaveMode() {
     mode = "browse"; cand = null; draw = null; checkSeq++; clearTimeout(checkTimer);
-    if (M.ready) { M.clearGhost(); M.drawLayer.clearLayers(); }
+    if (M.ready) { M.clearGhost(); M.drawLayer.clearLayers(); M.map.setMinZoom(11); }
     markZones(false); paintPanel(); if (M.ready) M.refreshTrees();
   }
   function markZones(on) { if (root) root.classList.toggle("is-planting", !!on); }
@@ -455,7 +473,7 @@
     }
     const t = r.data.tree;
     G.trees.set(t.id, t); M.newId = t.id;
-    Object.assign(G.sum, { unplanted: r.data.unplanted, planted: r.data.planted, wilted: r.data.wilted, finished: r.data.finished, kinds: r.data.kinds, cityTrees: G.sum.cityTrees + 1 });
+    Object.assign(G.sum, { unplanted: r.data.unplanted, planted: r.data.planted, wilted: r.data.wilted, finished: r.data.finished, kinds: r.data.kinds, points: r.data.points, cityTrees: G.sum.cityTrees + 1 });
     if (window.L1_Focus) { window.L1_Focus.setCity(G.sum.cityTrees); window.L1_Focus.setCounts({ unplanted: r.data.unplanted, planted: r.data.planted, wilted: r.data.wilted, finished: r.data.finished }); }
     plantSound(); haptic("ok");
     const lat = t.lat, lon = t.lon;
@@ -466,6 +484,7 @@
     setTimeout(() => { M.newId = 0; M.refreshTrees(); }, 3200);
     toast("Daraxt ekildi 🌳");
     loadCity(false).then(() => paintPanel());
+    if (flowPlant) { flowPlant = false; setTimeout(() => { close(); if (window.L1_Flow) window.L1_Flow.rest(); }, 2200); } // the break starts with the tree planted
   }
 
   function sparkle(lat, lon) {
@@ -491,6 +510,19 @@
     toast("Daraxt tiklandi 🌱");
     paintPanel(); if (!$("gmModal").hidden) renderModal(modalKind);
     loadCity(false).then(() => paintPanel());
+  }
+
+  async function buyKind(kind) {
+    if (busy) return;
+    busy = true;
+    const r = await api("/api/green/buy", "POST", { kind });
+    busy = false;
+    if (!r.ok) { toast((r.data && r.data.message) || "Sotib olib bo'lmadi. Internetni tekshiring."); return; }
+    Object.assign(G.sum, { kinds: r.data.kinds, points: r.data.points });
+    chooseKind(kind); reviveSound(); haptic("ok");
+    closeModal(); if (cand) M.showGhost(cand);
+    toast(`${Art().name(kind)} sotib olindi 🌳`);
+    paintPanel();
   }
 
   // ------------------------------------------------------------------ admin: draw an area
@@ -534,6 +566,12 @@
       }).join("") || `<div class="gm-empty">Hali hech kim daraxt ekmagan. Birinchi bo'ling!</div>`;
       body = `<div class="gm-sheet-head"><h2>Kimda nechta daraxt</h2><span class="gm-seg"><button type="button" data-gm="board-week" class="${G.boardMode === "week" ? "is-on" : ""}">Hafta</button><button type="button" data-gm="board-all" class="${G.boardMode === "all" ? "is-on" : ""}">Hammasi</button></span></div>
         <div class="gm-rows">${rows}</div>`;
+    } else if (kind.startsWith("buy:")) {
+      const k = kind.slice(4), price = G.prices[k] || 0, enough = G.sum.points >= price;
+      body = `<div class="gm-buy"><div class="gm-buy-art">${Art().svg(k, 3, false)}</div><h2>${esc(Art().name(k))}</h2>
+        <p>Narxi: <b>⭐ ${price} ball</b> (bir marta olasiz, keyin xohlagancha ekasiz).</p>
+        <p class="${enough ? "" : "gm-buy-bad"}">Sizda: <b>⭐ ${G.sum.points} ball</b>${enough ? "" : `. Yana ${price - G.sum.points} ball kerak. O'yin, uyga vazifa va darslardan ball to'plang.`}</p>
+        <button type="button" class="gm-btn is-green" data-gm="buy" data-kind="${k}" ${enough && !busy ? "" : "disabled"}>Sotib olish</button></div>`;
     } else {
       // wilted trees first: those are the ones that need a pomodoro
       const mine = [...G.trees.values()].filter((t) => t.ownerId === G.meId)
@@ -567,6 +605,8 @@
     if (act === "cancel") return leaveMode();
     if (act === "confirm") return confirmPlant();
     if (act === "kind") { chooseKind(b.dataset.kind); if (cand) M.showGhost(cand); return paintPanel(); }
+    if (act === "shop") return renderModal("buy:" + b.dataset.kind);
+    if (act === "buy") return buyKind(b.dataset.kind);
     if (act === "restore") return restoreTree(parseInt(b.dataset.id, 10));
     if (act === "goto") { const t = G.trees.get(parseInt(b.dataset.id, 10)); closeModal(); if (t) M.flyTo(t.lat, t.lon, 18); return; }
     if (act === "owner") { const list = [...G.trees.values()].filter((t) => t.ownerId === b.dataset.id); closeModal(); M.fitTrees(list); return; }
@@ -590,7 +630,7 @@
   async function open(opts) {
     if (!(window.l1GetToken && window.l1GetToken())) return;
     ensureRoot();
-    openFlag = true; root.hidden = false; document.body.classList.add("gm-open");
+    openFlag = true; flowPlant = !!(opts && opts.flow); root.hidden = false; document.body.classList.add("gm-open");
     mode = "browse"; paintPanel();
     const host = $("gmMap");
     const [Lf] = await Promise.all([loadLeaflet().catch(() => null), loadZones(), loadCity(true)]);
@@ -601,7 +641,8 @@
     $("gmLoading").hidden = true;
     M.drawZones(); M.refreshTrees();
     const mine = [...G.trees.values()].filter((t) => t.ownerId === G.meId && t.state === "planted").sort((a, b) => (b.at || 0) - (a.at || 0))[0];
-    if (mine) M.map.setView([mine.lat, mine.lon], 17);
+    if (opts && opts.plant) M.map.setView(plantSpot(), 17);
+    else if (mine) M.map.setView([mine.lat, mine.lon], 17);
     else if (M.boundsAll) M.map.fitBounds(M.boundsAll, { padding: [30, 30], maxZoom: 15 });
     paintPanel();
     if (opts && opts.plant) enterPlant();
@@ -609,7 +650,7 @@
     poll = setInterval(async () => { if (document.hidden || !openFlag) return; if (await loadCity(false)) { if (M.ready && !M.map._popup && mode === "browse") M.refreshTrees(); paintPanel(); } }, 20000);
   }
   function close() {
-    openFlag = false; clearInterval(poll);
+    openFlag = false; flowPlant = false; clearInterval(poll);
     if (mode !== "browse") leaveMode();
     closeModal();
     if (root) root.hidden = true;

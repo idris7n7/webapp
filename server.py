@@ -579,6 +579,15 @@ def init_db() -> None:
             );
 
             -- Extra planting areas drawn on the map by an administrator (a polygon as JSON [[lat, lon], ...]).
+            -- Tree kinds bought with points (once per kind; the points spent are not taken from the rating).
+            CREATE TABLE IF NOT EXISTS green_purchases (
+                student_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                price INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY (student_id, kind)
+            );
+
             CREATE TABLE IF NOT EXISTS green_zones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -2084,7 +2093,11 @@ def green_counts(conn, student_id: str) -> dict:
         if r["state"] in out:
             out[r["state"]] = r["n"]
     out["finished"] = focus_finished_total(conn, student_id)
-    out["kinds"] = green_city.unlocked_kinds(out["finished"])
+    bought = [r["kind"] for r in conn.execute("SELECT kind FROM green_purchases WHERE student_id = ?", (student_id,))]
+    out["kinds"] = green_city.owned_kinds(bought)
+    earned = conn.execute("SELECT COALESCE(SUM(points), 0) FROM points_log WHERE student_id = ?", (student_id,)).fetchone()[0]
+    spent = conn.execute("SELECT COALESCE(SUM(price), 0) FROM green_purchases WHERE student_id = ?", (student_id,)).fetchone()[0]
+    out["points"] = max(0, int(earned) - int(spent))
     return out
 
 
@@ -2334,9 +2347,9 @@ async def handle_green_plant(request: web.Request) -> web.Response:
         if credit is None:
             raise ApiError("Ekadigan daraxtingiz yo'q. Avval pomidorni tugating.", 409)
         counts = green_counts(conn, user["id"])
-        kind = clean_text(data.get("kind"), 20) or random.choice(green_city.COMMON_KINDS)
+        kind = clean_text(data.get("kind"), 20) or green_city.FREE_KIND
         if kind not in counts["kinds"]:
-            raise ApiError("Bu daraxt turi hali ochilmagan.", 400)
+            raise ApiError("Bu daraxt turini avval ball evaziga sotib oling.", 400)
         verdict = judge_green_spot(conn, lat, lon)
         if not verdict["ok"]:
             return refuse(verdict["message"], 409, code=verdict["code"], distance=verdict["distance"])
@@ -2347,6 +2360,28 @@ async def handle_green_plant(request: web.Request) -> web.Response:
         tree = conn.execute("SELECT * FROM green_trees WHERE id = ?", (credit["id"],)).fetchone()
         counts = green_counts(conn, user["id"])
     return web.json_response({"tree": tree_view(tree, user["name"]), "now": now, **counts})
+
+
+async def handle_green_buy(request: web.Request) -> web.Response:
+    """Buys a tree kind for good with the student's points."""
+    now = int(time.time())
+    data = await read_json(request)
+    kind = clean_text(data.get("kind"), 20)
+    price = green_city.PRICES.get(kind)
+    if price is None:
+        raise ApiError("Bunday daraxt turi yo'q.", 400)
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"greenbuy:{user['id']}", 120, 3600)
+        conn.execute("BEGIN IMMEDIATE")
+        counts = green_counts(conn, user["id"])
+        if kind in counts["kinds"]:
+            raise ApiError("Bu daraxt turi sizda allaqachon bor.", 409)
+        if counts["points"] < price:
+            raise ApiError(f"Ball yetarli emas: {price} ball kerak, sizda {counts['points']} ta.", 409)
+        conn.execute("INSERT INTO green_purchases (student_id, kind, price, created_at) VALUES (?, ?, ?, ?)", (user["id"], kind, price, now))
+        counts = green_counts(conn, user["id"])
+    return web.json_response({"kind": kind, "price": price, "now": now, **counts})
 
 
 async def handle_green_restore(request: web.Request) -> web.Response:
@@ -2418,7 +2453,7 @@ async def handle_green_city(request: web.Request) -> web.Response:
             "trees": [tree_view(r, r["name"] or "") for r in rows],
             "cityTrees": planted, "cityWilted": wilted, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES,
             "week": board(week_start_ts(now)), "all": board(0), "zones": zones, "now": now, "meId": user["id"],
-            "minDistance": green_city.MIN_DISTANCE_M, "rare": [{"kind": k, "need": n} for k, n in green_city.RARE_KINDS],
+            "minDistance": green_city.MIN_DISTANCE_M, "prices": green_city.PRICES,
             "isAdmin": user["role"] == "admin", **counts,
         }
     return web.json_response(payload)
@@ -3506,6 +3541,7 @@ def build_web_app() -> web.Application:
     web_app.router.add_post("/api/green/check", handle_green_check)
     web_app.router.add_post("/api/green/plant", handle_green_plant)
     web_app.router.add_post("/api/green/restore", handle_green_restore)
+    web_app.router.add_post("/api/green/buy", handle_green_buy)
     web_app.router.add_post("/api/green/zones", handle_green_zone_add)
     web_app.router.add_post("/api/green/zones/delete", handle_green_zone_delete)
     web_app.router.add_post("/api/auth/join", handle_auth_join)

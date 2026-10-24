@@ -182,7 +182,9 @@
     sheet.addEventListener("click", onSheetClick);
     return sheet;
   }
-  function openSheet(view) {
+  function openSheet(view, force) {
+    // an idle student gets the full-page intro with Shakespeare; the sheet is for a running block
+    if (!force && !view && St.status === "idle" && window.L1_Flow) { window.L1_Flow.intro(); refreshState(); return; }
     ensureSheet();
     sheetOpen = true; sheetView = view || "main"; sheet.hidden = false;
     renderSheet();
@@ -270,6 +272,7 @@
   const baseTitle = document.title;
 
   function tick() {
+    if (St.status !== "idle") window.dispatchEvent(new CustomEvent("l1:focus-tick", { detail: { left: leftMs(), status: St.status } }));
     if (St.status === "running") {
       const left = leftMs();
       document.title = `🍅 ${mmss(left)}`;
@@ -300,19 +303,26 @@
   }
 
   async function startBlock() {
-    if (St.busy || St.status !== "idle") return;
+    if (St.busy || St.status !== "idle") return false;
     St.busy = true; unlockAudio();
     const r = await api("/api/focus/start", "POST", {});
     St.busy = false;
     if (!r.ok) {
-      if (r.status === 409 && r.data && r.data.active) { applyBlock(r.data.active); startTicker(); paintWidget(); renderSheet(); return; }
+      if (r.status === 409 && r.data && r.data.active) { applyBlock(r.data.active); startTicker(); paintWidget(); renderSheet(); return true; }
       toast((r.data && r.data.message) || "Boshlab bo'lmadi. Internetni tekshiring.");
-      return;
+      return false;
     }
     applyBlock(r.data); applyCounts(r.data);
     sheetView = "main";
     startTicker(); keepAwake(); haptic("tap");
     paintWidget(); renderSheet(); emit();
+    return true;
+  }
+
+  // the home button: pause a running block, continue a paused one (the 10 minutes of pause are shared by the whole block)
+  function toggle() {
+    if (St.status === "running") return pauseBlock();
+    if (St.status === "paused") return resumeBlock();
   }
 
   async function pauseBlock() {
@@ -354,7 +364,8 @@
     St.justEarned = { awarded: d.awarded };
     chime(); buzz();
     const l = L1(); if (l && l.Sound && l.Sound.finish) setTimeout(() => l.Sound.finish(), 600);
-    paintWidget(); openSheet("earned"); emit();
+    paintWidget(); emit();
+    if (window.L1_Flow) window.L1_Flow.done({ awarded: d.awarded }); else openSheet("earned");
     if (window.L1_Green) window.L1_Green.refresh();
   }
 
@@ -408,7 +419,7 @@
   function setCounts(d) { applyCounts(d); paintWidget(); if (sheetOpen) renderSheet(); emit(); }
 
   window.L1_Focus = {
-    open: (v) => openSheet(v), start: () => { openSheet(); return startBlock(); }, openMap: () => window.L1_Green && window.L1_Green.open({}),
+    open: (v) => openSheet(v), sheet: () => openSheet("main", true), begin: startBlock, toggle, start: () => { openSheet(null, true); return startBlock(); }, openMap: () => window.L1_Green && window.L1_Green.open({}),
     refresh: refreshState, summary, setCity, setCounts, close: closeSheet,
   };
 

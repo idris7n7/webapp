@@ -434,17 +434,22 @@
   const Pomo = (() => {
     const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { city: 0, mine: 0, unplanted: 0, today: 0, daily: 12, status: "idle", left: 1500000 });
     const art = (kind, stage) => (window.L1_TreeArt ? window.L1_TreeArt.svg(kind, stage, false) : "");
+    // idle: "🍅 Pomidor"; running: the live time with a pause icon (tap = pause), paused: a play icon (tap = continue)
+    function btnLabel(f) {
+      if (f.status === "idle") return "🍅 Pomidor";
+      const sec = Math.max(0, Math.ceil(f.left / 1000));
+      return `${f.status === "paused" ? "▶" : "⏸"} ${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+    }
     function html() {
       const f = stats();
       const running = f.status !== "idle";
-      const mm = Math.floor(f.left / 60000), ss = Math.floor((f.left % 60000) / 1000);
       return `<section class="hm-city" id="l1Pomo">
         <div class="hm-city-trees" aria-hidden="true"><i>${art("pine", 3)}</i><i>${art("cherry", 3)}</i><i class="is-big">${art("oak", 3)}</i><i>${art("apple", 3)}</i><i>${art("plane", 3)}</i></div>
         <div class="hm-city-body">
           <div><div class="hm-city-title">Yashil shahar</div>
             <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b>${f.unplanted ? ` · <span class="hm-city-new">${f.unplanted} ta ekilmagan</span>` : ""}</div></div>
           <div class="hm-city-btns">
-            <button type="button" class="hm-btn is-white" data-pomo="start">🍅 ${running ? `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : "Pomidor"}</button>
+            <button type="button" class="hm-btn is-white" data-pomo="start" id="l1PomoBtn" ${running ? `aria-label="${f.status === "paused" ? "Davom ettirish" : "Pauza"}"` : ""}>${btnLabel(f)}</button>
             <button type="button" class="hm-btn is-glass" data-pomo="${f.unplanted ? "plant" : "map"}">${f.unplanted ? "🌱 Ekish" : "🗺️ Xarita"}</button>
           </div>
         </div></section>`;
@@ -454,11 +459,13 @@
       const b = ev.target.closest("[data-pomo]");
       if (!b || !window.L1_Focus) return;
       Haptic.tap();
-      if (b.dataset.pomo === "start") window.L1_Focus.open();
+      if (b.dataset.pomo === "start") { if (stats().status === "idle") window.L1_Focus.open(); else window.L1_Focus.toggle(); }
       else if (b.dataset.pomo === "plant") window.L1_Green && window.L1_Green.open({ plant: true });
       else if (b.dataset.pomo === "map") window.L1_Focus.openMap();
     });
     window.addEventListener("l1:focus-summary", paint);
+    // the clock ticks every second, whatever page the student has been on
+    window.addEventListener("l1:focus-tick", () => { const b = $("l1PomoBtn"); if (b) b.textContent = btnLabel(stats()); });
     return { html };
   })();
 

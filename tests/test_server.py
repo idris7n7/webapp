@@ -1206,18 +1206,22 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         status, _ = await self.call("POST", "/api/green/plant", None, {"lat": GREEN_LAT, "lon": GREEN_LON})
         self.assertEqual(status, 401)
 
-    async def test_rare_trees_are_unlocked_by_finished_blocks(self):
+    async def test_trees_other_than_the_free_one_are_bought_with_points(self):
         token, student = await self.student_token()
-        await self.earn(token)
-        await self.plant(token, kind="blossom", expect=400)  # needs 10 finished blocks
+        await self.earn(token)  # +10 points
+        await self.plant(token, kind="pine", expect=400)  # not bought yet
         await self.plant(token, kind="no-such-tree", expect=400)
-        for i in range(9):
-            self.db_exec("INSERT INTO focus_sessions (id, student_id, started_at, seconds, status, finished_at) VALUES (?, ?, 1, 1, 'done', 1)",
-                         (f"old{i}", student["id"]))
-        _, state = await self.call("GET", "/api/focus/state", token)
-        self.assertEqual((state["finished"], "blossom" in state["kinds"], "gold" in state["kinds"]), (10, True, False))
-        tree = (await self.plant(token, kind="blossom"))["tree"]
-        self.assertEqual(tree["kind"], "blossom")
+        status, r = await self.call("POST", "/api/green/buy", token, {"kind": "pine"})
+        self.assertEqual(status, 409, r)  # 30 points needed, 10 earned
+        self.assertEqual((await self.call("GET", "/api/focus/state", token))[1]["points"], server.FOCUS_POINTS_PER_TREE)
+        self.db_exec("INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'game', 'x', 100, 1)", (student["id"],))
+        status, r = await self.call("POST", "/api/green/buy", token, {"kind": "pine"})
+        self.assertEqual((status, r["kinds"], r["points"]), (200, ["oak", "pine"], 110 - 30))
+        status, _ = await self.call("POST", "/api/green/buy", token, {"kind": "pine"})
+        self.assertEqual(status, 409)  # already owned
+        status, _ = await self.call("POST", "/api/green/buy", token, {"kind": "oak"})
+        self.assertEqual(status, 400)  # the free one is not for sale
+        self.assertEqual((await self.plant(token, kind="pine"))["tree"]["kind"], "pine")
 
     async def test_daily_tree_and_point_limits(self):
         saved = server.FOCUS_DAILY_TREES, server.FOCUS_REWARDED_TREES
