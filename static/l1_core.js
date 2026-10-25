@@ -67,55 +67,87 @@
   };
   Theme.apply(Theme.get());
 
-  // ---------------------------------------------------------------- Colour palette (four designs)
-  // <html data-palette> picks one of the palettes in palette.css; orange is the default. The button next to the
-  // day / night switch steps through them in this order.
+  // ---------------------------------------------------------------- Colour palette (five designs)
+  // <html data-palette> picks one of the palettes in palette.css; orange is the default. The palette button next to the
+  // day / night switch opens a page with the five designs; a tap shows that design at once, "Tayyor" closes the page.
   const PALETTES = [
     { id: "orange", name: "To'q sariq" },
     { id: "navy", name: "Dengiz" },
     { id: "blue", name: "Ko'k" },
     { id: "teal", name: "Feruza" },
+    { id: "violet", name: "Binafsha" },
   ];
   const Palette = {
+    list: PALETTES,
     get() {
       let p = null;
       try { p = localStorage.getItem("l1_palette_v1"); } catch (e) {}
       return PALETTES.some((x) => x.id === p) ? p : PALETTES[0].id;
     },
     apply(p) {
+      const changed = document.documentElement.getAttribute("data-palette") !== p;
       document.documentElement.setAttribute("data-palette", p);
-      const i = PALETTES.findIndex((x) => x.id === p), next = PALETTES[(i + 1) % PALETTES.length];
+      const name = (PALETTES.find((x) => x.id === p) || PALETTES[0]).name;
       document.querySelectorAll("[data-palette-btn]").forEach((b) => {
-        b.setAttribute("aria-label", `Rang: ${PALETTES[i].name}. Keyingisi: ${next.name}`);
-        b.title = "Rangni almashtirish";
+        b.setAttribute("aria-label", `Ilova rangi: ${name}`);
+        b.title = "Ilova rangini tanlash";
       });
       Theme.apply(Theme.get()); // the Telegram header follows the new page colour
+      if (changed) window.dispatchEvent(new CustomEvent("l1:palette", { detail: p }));
     },
     set(p) {
       try { localStorage.setItem("l1_palette_v1", p); } catch (e) {}
       this.apply(p);
     },
-    next() {
-      const i = PALETTES.findIndex((x) => x.id === this.get());
-      const p = PALETTES[(i + 1) % PALETTES.length];
-      this.set(p.id);
-      return p;
+    // The theme page: one card per design, each drawn in its own colours (palette.css also matches [data-palette] on the card).
+    open() {
+      Haptic.tap();
+      const back = document.createElement("div");
+      back.className = "l1-sheet-backdrop";
+      const sheet = document.createElement("div");
+      sheet.className = "l1-sheet l1-sheet-center pal-sheet";
+      const cur = this.get();
+      sheet.innerHTML = `<div class="l1-grip"></div>
+        <h3 class="pal-title">Ilova rangi</h3>
+        <p class="pal-lead">O'zingizga yoqqan dizaynni tanlang</p>
+        <div class="pal-list">${PALETTES.map((p) => `
+          <button type="button" class="pal-opt${p.id === cur ? " is-on" : ""}" data-palette="${p.id}" data-pick="${p.id}" aria-pressed="${p.id === cur}">
+            <span class="pal-hero"><img src="/static/icons3d/${p.id}/timer.webp" alt="" draggable="false"></span>
+            <span class="pal-info"><b>${p.name}</b>
+              <span class="pal-icons">${["home", "book", "task", "game", "headphones"].map((n) => `<img src="/static/icons3d/${p.id}/${n}.webp" alt="" draggable="false">`).join("")}</span></span>
+            <span class="pal-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          </button>`).join("")}</div>
+        <button type="button" class="l1-btn l1-btn-primary w-full pal-done" data-act="close" data-keep-emoji>Tayyor</button>`;
+      const close = () => { back.remove(); sheet.remove(); Back.remove(handler); };
+      const handler = Back.push(close);
+      back.addEventListener("click", close);
+      sheet.addEventListener("click", (ev) => {
+        const pick = ev.target.closest("[data-pick]");
+        if (pick) {
+          Haptic.tap();
+          this.set(pick.dataset.pick);
+          sheet.querySelectorAll("[data-pick]").forEach((b) => {
+            const on = b === pick;
+            b.classList.toggle("is-on", on);
+            b.setAttribute("aria-pressed", String(on));
+          });
+        } else if (ev.target.closest('[data-act="close"]')) close();
+      });
+      document.body.appendChild(back);
+      document.body.appendChild(sheet);
     },
-    // Markup of the palette switch (an artist's palette with the four colours as its paint dots); wire it with Palette.bind(root).
+    // Markup of the palette button (an artist's palette with the five colours as its paint dots); wire it with Palette.bind(root).
     buttonHtml(id) {
       return `<button type="button" ${id ? `id="${id}"` : ""} class="l1-icon-btn l1-palette-btn" data-palette-btn>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2.1-.8 2.1-1.9 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-1.9 2-1.9h2.2A3.9 3.9 0 0 0 21 10.5C21 6.4 17 3 12 3z"/>
-        <circle cx="7.4" cy="12" r="1.7" fill="#ee5b1f" stroke="none"/><circle cx="9.3" cy="7.6" r="1.7" fill="#1d5b7a" stroke="none"/><circle cx="14.2" cy="7" r="1.7" fill="#2263dc" stroke="none"/><circle cx="17.6" cy="10.4" r="1.7" fill="#0b878c" stroke="none"/></svg>
+        <circle cx="7.1" cy="12.9" r="1.55" fill="#ee5b1f" stroke="none"/><circle cx="7.9" cy="8.6" r="1.55" fill="#5f3fe0" stroke="none"/><circle cx="11.6" cy="6.3" r="1.55" fill="#2263dc" stroke="none"/><circle cx="15.6" cy="7.2" r="1.55" fill="#1d5b7a" stroke="none"/><circle cx="17.9" cy="10.6" r="1.55" fill="#0b878c" stroke="none"/></svg>
       </button>`;
     },
     bind(root) {
       (root || document).querySelectorAll("[data-palette-btn]").forEach((b) => {
         if (b.dataset.bound) return;
         b.dataset.bound = "1";
-        b.addEventListener("click", () => {
-          const p = Palette.next();
-          if (typeof window.showToast === "function") window.showToast(`🎨 Rang: ${p.name}`);
-        });
+        b.addEventListener("click", () => Palette.open());
       });
       this.apply(this.get());
     },

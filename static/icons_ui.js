@@ -16,8 +16,22 @@
   const SKIP = new Set(["SCRIPT", "STYLE", "TEXTAREA", "OPTION", "TITLE", "NOSCRIPT", "CODE", "PRE"]);
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
-  const img = (file, alt, cls) =>
-    `<img class="l1-emo${cls ? " " + cls : ""}" src="/static/emoji/${file}.webp" alt="${esc(alt || "")}" draggable="false" decoding="async">`;
+  // The "Sculpted 3D" pictures (cut from the design sheets, /static/icons3d/) stand in for these emoji everywhere. The
+  // theme-coloured ones have a copy per palette in icons3d/<palette>/; a palette change swaps their src ("l1:palette").
+  const ICON3D = { "1f3e0": "home", "1f4dd": "task", "1f4d6": "book", "1f3ae": "game", "1f345": "timer", "1f3a7": "headphones",
+    "1f3c6": "trophy", "1f333": "tree", "1f409": "dragon", "1f3c1": "flag", "1f525": "flame", "1f48e": "diamond" };
+  const THEMED3D = new Set(["home", "task", "book", "game", "timer", "headphones"]);
+  const palette = () => document.documentElement.getAttribute("data-palette") || "orange";
+  const src3d = (name) => `/static/icons3d/${THEMED3D.has(name) ? palette() + "/" : ""}${name}.webp`;
+  const img3d = (name, alt, cls) =>
+    `<img class="l1-emo l1-3d${cls ? " " + cls : ""}" src="${src3d(name)}" data-i3d="${name}" alt="${esc(alt || "")}" draggable="false" decoding="async">`;
+  const img = (file, alt, cls) => (ICON3D[file] ? img3d(ICON3D[file], alt, cls) :
+    `<img class="l1-emo${cls ? " " + cls : ""}" src="/static/emoji/${file}.webp" alt="${esc(alt || "")}" draggable="false" decoding="async">`);
+  window.L1Icon3D = (name, cls) => img3d(name, "", cls);
+  window.addEventListener("l1:palette", () => document.querySelectorAll("img[data-i3d]").forEach((i) => {
+    const s = src3d(i.dataset.i3d);
+    if (i.getAttribute("src") !== s) i.setAttribute("src", s);
+  }));
   function fileFor(e) {
     const key = e.replace(/️/g, "");
     return SYMS[key] || MAP[key] || MAP[key.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "")] || (key.includes("‍") && MAP[key.split("‍")[0]]) || null;

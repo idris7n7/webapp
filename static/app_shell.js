@@ -2,7 +2,7 @@
 // Loaded after the main inline script, so it can wrap updateAuthView / updateStudentViews / L1_Nav.
 (function (window, document) {
   "use strict";
-  const { Theme, Palette, Back, Haptic, Sound, Idris, avatar, api, countdown, fmtDate, ICONS, html } = window.L1;
+  const { Theme, Palette, Back, Haptic, Sound, Idris, avatar, api, countdown, fmtDate, html } = window.L1;
   const TABS = ["home", "tasks", "learn", "games", "rating"];
   const LEGACY = ["learnContainer", "practiceContainer", "gamesContainer", "dictionaryView", "myProgressView", "exerciseRunnerView"];
   const $ = (id) => document.getElementById(id);
@@ -91,6 +91,15 @@
   }
 
   // ------------------------------------------------------------------ DOM scaffolding
+  // Bottom bar icons: thin outline drawings; the active tab fills the parts marked "f" with its colour.
+  const navSvg = (body) => `<svg class="l1-nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  const NAV_ICONS = {
+    home: navSvg('<path class="f" d="M4.5 10.2 12 4.2l7.5 6V19a1.5 1.5 0 0 1-1.5 1.5h-3.6v-5.6H9.6v5.6H6A1.5 1.5 0 0 1 4.5 19z"/><path d="M2.8 11.5 12 4.2l9.2 7.3"/>'),
+    tasks: navSvg('<rect class="f" x="4.8" y="4.6" width="14.4" height="16.4" rx="2.6"/><path d="M9 4.6V3.3h6v1.3"/><path d="m8.6 13.2 2.4 2.4 4.6-4.8"/>'),
+    learn: navSvg('<path class="f" d="M12 6.8C10 5.2 7.1 4.7 3.4 5.1v13.2c3.7-.4 6.6.1 8.6 1.7 2-1.6 4.9-2.1 8.6-1.7V5.1c-3.7-.4-6.6.1-8.6 1.7z"/><path d="M12 6.8V20"/>'),
+    games: navSvg('<path class="f" d="M7.6 7.4h8.8a4.6 4.6 0 0 1 4.5 5.5l-.9 4.3a2.7 2.7 0 0 1-4.7 1.2l-1.6-2.3h-3.4l-1.6 2.3a2.7 2.7 0 0 1-4.7-1.2l-.9-4.3a4.6 4.6 0 0 1 4.5-5.5z"/><path d="M8.2 10.4v3.2M6.6 12h3.2"/><circle cx="15.6" cy="10.9" r=".9" fill="currentColor" stroke="none"/><circle cx="17.3" cy="12.9" r=".9" fill="currentColor" stroke="none"/>'),
+    rating: navSvg('<path class="f" d="M7.6 4h8.8v5.2a4.4 4.4 0 0 1-8.8 0z"/><path d="M7.6 5.6H4.5a3.3 3.3 0 0 0 3.4 4.2M16.4 5.6h3.1a3.3 3.3 0 0 1-3.4 4.2M12 13.6v3.4M8.4 20.5h7.2M9.6 20.5l.5-3.5h3.8l.5 3.5"/>'),
+  };
   function build() {
     const legacyHeader = document.querySelector("body > header");
     if (legacyHeader) legacyHeader.id = "l1LegacyHeader";
@@ -105,7 +114,7 @@
       <button type="button" id="l1BarStaff" class="l1-pill hidden">Panel</button>
       ${Palette.buttonHtml("l1BarPalette")}
       ${Theme.buttonHtml("", "l1BarTheme")}
-      <button type="button" id="l1BarStreak" class="l1-pill hidden" aria-label="Doimiylik kalendari">🔥</button>
+      <button type="button" id="l1BarStreak" class="l1-pill hidden" aria-label="Doimiylik kalendari">🔥<span id="l1BarStreakNum">0</span></button>
       <button type="button" id="l1BarPoints" class="l1-pill" aria-label="Haftalik ballar: 0. Reytingni ochish"><span class="l1-coin">★</span><span id="l1BarPointsNum">0</span></button>
     </div>`;
     document.body.insertBefore(bar, document.body.firstChild);
@@ -137,7 +146,7 @@
     nav.className = "hidden";
     const labels = { home: "Asosiy", tasks: "Vazifalar", learn: "O'rganish", games: "O'yinlar", rating: "Reyting" };
     nav.innerHTML = `<div class="l1-nav">${TABS.map((t) =>
-      `<button type="button" data-tab="${t}" aria-label="${labels[t]}">${ICONS[t]}<span>${labels[t]}</span>${t === "tasks" ? '<i class="l1-badge-dot hidden" id="l1TasksDot"></i>' : ""}</button>`).join("")}</div>`;
+      `<button type="button" data-tab="${t}" aria-label="${labels[t]}">${NAV_ICONS[t]}<span>${labels[t]}</span>${t === "tasks" ? '<i class="l1-badge-dot hidden" id="l1TasksDot"></i>' : ""}</button>`).join("")}</div>`;
     document.body.appendChild(nav);
     nav.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { Haptic.tap(); Shell.go(b.dataset.tab); }));
 
@@ -364,6 +373,7 @@
     streak.classList.toggle("hidden", !isStudentMode());
     streak.classList.toggle("is-cold", days === 0);
     streak.title = `Doimiylik: ${days} kun`;
+    $("l1BarStreakNum").textContent = days;
     $("l1BarPoints").classList.toggle("hidden", !isStudentMode());
   }
 
@@ -458,13 +468,21 @@
   // Yashil shahar map (static/green_map.js), where every finished Pomodoro's tree is planted.
   const Pomo = (() => {
     const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { city: 0, mine: 0, unplanted: 0, today: 0, daily: 12, status: "idle", left: 1500000 });
-    const art = (kind, stage) => (window.L1_TreeArt ? window.L1_TreeArt.svg(kind, stage, false) : "");
-    // idle: "🍅 Pomidor"; running: a pause icon and the live time (tap = pause), paused: a play icon (tap = continue).
-    // The time is not in the markup: tickTime fills it in after a paint and on every tick, so nothing is redrawn each second.
-    function btnLabel(f) {
-      if (f.status === "idle") return "🍅 Pomidor";
-      return `${f.status === "paused" ? "▶" : "⏸"} <span id="l1PomoTime"></span>`;
-    }
+    // The card is the design's: a meadow with the 3D tree (tap = the map), the Pomodoro clock with a play / pause button
+    // and the green start button. The time is not in the markup: tickTime fills it in after a paint and on every tick, so
+    // nothing is redrawn each second.
+    const PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.7-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z"/></svg>';
+    const PAUSE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.3"/><rect x="13.5" y="5" width="4" height="14" rx="1.3"/></svg>';
+    const SCENE_SVG = `<svg class="hm-city-scene" viewBox="0 0 360 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
+      <defs><linearGradient id="hmCitySky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe8d4"/><stop offset="1" stop-color="#e6f6d9"/></linearGradient>
+        <linearGradient id="hmCityPanel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#27a24a"/><stop offset="1" stop-color="#3cb957"/></linearGradient></defs>
+      <rect width="360" height="200" fill="url(#hmCitySky)"/>
+      <g fill="#fff" opacity=".95"><ellipse cx="236" cy="38" rx="20" ry="9"/><ellipse cx="250" cy="31" rx="14" ry="11"/><ellipse cx="322" cy="56" rx="17" ry="8"/><ellipse cx="334" cy="50" rx="12" ry="9"/><ellipse cx="282" cy="104" rx="15" ry="7"/></g>
+      <path d="M150 150c30-34 62-40 94-24s58 4 82-10 34-6 34-6v90H150z" fill="#8fd37f"/>
+      <path d="M130 168c50-20 120-22 230-14v46H130z" fill="#62c060"/>
+      <g fill="#4fae52"><circle cx="196" cy="160" r="13"/><circle cx="208" cy="154" r="10"/><circle cx="342" cy="150" r="14"/><circle cx="326" cy="158" r="10"/></g>
+      <path d="M0 0h205c14 30-12 62 2 98 12 32-26 70-54 102H0z" fill="url(#hmCityPanel)"/>
+    </svg>`;
     function tickTime() {
       const t = $("l1PomoTime");
       if (!t) return;
@@ -474,15 +492,20 @@
     }
     function html() {
       const f = stats();
-      const running = f.status !== "idle";
+      const idle = f.status === "idle", paused = f.status === "paused";
+      const label = idle ? "Boshlash" : paused ? "Davom etish" : "Pauza";
       return `<section class="hm-city" id="l1Pomo">
-        <div class="hm-city-trees" aria-hidden="true"><i>${art("pine", 3)}</i><i>${art("cherry", 3)}</i><i class="is-big">${art("oak", 3)}</i><i>${art("apple", 3)}</i><i>${art("plane", 3)}</i></div>
+        ${SCENE_SVG}
+        <button type="button" class="hm-city-tree" data-pomo="map" aria-label="Yashil shahar xaritasi">${L1Icon3D("tree")}</button>
         <div class="hm-city-body">
-          <div><div class="hm-city-title">Yashil shahar</div>
-            <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b>${f.unplanted ? ` · <span class="hm-city-new">${f.unplanted} ta ekilmagan</span>` : ""}</div></div>
-          <div class="hm-city-btns">
-            <button type="button" class="hm-btn is-white" data-pomo="start" id="l1PomoBtn" ${running ? `aria-label="${f.status === "paused" ? "Davom ettirish" : "Pauza"}"` : ""}>${btnLabel(f)}</button>
-            <button type="button" class="hm-btn is-glass" data-pomo="${f.unplanted ? "plant" : "map"}">${f.unplanted ? "🌱 Ekish" : "🗺️ Xarita"}</button>
+          <div class="hm-city-title" data-keep-emoji>Yashil shahar</div>
+          <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b>${f.unplanted ? ` · <button type="button" class="hm-city-new" data-pomo="plant">${f.unplanted} ta ekilmagan</button>` : ""}</div>
+          <div class="hm-timer">
+            <div class="hm-timer-row">
+              <button type="button" class="hm-play" data-pomo="start" aria-label="${idle || paused ? "Boshlash" : "Pauza"}">${idle || paused ? PLAY_SVG : PAUSE_SVG}</button>
+              <span class="hm-time" id="l1PomoTime"></span>
+            </div>
+            <button type="button" class="hm-start" data-pomo="start" data-keep-emoji>${label}</button>
           </div>
         </div></section>`;
     }
@@ -505,16 +528,15 @@
   const POMO_GOAL = 3; // finished Pomodoros a day
   const LESSON_GOAL = 1; // lessons learned a day
   const GAME_CARDS = [
-    { id: "dragon", ref: "dragon", name: "Ajdarho", tag: "Qoch va javob ber", emoji: "🐉", bg: "linear-gradient(145deg,#14b886 0%,#0a8f9c 100%)" },
-    { id: "millionaire", ref: "millionaire", name: "Millioner", tag: "15 ta savol", emoji: "💰", bg: "linear-gradient(145deg,#3b3fd8 0%,#7c3aed 100%)" },
-    { id: "race", ref: "wordrace", name: "Word Race", tag: "Do'stlar bilan poyga", emoji: "🏁", bg: "linear-gradient(145deg,#ff8a3d 0%,#ef4444 100%)" },
-    { id: "listen", ref: "listen", name: "Listen and Survive", tag: "Tingla va omon qol", emoji: "🎧", bg: "linear-gradient(145deg,#0ea5e9 0%,#2563eb 100%)" },
+    { id: "dragon", ref: "dragon", name: "Ajdarho", tag: "Qoch va javob ber", icon: "dragon" },
+    { id: "race", ref: "wordrace", name: "Word Race", tag: "Do'stlar bilan poyga", icon: "flag" },
+    { id: "millionaire", ref: "millionaire", name: "Millioner", tag: "15 ta savol", icon: "diamond" },
+    { id: "listen", ref: "listen", name: "Listen and Survive", tag: "Tingla va omon qol", icon: "headphones" },
   ];
-  const RING_C = 2 * Math.PI * 26;
-  // A finished goal shows a tick instead of its icon, unless `keep` is set (the Pomidor tomato always stays).
-  const ringHtml = (frac, color, icon, keep) => `<span class="hm-ring"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="t"/>
-    <circle cx="32" cy="32" r="26" class="p" style="stroke:${color}" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - Math.min(1, Math.max(0, frac)))).toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
-    <b${keep ? ' class="is-keep"' : ""}>${frac >= 1 && !keep ? "✓" : icon}</b></span>`;
+  const CHEVRON = '<svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>';
+  // A goal shows its 3D picture; a finished one gets a green tick on it and a green tile.
+  const DONE_BADGE = '<i class="hm-done-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8.5"/></svg></i>';
+  const goalIcon = (g) => `<span class="hm-goal-ico">${g.pic ? L1Icon3D(g.pic) : `<span class="hm-goal-emo">${g.icon}</span>`}${g.frac >= 1 ? DONE_BADGE : ""}</span>`;
 
   // Lessons the student marked as learned today (index.html writes the time of each into l1_learned_log_v1).
   function lessonsToday() {
@@ -532,20 +554,20 @@
     const lessonDone = lessonsToday() > 0;
     const hub = window.L1_Hub;
     const goals = [
-      { key: "pomo", icon: "🍅", color: "#ef4444", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}`, keep: true },
+      { key: "pomo", icon: "🍅", pic: "timer", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
     ];
     const allLearned = hub && !hub.nextLesson();
-    goals.push({ key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
-    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", color: "var(--l1-primary)", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
+    goals.push({ key: "lessons", icon: "📖", pic: "book", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
+    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
     else {
       const left = hub && hub.nextHomework();
       const done = homeworkDoneToday() || (hub && !left);
-      goals.push({ key: "tasks", icon: "📝", color: "var(--l1-primary)", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
+      goals.push({ key: "tasks", icon: "📝", pic: "task", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
     }
     return goals;
   }
   function goalsHtml() {
-    return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${ringHtml(g.frac, g.color, g.icon, g.keep)}
+    return dailyGoals().map((g) => `<button type="button" class="hm-goal${g.frac >= 1 ? " is-done" : ""}" data-hm="${g.key}">${goalIcon(g)}
       <b>${g.text}</b><span>${g.name}</span></button>`).join("");
   }
   function goalCount() { const g = dailyGoals().filter((x) => !x.rest); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
@@ -589,9 +611,9 @@
       const pts = week[g.ref] || 0;
       let status = pts ? `Bu hafta +${pts} ball` : g.tag;
       if (g.id === "listen" && Shell.data.listen) status = `⭐ ${Shell.data.listen}/15 yulduz`;
-      return `<button type="button" class="hm-game" data-game="${g.id}" style="background:${g.bg}">
-        <span class="hm-game-emoji" aria-hidden="true">${g.emoji}</span>
-        <span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span></button>`;
+      return `<button type="button" class="hm-game" data-game="${g.id}">
+        <span class="hm-game-ico" aria-hidden="true">${L1Icon3D(g.icon)}</span>
+        <span class="hm-game-txt"><span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span></span>${CHEVRON}</button>`;
     }).join("");
   }
 
@@ -691,6 +713,8 @@
     if (!b) return;
     Sound.ok && Sound.ok();
     b.classList.add("is-read", "is-just-read");
+    const chev = b.querySelector(".hm-chev");
+    if (chev) chev.remove();
     b.insertAdjacentHTML("beforeend", TICK_SVG);
     setTimeout(() => b.classList.remove("is-just-read"), 1200);
   }
@@ -698,7 +722,7 @@
   function wordBtnHtml() {
     todaysWord().catch(() => {});   // warm the cache so the card opens at once
     const read = dailyRead(WORD_KEY);
-    return `<button type="button" class="hm-fact hm-wordpill${read ? " is-read" : ""}" data-word aria-label="Bugungi so'z"><span class="hm-fact-ico">${L1Icon("open-book")}</span><b>Bugungi so'z</b>${read ? TICK_SVG : ""}</button>`;
+    return `<button type="button" class="hm-fact hm-wordpill${read ? " is-read" : ""}" data-word aria-label="Bugungi so'z"><span class="hm-fact-ico">${L1Icon3D("book")}</span><b>Bugungi so'z</b>${read ? TICK_SVG : CHEVRON}</button>`;
   }
   async function openWord() {
     let w = null;
@@ -751,7 +775,7 @@
     const f = todaysFact();
     if (!f) return "";
     const read = factRead();
-    return `<button type="button" class="hm-fact${read ? " is-read" : ""}" data-fact aria-label="Kunning fakti"><span class="hm-fact-ico">${f.icon}</span><b>Kunning fakti</b>${read ? TICK_SVG : ""}</button>`;
+    return `<button type="button" class="hm-fact${read ? " is-read" : ""}" data-fact aria-label="Kunning fakti"><span class="hm-fact-ico"><i class="l1-coin" aria-hidden="true">★</i></span><b>Kunning fakti</b>${read ? TICK_SVG : CHEVRON}</button>`;
   }
   function openFact() {
     const f = todaysFact();
@@ -812,10 +836,7 @@
 
       ${part("l1Pomo", Pomo.html())}
 
-      <section>
-        <div class="hm-card-head px-1"><h2>O'yinlar</h2><button type="button" class="hm-more" data-go="games">Hammasi ›</button></div>
-        <div class="hm-games">${gameCardsHtml()}</div>
-      </section>
+      <section class="hm-games" aria-label="O'yinlar">${gameCardsHtml()}</section>
 
       ${top3.length ? `<section class="hm-card">
         <div class="hm-card-head"><h2>Hafta yetakchilari</h2><button type="button" class="hm-more" data-go="rating">Hammasi ›</button></div>

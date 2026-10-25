@@ -1,0 +1,167 @@
+/* Level Up — "Sculpted 3D" design layer (the five design sheets: dimensional features, crisp navigation).
+   Loaded after modern.css: Plus Jakarta Sans (ExtraBold headings, as measured on the sheets), a plain warm page, white
+   cards with soft shadows, 3D pictures for features (icons_ui.js, /static/icons3d/), thin line icons in the bottom bar,
+   and the theme page of the palette button. Sizes follow the sheets' phone (about 1.42 sheet px per CSS px).
+   Colours come from palette.css (--pal-*), so every rule here works in all five designs. */
+
+:root {
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --sc-ink: #14163a;
+  --sc-ink-2: #2f3b66;
+  --sc-card-shadow: 0 1px 2px rgba(60, 40, 20, .05), 0 10px 24px -16px rgba(60, 40, 20, .28);
+  --sc-green: #22a447;
+}
+html[data-theme="dark"] { --sc-ink: var(--l1-ink); --sc-ink-2: var(--l1-muted); --sc-card-shadow: 0 14px 30px -18px rgba(0, 0, 0, .8); }
+
+/* app headings in Jakarta ExtraBold instead of the round Fredoka (the games keep their own display fonts) */
+.pg-head h2, .hm-fact, .hm-fact-sheet h3, .sc-big, .hm-word-txt b, .wd-row h3, .hub-title, .hub-name, .hub-pic .big, .hub-pic b,
+.hw-today h2, .hm-phrase, .hm-name, .hm-card-head h2, .hm-city-title, .l1-h1, .l1-h2, #l1BottomNav button { font-family: var(--font-display) !important; }
+.pg-head h2, .hm-fact-sheet h3, .hm-word-txt b, .wd-row h3, .hub-title, .hub-name, .hw-today h2, .l1-h1, .l1-h2 { font-weight: 800 !important; letter-spacing: -.01em; }
+body { color: var(--sc-ink); }
+
+/* a plain warm page, as in the designs (no colour mesh behind the cards) */
+html:not([data-theme="dark"]) body::before { background: none; }
+html:not([data-theme="dark"]) body, html:not([data-theme="dark"]) body[data-l1-tab] { background: var(--pal-bg) !important; }
+
+/* white cards with a soft warm shadow */
+html:not([data-theme="dark"]) .hm-card, html:not([data-theme="dark"]) .l1-card, html:not([data-theme="dark"]) .pg-card,
+html:not([data-theme="dark"]) .hub-card, html:not([data-theme="dark"]) main .bg-white.rounded-2xl, html:not([data-theme="dark"]) main .bg-white.rounded-3xl {
+  background: #fff; border: 1px solid rgba(60, 40, 20, .04) !important; box-shadow: var(--sc-card-shadow);
+}
+
+/* ------------------------------------------------------------------ top bar */
+html #l1AppBar { background: var(--l1-bg); border-bottom: 0; box-shadow: none; }
+#l1AppBar .l1-bar { gap: 6px; }
+#l1AppBar .l1-hello { font: 800 14.5px/1.1 var(--font-display) !important; text-transform: uppercase; letter-spacing: .02em; color: var(--sc-ink); }
+#l1AppBar .l1-icon-btn { width: 36px; height: 36px; min-width: 36px; min-height: 36px; background: #fff; border: 1px solid rgba(60, 40, 20, .06); box-shadow: var(--sc-card-shadow); }
+#l1AppBar .l1-palette-btn { color: rgb(var(--pal-600)); }
+#l1AppBar .l1-palette-btn svg { width: 21px; height: 21px; }
+html #l1AppBar .l1-pill { height: 36px; min-height: 36px; padding: 0 11px 0 8px; gap: 5px; border-radius: 999px; font: 800 14px/1 var(--font-display); color: var(--sc-ink);
+  background: #fff; border: 1px solid rgba(60, 40, 20, .05); box-shadow: var(--sc-card-shadow); }
+html #l1AppBar #l1BarStreak { width: auto; display: inline-flex; font-size: 14px; }
+html #l1AppBar #l1BarStreak img.l1-emo { width: 22px; height: 22px; margin: 0; }
+html #l1AppBar #l1BarPoints { min-width: 0; background: linear-gradient(180deg, #fff6d6, #ffe9a6); border-color: #f6d77c; color: var(--sc-ink); }
+/* the gold coin of the designs: a round coin with a raised star */
+.l1-coin { width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 50%; font-size: 12px; line-height: 1;
+  background: radial-gradient(circle at 34% 30%, #ffe98a, #f7c21b 52%, #d99100 100%); box-shadow: inset 0 -2px 0 rgba(150, 90, 0, .35), inset 0 0 0 2px rgba(255, 220, 110, .9), 0 2px 4px -1px rgba(150, 90, 0, .45); }
+.l1-coin img.l1-emo { width: 13px; height: 13px; margin: 0; filter: saturate(1.2) drop-shadow(0 1px 0 rgba(150, 90, 0, .4)); }
+html[data-theme="dark"] #l1AppBar .l1-pill, html[data-theme="dark"] #l1AppBar .l1-icon-btn { background: var(--l1-card); border-color: var(--l1-line); box-shadow: none; color: var(--l1-ink); }
+html[data-theme="dark"] #l1AppBar .l1-palette-btn { color: rgb(var(--pal-300)); }
+html[data-theme="dark"] #l1AppBar #l1BarPoints { background: linear-gradient(180deg, rgba(251, 191, 36, .22), rgba(251, 146, 60, .16)); border-color: rgba(251, 191, 36, .4); color: #ffe2a0; }
+
+/* ------------------------------------------------------------------ greeting card */
+html:not([data-theme="dark"]) .hm-hero { background: var(--pal-hero); border: 0; border-radius: 22px; box-shadow: 0 14px 30px -22px rgb(var(--pal-800) / .55); }
+html .hm-hero { padding: 16px 10px 12px 17px; gap: 4px 2px; min-height: 0; }
+html .hm-hero .hm-phrase, html .hm-hero .hm-name { font: 800 18px/1.2 var(--font-display) !important; letter-spacing: -.01em; }
+html:not([data-theme="dark"]) .hm-hero .hm-phrase, html:not([data-theme="dark"]) .hm-hero .hm-name { color: var(--sc-ink); }
+html .hm-hero .hm-sub { margin-top: 8px; font: 500 13.5px/1.36 var(--font-body); }
+html:not([data-theme="dark"]) .hm-hero .hm-sub, html:not([data-theme="dark"]) .hm-hero .hm-kicker { color: var(--pal-sub); }
+html .hm-hero .hm-daily { gap: 8px; margin-top: 10px; }
+html .hm-hero .hm-daily .hm-fact { justify-content: flex-start; gap: 6px; min-height: 40px; padding: 0 8px 0 7px; border-radius: 13px; font: 800 13px/1.1 var(--font-display) !important; }
+html:not([data-theme="dark"]) .hm-hero .hm-daily .hm-fact { background: rgba(255, 255, 255, .94); color: var(--sc-ink); border: 0; box-shadow: 0 8px 16px -12px rgb(var(--pal-800) / .5); }
+html:not([data-theme="dark"]) .hm-hero .hm-daily .hm-fact.is-read { background: rgba(255, 255, 255, .62); color: var(--sc-ink-2); }
+html .hm-daily .hm-fact .hm-fact-ico, html:not([data-theme="dark"]) .hm-hero .hm-daily .hm-fact .hm-fact-ico { width: 24px; height: 24px; flex: none; border-radius: 0; background: none !important; }
+.hm-daily .hm-fact .hm-fact-ico img.l1-emo { width: 24px; height: 24px; margin: 0; }
+.hm-daily .hm-fact .hm-fact-ico .l1-coin { width: 22px; height: 22px; }
+.hm-daily .hm-fact b { flex: 1; min-width: 0; text-align: left; font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
+.hm-chev { flex: none; width: 13px; height: 13px; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ------------------------------------------------------------------ today's goals */
+html .hm-card { border-radius: 20px; padding: 14px 12px 12px; }
+html .hm-card-head { margin-bottom: 10px; padding: 0 2px; }
+html .hm-card-head h2 { font: 800 16px/1.2 var(--font-display) !important; color: var(--sc-ink); }
+html .hm-card-head h2 img.l1-emo { width: 26px; height: 26px; vertical-align: -7px; }
+html .hm-count, html .hm-count.is-done, html[data-theme] .hm-count { min-width: 44px; height: 30px; display: inline-grid; place-items: center; padding: 0 11px; font: 800 14px/1 var(--font-display);
+  border: 1px solid rgba(60, 40, 20, .06); box-shadow: 0 6px 12px -9px rgba(60, 40, 20, .5); }
+html .hm-goals { gap: 8px; }
+html .hm-goal { position: relative; gap: 0; padding: 10px 4px 9px; border-radius: 16px; background: rgb(var(--pal-50) / .8); box-shadow: none; border: 1.5px solid transparent; }
+html .hm-goal.is-done { background: #e8f7e6; border-color: #a8e0a4; box-shadow: none; }
+html[data-theme="dark"] .hm-goal { background: rgb(var(--pal-400) / .12); }
+html[data-theme="dark"] .hm-goal.is-done { background: rgba(34, 197, 94, .16); border-color: rgba(34, 197, 94, .45); }
+.hm-goal-ico { position: relative; width: 52px; height: 52px; display: grid; place-items: center; margin-bottom: 5px; }
+.hm-goal-ico img.l1-emo { width: 52px; height: 52px; margin: 0; filter: drop-shadow(0 5px 6px rgba(60, 40, 20, .16)); }
+.hm-goal-emo { font-size: 40px; line-height: 1; }
+.hm-goal-emo img.l1-emo { width: 46px; height: 46px; }
+.hm-done-badge { position: absolute; right: -5px; bottom: -1px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--sc-green); box-shadow: 0 0 0 2px #fff, 0 3px 6px -2px rgba(20, 120, 50, .5); }
+.hm-done-badge svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+html .hm-goal b { margin-top: 0; font: 800 14.5px/1.2 var(--font-display) !important; color: var(--sc-ink); }
+html .hm-goal > span:last-child { font: 500 12.5px/1.3 var(--font-body); color: var(--sc-ink-2); }
+
+/* ------------------------------------------------------------------ Yashil shahar card */
+html .hm-city { position: relative; min-height: 146px; padding: 0; border-radius: 20px; overflow: hidden; color: #fff; background: #2ea54d;
+  box-shadow: 0 16px 28px -20px rgba(16, 110, 50, .8); isolation: isolate; }
+.hm-city::before { display: none; }
+.hm-city-scene { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; }
+.hm-city-tree { position: absolute; right: 1%; bottom: 2px; width: 44%; max-width: 168px; aspect-ratio: 1; padding: 0; background: none; border: 0; }
+.hm-city-tree img.l1-emo { width: 100%; height: 100%; margin: 0; filter: drop-shadow(0 8px 8px rgba(20, 80, 30, .3)); }
+html .hm-city-body { display: block; width: 56%; min-width: 172px; padding: 12px 0 11px 12px; }
+html .hm-city-title { font: 800 18px/1.15 var(--font-display) !important; color: #fff; text-shadow: 0 1px 2px rgba(0, 60, 20, .25); }
+html .hm-city-sub { margin-top: 3px; font: 600 12px/1.6 var(--font-body); color: #f1fff3; white-space: nowrap; }
+html .hm-city-sub b { font-weight: 600; }
+html .hm-city-new { display: inline-block; padding: 0 8px; border-radius: 999px; font: 800 12px/1.65 var(--font-display); color: #3b2f00; background: #ffe066; vertical-align: 1px; }
+.hm-timer { margin-top: 7px; padding: 8px 9px 9px; border-radius: 15px; background: rgba(255, 255, 255, .97); box-shadow: 0 10px 20px -12px rgba(0, 60, 20, .55); }
+.hm-timer-row { display: flex; align-items: center; gap: 10px; padding: 0 2px 7px; }
+.hm-play { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 35% 30%, rgb(var(--pal-400)), rgb(var(--pal-600)) 70%); box-shadow: 0 6px 12px -5px rgb(var(--pal-700) / .7), inset 0 -2px 0 rgba(0, 0, 0, .12); }
+.hm-play svg { width: 18px; height: 18px; fill: currentColor; }
+.hm-time { flex: 1; text-align: center; font: 800 24px/1 var(--font-display); color: var(--sc-ink); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.hm-start { width: 100%; height: 30px; border-radius: 999px; font: 700 13px/1 var(--font-display); color: #fff; background: linear-gradient(180deg, #34b95a, #1f9c45);
+  box-shadow: 0 6px 12px -7px rgba(20, 120, 50, .8), inset 0 1px 0 rgba(255, 255, 255, .25); }
+html[data-theme="dark"] .hm-timer { background: rgba(255, 255, 255, .95); }
+html[data-theme="dark"] .hm-time { color: #14163a; }
+
+/* ------------------------------------------------------------------ game cards */
+html .hm-games { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; overflow: visible; margin: 0; padding: 0; scroll-snap-type: none; }
+html .hm-game { width: auto; min-height: 54px; display: flex; flex-direction: row; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; border-radius: 16px;
+  color: var(--sc-ink); background: #fff; border: 1px solid rgba(60, 40, 20, .04); box-shadow: var(--sc-card-shadow); text-align: left; transform-style: flat; }
+html .hm-game::before, html .hm-game::after { display: none; }
+.hm-game-ico { flex: none; width: 42px; height: 42px; }
+.hm-game-ico img.l1-emo { width: 42px; height: 42px; margin: 0; animation: none; }
+.hm-game-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+html .hm-game-name { margin: 0; font: 800 14px/1.15 var(--font-display) !important; color: var(--sc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html .hm-game-status { font: 500 12px/1.25 var(--font-body); color: var(--sc-ink-2); opacity: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-game .hm-chev { width: 14px; height: 14px; color: var(--sc-ink); }
+html[data-theme="dark"] .hm-game { background: var(--l1-card); border-color: var(--l1-line); }
+
+/* ------------------------------------------------------------------ bottom bar: flat, crisp line icons */
+html #l1BottomNav { bottom: 0; padding: 0 6px var(--l1-safe-bottom-total); background: #fff; border-top: 1px solid rgba(60, 40, 20, .07);
+  box-shadow: 0 -10px 24px -18px rgba(60, 40, 20, .35); pointer-events: auto; }
+html #l1BottomNav .l1-nav { max-width: 520px; height: 60px; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: none; }
+html #l1BottomNav button { height: 58px; gap: 2px; border-radius: 0; background: none !important; box-shadow: none !important; color: var(--sc-ink); font: 600 12px/1.1 var(--font-display) !important; }
+html[data-theme] #l1BottomNav button[data-tab] svg.l1-nav-ico { width: 23px; height: 23px; padding: 5px; box-sizing: content-box; margin: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; color: inherit; animation: none; }
+html[data-theme] #l1BottomNav button[data-tab] svg.l1-nav-ico .f { fill: none; }
+html #l1BottomNav button.is-active { color: rgb(var(--pal-600)); font-weight: 700 !important; }
+html[data-theme] #l1BottomNav button[data-tab].is-active svg.l1-nav-ico { background: rgb(var(--pal-600) / .1); }
+html[data-theme] #l1BottomNav button[data-tab].is-active svg.l1-nav-ico .f { fill: rgb(var(--pal-600) / .2); }
+html #l1BottomNav button[data-tab="learn"] { justify-content: center; }
+html #l1BottomNav button[data-tab="learn"] span { margin-top: 0; }
+html #l1BottomNav .l1-badge-dot { transform: translate(11px, -16px); }
+html[data-theme="dark"] #l1BottomNav { background: var(--l1-card); border-top-color: var(--l1-line); }
+html[data-theme="dark"] #l1BottomNav button { color: var(--l1-muted); }
+html[data-theme="dark"] #l1BottomNav button.is-active { color: rgb(var(--pal-300)); }
+html[data-theme="dark"] #l1BottomNav button[data-tab].is-active svg.l1-nav-ico { background: rgb(var(--pal-300) / .16); }
+html[data-theme="dark"] #l1BottomNav button[data-tab].is-active svg.l1-nav-ico .f { fill: rgb(var(--pal-300) / .2); }
+
+/* ------------------------------------------------------------------ theme page (palette button) */
+.pal-sheet { padding-bottom: calc(18px + var(--l1-safe-bottom-total, 0px)); }
+.pal-title { margin: 2px 0 2px; text-align: center; font: 800 21px/1.2 var(--font-display); color: var(--sc-ink); }
+.pal-lead { margin: 0 0 14px; text-align: center; font: 500 14px/1.4 var(--font-body); color: var(--sc-ink-2); }
+.pal-list { display: grid; gap: 10px; margin-bottom: 14px; }
+.pal-opt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 12px 8px 8px; border-radius: 18px; text-align: left; background: #fff;
+  border: 2px solid rgba(60, 40, 20, .06); box-shadow: var(--sc-card-shadow); transition: border-color .15s, transform .12s; }
+.pal-opt.is-on { border-color: rgb(var(--pal-600)); box-shadow: 0 10px 24px -14px rgb(var(--pal-700) / .7); }
+.pal-hero { flex: none; width: 60px; height: 60px; display: grid; place-items: center; border-radius: 15px; background: var(--pal-hero); }
+.pal-hero img { width: 46px; height: 46px; filter: drop-shadow(0 4px 6px rgba(60, 40, 20, .2)); }
+.pal-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pal-info b { font: 800 16px/1.1 var(--font-display); color: var(--sc-ink); }
+.pal-icons { display: flex; gap: 4px; }
+.pal-icons img { width: 26px; height: 26px; }
+.pal-check { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(60, 40, 20, .15); }
+.pal-check svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.pal-opt.is-on .pal-check { border-color: rgb(var(--pal-600)); background: rgb(var(--pal-600)); }
+.pal-opt.is-on .pal-check svg { opacity: 1; }
+.pal-done { min-height: 48px; border-radius: 15px !important; font: 700 16px/1 var(--font-display) !important; }
+html[data-theme="dark"] .pal-opt { background: var(--l1-card); border-color: var(--l1-line); }
+html[data-theme="dark"] .pal-opt.is-on { border-color: rgb(var(--pal-400)); }

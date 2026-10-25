@@ -1,10 +1,13 @@
-/* Level Up colour palettes — the four designs a student steps through with the palette button in the top bar
-   (Palette in l1_core.js). <html data-palette> picks one; orange is the default.
+/* Level Up colour palettes — the five "Sculpted 3D" designs a student picks on the theme page that the palette button in
+   the top bar opens (Palette in l1_core.js). <html data-palette> picks one; orange is the default. The theme page's
+   cards carry their own data-palette, so each card is drawn in its design's colours.
    The app CSS and Tailwind's indigo / blue classes read their brand colour from these "r g b" steps
-   (rgb(var(--pal-600)), rgb(var(--pal-600) / .3)), so a palette only has to be defined here.
-   --pal-2 is the partner colour of gradients, --pal-bg the page, --pal-line card borders, --pal-hero the greeting card. */
+   (rgb(var(--pal-600)), rgb(var(--pal-600) / .3)), so a palette only has to be defined here. The theme-coloured 3D icons
+   live in /static/icons3d/<palette>/ (icons_ui.js).
+   --pal-2 is the partner colour of gradients, --pal-bg the page, --pal-line card borders, --pal-hero the greeting card and
+   --pal-sub its second line (a deep shade of the palette, as in the designs). */
 
-:root, html[data-palette="orange"] {
+:root, [data-palette="orange"] {
   --pal-25: 254 248 246;
   --pal-50: 253 239 233;
   --pal-100: 252 225 215;
@@ -18,12 +21,13 @@
   --pal-900: 131 50 17;
   --pal-950: 83 32 11;
   --pal-2: 255 154 60;
-  --pal-bg: #fdf8f3;
-  --pal-line: #f4e6dc;
-  --pal-hero: linear-gradient(165deg, #fee3d2 0%, #fdcdb1 58%, #fcb994 100%);
+  --pal-bg: #fbf9f2;
+  --pal-line: #f2e7dd;
+  --pal-hero: linear-gradient(160deg, #fde0cc 0%, #fdc9aa 55%, #fcb48c 100%);
+  --pal-sub: #4e342c;
 }
 
-html[data-palette="navy"] {
+[data-palette="navy"] {
   --pal-25: 246 248 250;
   --pal-50: 232 239 242;
   --pal-100: 214 225 231;
@@ -37,12 +41,13 @@ html[data-palette="navy"] {
   --pal-900: 16 50 67;
   --pal-950: 10 32 43;
   --pal-2: 61 143 179;
-  --pal-bg: #f9f8f2;
+  --pal-bg: #fbfaf1;
   --pal-line: #e3eaed;
-  --pal-hero: linear-gradient(165deg, #e6f0f3 0%, #d2e6ec 58%, #bcd8e1 100%);
+  --pal-hero: linear-gradient(160deg, #e3eff2 0%, #d0e5eb 55%, #b5d3dc 100%);
+  --pal-sub: #123a52;
 }
 
-html[data-palette="blue"] {
+[data-palette="blue"] {
   --pal-25: 246 249 254;
   --pal-50: 233 239 252;
   --pal-100: 215 227 249;
@@ -56,12 +61,13 @@ html[data-palette="blue"] {
   --pal-900: 19 54 121;
   --pal-950: 12 35 77;
   --pal-2: 63 160 245;
-  --pal-bg: #f5f7fd;
+  --pal-bg: #fcfaf6;
   --pal-line: #e2e8f6;
-  --pal-hero: linear-gradient(165deg, #e6eefe 0%, #d5e4fd 58%, #bfd5fb 100%);
+  --pal-hero: linear-gradient(160deg, #e3ecfd 0%, #d3e3fd 55%, #b9d1fa 100%);
+  --pal-sub: #10307a;
 }
 
-html[data-palette="teal"] {
+[data-palette="teal"] {
   --pal-25: 245 250 250;
   --pal-50: 231 243 244;
   --pal-100: 211 233 234;
@@ -75,9 +81,30 @@ html[data-palette="teal"] {
   --pal-900: 6 74 77;
   --pal-950: 4 47 49;
   --pal-2: 43 191 174;
-  --pal-bg: #f3faf8;
+  --pal-bg: #fafbf8;
   --pal-line: #dfeeeb;
-  --pal-hero: linear-gradient(165deg, #e4f6f3 0%, #d3efeb 58%, #b9e3dd 100%);
+  --pal-hero: linear-gradient(160deg, #e3f6f3 0%, #d3efeb 55%, #b3e0da 100%);
+  --pal-sub: #0b3d48;
+}
+
+[data-palette="violet"] {
+  --pal-25: 249 247 254;
+  --pal-50: 239 236 252;
+  --pal-100: 226 220 249;
+  --pal-200: 202 192 245;
+  --pal-300: 170 153 239;
+  --pal-400: 137 113 232;
+  --pal-500: 111 82 227;
+  --pal-600: 95 63 224;
+  --pal-700: 78 52 184;
+  --pal-800: 65 43 152;
+  --pal-900: 52 35 123;
+  --pal-950: 33 22 78;
+  --pal-2: 167 123 246;
+  --pal-bg: #faf8f4;
+  --pal-line: #e9e4f7;
+  --pal-hero: linear-gradient(160deg, #ece0fa 0%, #d9c7fb 55%, #c1a1f6 100%);
+  --pal-sub: #2c1670;
 }
 
 /* Night mode reads the light steps as its accent; navy's are too dark for the night page, so they are lifted. */
@@ -86,9 +113,3 @@ html[data-theme="dark"][data-palette="navy"] {
   --pal-400: 112 162 190;
   --pal-500: 74 132 162;
 }
-
-/* The palette button: its outline shows the current colour, the four dots show the choices.
-   (#l1AppBar in the selectors: this file loads first, and .l1-icon-btn later sets its own colour.) */
-#l1AppBar .l1-palette-btn { color: rgb(var(--pal-600)); }
-#l1AppBar .l1-palette-btn svg { width: 22px; height: 22px; }
-html[data-theme="dark"] #l1AppBar .l1-palette-btn { color: rgb(var(--pal-300)); }
