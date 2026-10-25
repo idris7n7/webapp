@@ -11,7 +11,14 @@
 
   // ---------------------------------------------------------------- Theme (day / night)
   // The saved choice wins; otherwise follow the device. The <html data-theme> attribute drives app_theme.css.
-  const THEME_COLORS = { light: { bar: "#f7f8fe", bg: "#f7f8fe" }, dark: { bar: "#0f1226", bg: "#0f1226" } };
+  const THEME_COLORS = { light: { bar: "#fdf8f3", bg: "#fdf8f3" }, dark: { bar: "#0f1226", bg: "#0f1226" } };
+  // In day mode Telegram's header takes the palette's page colour (--pal-bg in palette.css).
+  function themeColors(t) {
+    if (t === "dark") return THEME_COLORS.dark;
+    let bg = "";
+    try { bg = getComputedStyle(document.documentElement).getPropertyValue("--pal-bg").trim(); } catch (e) {}
+    return bg ? { bar: bg, bg } : THEME_COLORS.light;
+  }
   const Theme = {
     get() {
       let t = null;
@@ -21,8 +28,9 @@
     },
     apply(t) {
       document.documentElement.setAttribute("data-theme", t);
+      const colors = themeColors(t);
       const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute("content", THEME_COLORS[t].bar);
+      if (meta) meta.setAttribute("content", colors.bar);
       document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
         b.setAttribute("aria-pressed", t === "dark" ? "true" : "false");
         b.setAttribute("aria-label", t === "dark" ? "Kunduzgi rejim" : "Tungi rejim");
@@ -30,10 +38,10 @@
       });
       try {
         if (tg && versionAtLeast("6.1")) {
-          tg.setHeaderColor && tg.setHeaderColor(THEME_COLORS[t].bar);
-          tg.setBackgroundColor && tg.setBackgroundColor(THEME_COLORS[t].bg);
+          tg.setHeaderColor && tg.setHeaderColor(colors.bar);
+          tg.setBackgroundColor && tg.setBackgroundColor(colors.bg);
         }
-        if (tg && versionAtLeast("7.10") && tg.setBottomBarColor) tg.setBottomBarColor(THEME_COLORS[t].bg);
+        if (tg && versionAtLeast("7.10") && tg.setBottomBarColor) tg.setBottomBarColor(colors.bg);
       } catch (e) {}
     },
     set(t) {
@@ -58,6 +66,61 @@
     },
   };
   Theme.apply(Theme.get());
+
+  // ---------------------------------------------------------------- Colour palette (four designs)
+  // <html data-palette> picks one of the palettes in palette.css; orange is the default. The button next to the
+  // day / night switch steps through them in this order.
+  const PALETTES = [
+    { id: "orange", name: "To'q sariq" },
+    { id: "navy", name: "Dengiz" },
+    { id: "blue", name: "Ko'k" },
+    { id: "teal", name: "Feruza" },
+  ];
+  const Palette = {
+    get() {
+      let p = null;
+      try { p = localStorage.getItem("l1_palette_v1"); } catch (e) {}
+      return PALETTES.some((x) => x.id === p) ? p : PALETTES[0].id;
+    },
+    apply(p) {
+      document.documentElement.setAttribute("data-palette", p);
+      const i = PALETTES.findIndex((x) => x.id === p), next = PALETTES[(i + 1) % PALETTES.length];
+      document.querySelectorAll("[data-palette-btn]").forEach((b) => {
+        b.setAttribute("aria-label", `Rang: ${PALETTES[i].name}. Keyingisi: ${next.name}`);
+        b.title = "Rangni almashtirish";
+      });
+      Theme.apply(Theme.get()); // the Telegram header follows the new page colour
+    },
+    set(p) {
+      try { localStorage.setItem("l1_palette_v1", p); } catch (e) {}
+      this.apply(p);
+    },
+    next() {
+      const i = PALETTES.findIndex((x) => x.id === this.get());
+      const p = PALETTES[(i + 1) % PALETTES.length];
+      this.set(p.id);
+      return p;
+    },
+    // Markup of the palette switch (an artist's palette with the four colours as its paint dots); wire it with Palette.bind(root).
+    buttonHtml(id) {
+      return `<button type="button" ${id ? `id="${id}"` : ""} class="l1-icon-btn l1-palette-btn" data-palette-btn>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2.1-.8 2.1-1.9 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-1.9 2-1.9h2.2A3.9 3.9 0 0 0 21 10.5C21 6.4 17 3 12 3z"/>
+        <circle cx="7.4" cy="12" r="1.7" fill="#ee5b1f" stroke="none"/><circle cx="9.3" cy="7.6" r="1.7" fill="#1d5b7a" stroke="none"/><circle cx="14.2" cy="7" r="1.7" fill="#2263dc" stroke="none"/><circle cx="17.6" cy="10.4" r="1.7" fill="#0b878c" stroke="none"/></svg>
+      </button>`;
+    },
+    bind(root) {
+      (root || document).querySelectorAll("[data-palette-btn]").forEach((b) => {
+        if (b.dataset.bound) return;
+        b.dataset.bound = "1";
+        b.addEventListener("click", () => {
+          const p = Palette.next();
+          if (typeof window.showToast === "function") window.showToast(`🎨 Rang: ${p.name}`);
+        });
+      });
+      this.apply(this.get());
+    },
+  };
+  Palette.apply(Palette.get());
 
   // ---------------------------------------------------------------- Telegram
   const TG = {
@@ -400,7 +463,7 @@
     },
   };
 
-  window.L1 = { Theme, TG, Back, Haptic, Sound, Idris, Fx, avatar, initials, api, countdown, fmtDate, ICONS, html, Fullscreen };
+  window.L1 = { Theme, Palette, TG, Back, Haptic, Sound, Idris, Fx, avatar, initials, api, countdown, fmtDate, ICONS, html, Fullscreen };
   TG.init();
   Fullscreen.init();
 })(window);

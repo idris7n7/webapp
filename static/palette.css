@@ -1,0 +1,94 @@
+/* Level Up colour palettes — the four designs a student steps through with the palette button in the top bar
+   (Palette in l1_core.js). <html data-palette> picks one; orange is the default.
+   The app CSS and Tailwind's indigo / blue classes read their brand colour from these "r g b" steps
+   (rgb(var(--pal-600)), rgb(var(--pal-600) / .3)), so a palette only has to be defined here.
+   --pal-2 is the partner colour of gradients, --pal-bg the page, --pal-line card borders, --pal-hero the greeting card. */
+
+:root, html[data-palette="orange"] {
+  --pal-25: 254 248 246;
+  --pal-50: 253 239 233;
+  --pal-100: 252 225 215;
+  --pal-200: 249 201 181;
+  --pal-300: 246 168 136;
+  --pal-400: 242 134 89;
+  --pal-500: 240 107 53;
+  --pal-600: 238 91 31;
+  --pal-700: 195 75 25;
+  --pal-800: 162 62 21;
+  --pal-900: 131 50 17;
+  --pal-950: 83 32 11;
+  --pal-2: 255 154 60;
+  --pal-bg: #fdf8f3;
+  --pal-line: #f4e6dc;
+  --pal-hero: linear-gradient(165deg, #fee3d2 0%, #fdcdb1 58%, #fcb994 100%);
+}
+
+html[data-palette="navy"] {
+  --pal-25: 246 248 250;
+  --pal-50: 232 239 242;
+  --pal-100: 214 225 231;
+  --pal-200: 180 201 211;
+  --pal-300: 135 168 185;
+  --pal-400: 88 134 157;
+  --pal-500: 52 107 135;
+  --pal-600: 29 91 122;
+  --pal-700: 24 75 100;
+  --pal-800: 20 62 83;
+  --pal-900: 16 50 67;
+  --pal-950: 10 32 43;
+  --pal-2: 61 143 179;
+  --pal-bg: #f9f8f2;
+  --pal-line: #e3eaed;
+  --pal-hero: linear-gradient(165deg, #e6f0f3 0%, #d2e6ec 58%, #bcd8e1 100%);
+}
+
+html[data-palette="blue"] {
+  --pal-25: 246 249 254;
+  --pal-50: 233 239 252;
+  --pal-100: 215 227 249;
+  --pal-200: 182 204 243;
+  --pal-300: 138 172 236;
+  --pal-400: 91 140 229;
+  --pal-500: 56 115 224;
+  --pal-600: 34 99 220;
+  --pal-700: 28 81 180;
+  --pal-800: 23 67 150;
+  --pal-900: 19 54 121;
+  --pal-950: 12 35 77;
+  --pal-2: 63 160 245;
+  --pal-bg: #f5f7fd;
+  --pal-line: #e2e8f6;
+  --pal-hero: linear-gradient(165deg, #e6eefe 0%, #d5e4fd 58%, #bfd5fb 100%);
+}
+
+html[data-palette="teal"] {
+  --pal-25: 245 250 250;
+  --pal-50: 231 243 244;
+  --pal-100: 211 233 234;
+  --pal-200: 174 215 217;
+  --pal-300: 126 191 194;
+  --pal-400: 74 166 170;
+  --pal-500: 35 147 152;
+  --pal-600: 11 135 140;
+  --pal-700: 9 111 115;
+  --pal-800: 7 92 95;
+  --pal-900: 6 74 77;
+  --pal-950: 4 47 49;
+  --pal-2: 43 191 174;
+  --pal-bg: #f3faf8;
+  --pal-line: #dfeeeb;
+  --pal-hero: linear-gradient(165deg, #e4f6f3 0%, #d3efeb 58%, #b9e3dd 100%);
+}
+
+/* Night mode reads the light steps as its accent; navy's are too dark for the night page, so they are lifted. */
+html[data-theme="dark"][data-palette="navy"] {
+  --pal-300: 150 190 212;
+  --pal-400: 112 162 190;
+  --pal-500: 74 132 162;
+}
+
+/* The palette button: its outline shows the current colour, the four dots show the choices.
+   (#l1AppBar in the selectors: this file loads first, and .l1-icon-btn later sets its own colour.) */
+#l1AppBar .l1-palette-btn { color: rgb(var(--pal-600)); }
+#l1AppBar .l1-palette-btn svg { width: 22px; height: 22px; }
+html[data-theme="dark"] #l1AppBar .l1-palette-btn { color: rgb(var(--pal-300)); }

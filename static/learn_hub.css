@@ -29,7 +29,7 @@ body.l1-deep #gamesBanner { display: none; }
 .hub-title { font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; font-size: 24px; color: var(--l1-ink); line-height: 1.2; }
 .hub-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; background: var(--l1-card); border: 1px solid var(--l1-line); border-radius: 18px; box-shadow: var(--l1-shadow); }
 .hub-modes button { height: 40px; border-radius: 14px; font-weight: 800; font-size: 14px; color: var(--l1-muted); transition: background .2s, color .2s; }
-.hub-modes button.is-active { background: var(--l1-primary); color: #fff; box-shadow: 0 8px 16px -8px rgba(85, 88, 238, .9); }
+.hub-modes button.is-active { background: var(--l1-primary); color: #fff; box-shadow: 0 8px 16px -8px rgb(var(--pal-600) / .9); }
 .hub-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px; }
 .hub-tabs::-webkit-scrollbar { display: none; }
 .hub-tabs button { flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--l1-line); background: var(--l1-card); color: var(--l1-muted); font-size: 12px; font-weight: 800; white-space: nowrap; }
@@ -47,7 +47,7 @@ body.l1-deep #gamesBanner { display: none; }
 .hub-week:hover, .hub-unit:hover { border-color: var(--l1-primary); }
 .hub-num {
   flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px;
-  background: linear-gradient(145deg, #5558ee, #7c6cf5); color: #fff;
+  background: linear-gradient(145deg, rgb(var(--pal-600)), rgb(var(--pal-500))); color: #fff;
   font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; font-size: 20px;
 }
 .hub-num.is-done { background: linear-gradient(145deg, #1faa66, #35c486); }
@@ -66,7 +66,7 @@ html[data-theme="dark"] .hub-week-practice { background: rgba(245, 158, 11, .12)
 /* ---- practice kinds ---- */
 .hub-kinds { display: grid; gap: 10px; }
 .hub-kind .hub-num { font-size: 24px; }
-.hub-kind.k1 .hub-num { background: linear-gradient(145deg, #5558ee, #7c6cf5); }
+.hub-kind.k1 .hub-num { background: linear-gradient(145deg, rgb(var(--pal-600)), rgb(var(--pal-500))); }
 .hub-kind.k2 .hub-num { background: linear-gradient(145deg, #a855f7, #c084fc); }
 .hub-kind.k3 .hub-num { background: linear-gradient(145deg, #f59e0b, #fbbf24); }
 .hub-kind.is-done .hub-num { background: linear-gradient(145deg, #1faa66, #35c486); }
@@ -82,7 +82,7 @@ html[data-theme="dark"] .hub-week-practice { background: rgba(245, 158, 11, .12)
 @media (min-width: 560px) { .hub-pics { grid-template-columns: repeat(3, 1fr); } }
 
 /* ---- daily homework roadmap ---- */
-.hw-today { padding: 18px; border-radius: 22px; color: #fff; background: linear-gradient(145deg, #4647d6, #6f63f2); box-shadow: 0 16px 30px -16px rgba(70, 71, 214, .9); }
+.hw-today { padding: 18px; border-radius: 22px; color: #fff; background: linear-gradient(145deg, rgb(var(--pal-700)), rgb(var(--pal-500))); box-shadow: 0 16px 30px -16px rgb(var(--pal-700) / .9); }
 .hw-today.is-rest { background: linear-gradient(145deg, #0e9f8e, #34c8a9); }
 .hw-today .hw-kicker { font-size: 12px; font-weight: 800; opacity: .9; }
 .hw-today h2 { margin: 4px 0 2px; font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.2; }

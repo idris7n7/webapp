@@ -22,7 +22,7 @@
 .gm-banner { position: absolute; z-index: 700; left: 50%; bottom: 40px; transform: translateX(-50%); max-width: calc(100% - 24px); padding: 8px 16px; border-radius: 999px;
   font-size: 14px; font-weight: 800; color: #fff; background: rgba(31, 143, 78, .94); box-shadow: 0 10px 20px -10px rgba(10, 60, 30, .7); text-align: center; pointer-events: none; }
 .gm-banner[hidden] { display: none; }
-.gm-root[data-mode="zone"] .gm-banner { background: rgba(79, 91, 240, .94); }
+.gm-root[data-mode="zone"] .gm-banner { background: rgb(var(--pal-600) / .94); }
 
 /* the Pomodoro tomato stays visible above the map, out of the way of the panel */
 body.gm-open .gv-pomo { z-index: 9100; top: calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px)) + 58px); bottom: auto; }
@@ -37,7 +37,7 @@ body.gm-open .gv-pomo { z-index: 9100; top: calc(var(--tg-safe-area-inset-top, e
 .gm-stats .is-warn b { color: #c2410c; }
 .gm-actions { display: flex; gap: 10px; }
 .gm-btn { flex: 1; min-height: 50px; padding: 0 16px; border-radius: 16px; font-size: 16px; font-weight: 900; color: #fff; background: var(--l1-primary);
-  box-shadow: 0 12px 22px -12px rgba(79, 91, 240, .9); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s ease; }
+  box-shadow: 0 12px 22px -12px rgb(var(--pal-600) / .9); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s ease; }
 .gm-btn:active { transform: scale(.97); }
 .gm-btn:disabled { opacity: .45; box-shadow: none; }
 .gm-btn.is-green { background: #1f8f4e; box-shadow: 0 12px 22px -12px rgba(31, 143, 78, .9); }

@@ -20,7 +20,7 @@ body.pl-open .gv-pomo { display: none; }
 .pl-bubble p { margin: 6px 0 0; font-size: 16px; line-height: 1.45; font-weight: 600; color: var(--l1-muted); }
 .pl-pts { color: #1f9d55; white-space: nowrap; }
 .pl-note { margin: 0; padding: 10px 12px; border-radius: 14px; font-size: 14px; line-height: 1.45; font-weight: 600; color: var(--l1-muted); background: var(--l1-primary-50); text-align: left; }
-.pl-btn { width: 100%; min-height: 54px; padding: 0 20px; border-radius: 18px; font-size: 18px; font-weight: 900; color: #fff; background: var(--l1-primary); box-shadow: 0 14px 24px -12px rgba(79, 91, 240, .9); transition: transform .12s ease; }
+.pl-btn { width: 100%; min-height: 54px; padding: 0 20px; border-radius: 18px; font-size: 18px; font-weight: 900; color: #fff; background: var(--l1-primary); box-shadow: 0 14px 24px -12px rgb(var(--pal-600) / .9); transition: transform .12s ease; }
 .pl-btn:active { transform: scale(.97); }
 .pl-btn.is-green { background: #1f9d55; box-shadow: 0 14px 24px -12px rgba(31, 157, 85, .9); }
 .pl-btn.is-quiet { color: var(--l1-ink); background: var(--l1-card); border: 1px solid var(--l1-line); box-shadow: none; }

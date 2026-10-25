@@ -36,9 +36,9 @@ html:not([data-theme="dark"]) .text-slate-500 { color: #55607a !important; }
 html:not([data-theme="dark"]) .text-amber-600 { color: #b45309 !important; }
 html:not([data-theme="dark"]) .text-emerald-600 { color: #047857 !important; }
 html:not([data-theme="dark"]) .text-rose-600 { color: #be123c !important; }
-html:not([data-theme="dark"]) .text-sky-700, html:not([data-theme="dark"]) .text-blue-700, html:not([data-theme="dark"]) .text-indigo-700 { color: #3a3bb0 !important; }
+html:not([data-theme="dark"]) .text-sky-700, html:not([data-theme="dark"]) .text-blue-700, html:not([data-theme="dark"]) .text-indigo-700 { color: rgb(var(--pal-800)) !important; }
 html:not([data-theme="dark"]) .text-violet-700 { color: #5b21b6 !important; }
-html:not([data-theme="dark"]) .hm-count { color: #3a3bb0; }
+html:not([data-theme="dark"]) .hm-count { color: rgb(var(--pal-800)); }
 html:not([data-theme="dark"]) .l1-sub, html:not([data-theme="dark"]) .l1-muted { color: #5d6388; }
 .hm-goal span { color: var(--l1-muted); }
 /* Word Race: the title sits on the light-blue sky, so give it a soft dark scrim */
@@ -99,7 +99,7 @@ body.l1-deep .gv-pomo:not(.is-drag):not([data-state="running"]):not([data-state=
 /* ===== Design audit fixes ===== */
 /* Dark mode contrast: the bottom-bar labels, the filled "active" chips and the SIZ tag fell under 4.5:1 */
 html[data-theme="dark"] #l1BottomNav button:not(.is-active) { color: var(--l1-muted); }
-html[data-theme="dark"] .hub-modes button.is-active, html[data-theme="dark"] .lb-you { background: #3a62d4; color: #fff; }
+html[data-theme="dark"] .hub-modes button.is-active, html[data-theme="dark"] .lb-you { background: rgb(var(--pal-700)); color: #fff; }
 /* Light mode: the success green is a touch too pale as text on white */
 html:not([data-theme="dark"]) { --l1-success: #15803d; }
 

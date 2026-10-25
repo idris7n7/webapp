@@ -2,7 +2,7 @@
 // Loaded after the main inline script, so it can wrap updateAuthView / updateStudentViews / L1_Nav.
 (function (window, document) {
   "use strict";
-  const { Theme, Back, Haptic, Sound, Idris, avatar, api, countdown, fmtDate, ICONS, html } = window.L1;
+  const { Theme, Palette, Back, Haptic, Sound, Idris, avatar, api, countdown, fmtDate, ICONS, html } = window.L1;
   const TABS = ["home", "tasks", "learn", "games", "rating"];
   const LEGACY = ["learnContainer", "practiceContainer", "gamesContainer", "dictionaryView", "myProgressView", "exerciseRunnerView"];
   const $ = (id) => document.getElementById(id);
@@ -103,6 +103,7 @@
       <button type="button" id="l1BarAvatar" aria-label="Profil"></button>
       <div class="l1-hello"></div>
       <button type="button" id="l1BarStaff" class="l1-pill hidden">Panel</button>
+      ${Palette.buttonHtml("l1BarPalette")}
       ${Theme.buttonHtml("", "l1BarTheme")}
       <button type="button" id="l1BarStreak" class="l1-pill hidden" aria-label="Doimiylik kalendari">🔥</button>
       <button type="button" id="l1BarPoints" class="l1-pill" aria-label="Haftalik ballar: 0. Reytingni ochish"><span class="l1-coin">★</span><span id="l1BarPointsNum">0</span></button>
@@ -115,6 +116,7 @@
     bar.after(authTheme);
     Theme.bind(authTheme);
     Theme.bind(bar);
+    Palette.bind(bar);
     $("l1BarAvatar").addEventListener("click", openProfile);
     $("l1BarStreak").addEventListener("click", () => { Haptic.tap(); openStreakCalendar(); });
     $("l1BarBack").addEventListener("click", () => { Haptic.tap(); const go = backAction(); if (go) go(); setTimeout(syncBackButton, 120); });
@@ -534,11 +536,11 @@
     ];
     const allLearned = hub && !hub.nextLesson();
     goals.push({ key: "lessons", icon: "📖", color: "#0ea5a4", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
-    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", color: "#4f5bf0", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
+    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", color: "var(--l1-primary)", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
     else {
       const left = hub && hub.nextHomework();
       const done = homeworkDoneToday() || (hub && !left);
-      goals.push({ key: "tasks", icon: "📝", color: "#4f5bf0", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
+      goals.push({ key: "tasks", icon: "📝", color: "var(--l1-primary)", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
     }
     return goals;
   }

@@ -175,7 +175,7 @@
     const frac = (pts - levelStart(lv)) / Math.max(1, levelStart(lv + 1) - levelStart(lv));
     let ring = $(".mod-xp", av);
     if (!ring) {
-      av.insertAdjacentHTML("beforeend", `<svg class="mod-xp" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="modXpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
+      av.insertAdjacentHTML("beforeend", `<svg class="mod-xp" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="modXpGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color: rgb(var(--pal-400))"/><stop offset="1" style="stop-color: rgb(var(--pal-600))"/></linearGradient></defs>
         <circle class="t" cx="24" cy="24" r="22"/><circle class="p" cx="24" cy="24" r="22" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg><span class="mod-level"></span>`);
       ring = $(".mod-xp", av);
     }

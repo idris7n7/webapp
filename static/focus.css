@@ -53,7 +53,7 @@ body:not(.l1-has-nav) .gv-pomo { bottom: calc(14px + var(--l1-safe-bottom-total,
 .gv-x { width: 34px; height: 34px; border-radius: 50%; font-size: 16px; font-weight: 800; color: var(--l1-muted); background: var(--l1-primary-50); }
 .gv-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .gv-btn { min-height: 48px; padding: 0 22px; border-radius: 16px; font-size: 16px; font-weight: 900; background: var(--l1-primary); color: #fff;
-  box-shadow: 0 12px 22px -12px rgba(79, 91, 240, .9); transition: transform .12s ease; }
+  box-shadow: 0 12px 22px -12px rgb(var(--pal-600) / .9); transition: transform .12s ease; }
 .gv-btn:active { transform: scale(.96); }
 .gv-btn:disabled { opacity: .45; box-shadow: none; }
 .gv-btn.is-green { background: #1f8f4e; box-shadow: 0 12px 22px -12px rgba(31, 143, 78, .9); }
