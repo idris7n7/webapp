@@ -998,6 +998,50 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         _, mine = await self.call("GET", "/api/words", vali)
         self.assertEqual(mine["words"], {})
 
+    # -- lesson progress on every device --------------------------------------
+    async def test_lesson_progress_follows_the_student_to_another_device(self):
+        phone = await self.join("Ali", "aziz", "A1")
+        sent = {"learned": {"sec1_top1": 1_700_000_000_000}, "practice": {"sec1_top1": {"mcq": 1, "fill": 1, "mistake": 1}}}
+        status, r = await self.call("POST", "/api/lesson_progress", phone["token"], sent)
+        self.assertEqual((status, r["progress"]), (200, sent))
+        telegram = await self.join("ali", "aziz", "A1")  # the same student opens the app somewhere else
+        _, state = await self.call("GET", "/api/state", telegram["token"])
+        self.assertEqual(state["lessonProgress"], sent)
+        other = await self.join("Vali", "aziz", "A1")
+        _, state = await self.call("GET", "/api/state", other["token"])
+        self.assertEqual(state["lessonProgress"], {"learned": {}, "practice": {}})
+
+    async def test_lesson_progress_only_grows(self):
+        token, _ = await self.student_token()
+        await self.call("POST", "/api/lesson_progress", token, {"learned": {"a": 5000, "b": 0, "c": 9000}, "practice": {"a": {"mcq": 1}}})
+        # an older phone sends what it had: an unknown time, a later time, another practice, an unfinished one
+        status, r = await self.call("POST", "/api/lesson_progress", token, {
+            "learned": {"a": 0, "b": 7000, "c": 12000}, "practice": {"a": {"fill": 1, "mcq": 0}}})
+        self.assertEqual(status, 200)
+        self.assertEqual(r["progress"], {"learned": {"a": 5000, "b": 7000, "c": 9000}, "practice": {"a": {"mcq": 1, "fill": 1}}})
+        status, r = await self.call("POST", "/api/lesson_progress", token, {})  # nothing new: nothing is taken away
+        self.assertEqual((status, r["progress"]["learned"]), (200, {"a": 5000, "b": 7000, "c": 9000}))
+
+    async def test_lesson_progress_refuses_junk_but_not_a_wrong_clock(self):
+        token, _ = await self.student_token()
+        future = int(time.time() * 1000) + 30 * 86_400_000
+        status, r = await self.call("POST", "/api/lesson_progress", token, {"learned": {"a": future, "b": -5}, "practice": {"a": {"hack": 1}}})
+        self.assertEqual((status, r["progress"]["learned"], r["progress"]["practice"]), (200, {"a": 0, "b": 0}, {}))
+        for bad in ({"learned": {"<x>": 1}}, {"learned": ["a"]}, {"learned": {"a": "soon"}}, {"practice": {"a": 1}},
+                    {"learned": {f"l{i}": 1 for i in range(server.LESSON_PROGRESS_MAX_ITEMS + 1)}}):
+            status, _ = await self.call("POST", "/api/lesson_progress", token, bad)
+            self.assertEqual(status, 400, bad)
+        status, _ = await self.call("POST", "/api/lesson_progress", None, {})
+        self.assertEqual(status, 401)
+
+    async def test_deleting_a_student_deletes_their_lesson_progress(self):
+        token, student = await self.student_token()
+        await self.call("POST", "/api/lesson_progress", token, {"learned": {"a": 1}})
+        status, _ = await self.call("POST", "/api/students/delete", await self.admin_token(), {"id": student["id"]})
+        self.assertEqual(status, 200)
+        with server.get_db() as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM lesson_progress").fetchone()[0], 0)
+
     # -- pomodoro focus blocks and Yashil shahar ----------------------------
     def db_exec(self, sql, args=()):
         import sqlite3

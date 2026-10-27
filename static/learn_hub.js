@@ -46,7 +46,8 @@
   const weekCards = (week) => (typeof FLASHCARDS_DATA !== "undefined" ? FLASHCARDS_DATA : []).filter((c) => c.week === week);
 
   // ------------------------------------------------------------------ progress
-  // Which of the three grammar practices a student finished, per lesson (on this device, per student).
+  // Which of the three grammar practices a student finished, per lesson (per student; app_main.js L1_Progress keeps a copy
+  // on the server, so other devices get it too).
   const KINDS = ["mcq", "fill", "mistake"];
   const pKey = () => "l1_practice_done_v2_" + ((user() && (user().id || user().name)) || "guest");
   function pRead() { try { return JSON.parse(localStorage.getItem(pKey()) || "{}") || {}; } catch (e) { return {}; } }
@@ -475,10 +476,12 @@
     const was = practiceDone(m.topic);
     all[m.topic] = { ...(all[m.topic] || {}), [m.kind]: 1 };
     try { localStorage.setItem(pKey(), JSON.stringify(all)); } catch (err) { /* private mode */ }
+    if (window.L1_Progress) window.L1_Progress.changed();
     if (!was && practiceDone(m.topic)) toast("🎉 Mavzu mashqlari tugadi! Endi bu darsning kunlik vazifasi ochiladi.");
     window.dispatchEvent(new CustomEvent("l1:progress-changed"));
   });
-  window.addEventListener("l1:lesson-learned", () => { window.dispatchEvent(new CustomEvent("l1:progress-changed")); if (!cur() || cur().view !== "lesson") render(); });
+  // a lesson learned here, or progress made on another device that just arrived from the server
+  ["l1:lesson-learned", "l1:progress-synced"].forEach((ev) => window.addEventListener(ev, () => { window.dispatchEvent(new CustomEvent("l1:progress-changed")); if (!cur() || cur().view !== "lesson") render(); }));
 
   // ------------------------------------------------------------------ games banner
   function paintGamesBanner() {

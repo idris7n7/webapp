@@ -105,7 +105,7 @@ locked automatically at startup. Give them a new password with `set-password`.
 `POST /api/submit`, `POST /api/exercises` (staff), `POST /api/students` (staff),
 `POST /api/students/delete` (admin), `POST /api/user_status` (admin), `GET /healthz`,
 `GET /api/assignments`, `GET /api/assignments/{id}`, `POST /api/assignments/answer`,
-`POST /api/assignments|/update|/delete` (staff), `GET /api/leaderboard?period=week|all`, `POST /api/game/finish`, `POST /api/arcade/start|finish`, `GET /api/arcade/summary`, `GET /api/dictionary`, `POST /api/dictionary/save`.
+`POST /api/assignments|/update|/delete` (staff), `GET /api/leaderboard?period=week|all`, `POST /api/game/finish`, `POST /api/arcade/start|finish`, `GET /api/arcade/summary`, `GET /api/dictionary`, `POST /api/dictionary/save`, `POST /api/lesson_progress` (learned lessons and finished practices: the page sends what it has, the server keeps the union, so every device of a student shows the same progress; `/api/state` carries it as `lessonProgress`).
 
 ## Data persistence
 The database is one SQLite file (`level_one.db`, or `DB_PATH`). Containers and free cloud tiers

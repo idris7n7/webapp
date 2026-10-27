@@ -664,6 +664,17 @@ def init_db() -> None:
                 saved_at INTEGER NOT NULL,
                 PRIMARY KEY (student_id, word_id)
             );
+
+            -- What a student learned and practised, so every device (Telegram, a browser, the APK) shows the same
+            -- progress. It only grows: a lesson stays learned (the earliest known time is kept), a practice stays done.
+            CREATE TABLE IF NOT EXISTS lesson_progress (
+                student_id TEXT NOT NULL,
+                kind TEXT NOT NULL,                      -- learned | mcq | fill | mistake
+                item_id TEXT NOT NULL,                   -- the lesson id
+                value INTEGER NOT NULL,                  -- learned: ms time (0 = unknown); practice: 1
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY (student_id, kind, item_id)
+            );
             """
         )
         # Ensure new columns exist on databases created by older versions
@@ -1168,6 +1179,7 @@ async def handle_get_state(request: web.Request) -> web.Response:
                 "SELECT * FROM attempts WHERE student_id = ? ORDER BY timestamp ASC", (user["id"],)
             ).fetchall()
         exercises = load_all_exercises(conn)
+        progress = lesson_progress_of(conn, user["id"])
 
     attempts = [
         {
@@ -1190,6 +1202,7 @@ async def handle_get_state(request: web.Request) -> web.Response:
             "students": [student_public(r) for r in stu_rows],
             "attempts": attempts,
             "exercises": exercises,
+            "lessonProgress": progress,
         }
     )
 
@@ -1845,6 +1858,69 @@ async def handle_progress_level(request: web.Request) -> web.Response:
     before = path[-limit - 1]["level"] if len(path) > limit else 0
     right = sum(1 for p in path if p["ok"])
     return web.json_response({"start": before, "events": recent, "level": level, "right": right, "wrong": len(path) - right})
+
+
+# ---------------------------------------------------------------------------
+# Lesson progress: learned lessons and the three grammar practices per lesson
+# ---------------------------------------------------------------------------
+PRACTICE_KINDS = ("mcq", "fill", "mistake")
+LESSON_PROGRESS_MAX_ITEMS = 2000
+
+
+def lesson_progress_of(conn: sqlite3.Connection, student_id: str) -> dict:
+    """The progress in the shape the page keeps it: learned {lesson: ms}, practice {lesson: {kind: 1}}."""
+    out = {"learned": {}, "practice": {}}
+    for r in conn.execute("SELECT kind, item_id, value FROM lesson_progress WHERE student_id = ?", (student_id,)):
+        if r["kind"] == "learned":
+            out["learned"][r["item_id"]] = r["value"]
+        else:
+            out["practice"].setdefault(r["item_id"], {})[r["kind"]] = r["value"]
+    return out
+
+
+def lesson_progress_rows(data: dict, now_ms: int) -> list:
+    """(kind, item_id, value) rows from the page's progress. Malformed data is refused; a phone with a wrong clock is not."""
+    def items(section):
+        part = data.get(section) or {}
+        if not isinstance(part, dict):
+            raise ApiError("Dars natijalari noto'g'ri.")
+        for item_id, value in part.items():
+            if not _ID_RE.match(item_id):
+                raise ApiError("Dars natijalari noto'g'ri.")
+            yield item_id, value
+
+    rows = []
+    for lesson, at in items("learned"):
+        at = as_int(at, "learned")
+        rows.append(("learned", lesson, at if 0 <= at <= now_ms + 86_400_000 else 0))  # keep the lesson, forget a bad time
+    for lesson, kinds in items("practice"):
+        if not isinstance(kinds, dict):
+            raise ApiError("Dars natijalari noto'g'ri.")
+        rows.extend((kind, lesson, 1) for kind in PRACTICE_KINDS if kinds.get(kind))
+    if len(rows) > LESSON_PROGRESS_MAX_ITEMS:
+        raise ApiError("Dars natijalari juda ko'p.")
+    return rows
+
+
+async def handle_lesson_progress(request: web.Request) -> web.Response:
+    """The page sends all the progress it has; the server keeps the union and answers with the merged copy.
+    Nothing is ever taken away, so a repeated or late send (an offline phone) cannot undo progress made elsewhere."""
+    now = time.time()
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"lessonprog:{user['id']}", 240, 3600)
+        rows = lesson_progress_rows(await read_json(request), int(now * 1000))
+        conn.executemany(
+            "INSERT INTO lesson_progress (student_id, kind, item_id, value, updated_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(student_id, kind, item_id) DO UPDATE SET value = CASE "
+            "WHEN lesson_progress.kind <> 'learned' THEN 1 "
+            "WHEN lesson_progress.value = 0 THEN excluded.value "
+            "WHEN excluded.value = 0 THEN lesson_progress.value "
+            "ELSE MIN(lesson_progress.value, excluded.value) END, updated_at = excluded.updated_at",
+            [(user["id"], kind, item_id, value, int(now)) for kind, item_id, value in rows],
+        )
+        progress = lesson_progress_of(conn, user["id"])
+    return web.json_response({"progress": progress})
 
 
 async def handle_progress_calendar(request: web.Request) -> web.Response:
@@ -3364,6 +3440,7 @@ async def handle_delete_student(request: web.Request) -> web.Response:
         conn.execute("DELETE FROM attempts WHERE student_id = ?", (user_id,))
         conn.execute("DELETE FROM answer_log WHERE student_id = ?", (user_id,))
         conn.execute("DELETE FROM points_log WHERE student_id = ?", (user_id,))
+        conn.execute("DELETE FROM lesson_progress WHERE student_id = ?", (user_id,))
         conn.execute("DELETE FROM sessions WHERE student_id = ?", (user_id,))
         conn.execute("DELETE FROM students WHERE id = ?", (user_id,))
     return web.json_response({"status": "ok", "id": user_id})
@@ -3550,6 +3627,7 @@ def build_web_app() -> web.Application:
     web_app.router.add_get("/api/progress/calendar", handle_progress_calendar)
     web_app.router.add_get("/api/progress/level", handle_progress_level)
     web_app.router.add_post("/api/progress/events", handle_progress_events)
+    web_app.router.add_post("/api/lesson_progress", handle_lesson_progress)
     web_app.router.add_post("/api/game/finish", handle_game_finish)
     web_app.router.add_post("/api/arcade/start", handle_arcade_start)
     web_app.router.add_post("/api/arcade/finish", handle_arcade_finish)

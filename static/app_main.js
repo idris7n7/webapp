@@ -39,6 +39,89 @@
     }
     window.l1LearnedLog = () => (state.authStudent ? loadStorage(learnedLogKey(state.authStudent.id), {}) : {});
 
+    // Learning progress on the server. Learned lessons and the three grammar practices of each lesson (learn_hub.js) are
+    // kept in this browser; the server keeps a merged copy per student, so Telegram, another browser, the APK or a new
+    // phone show the same progress and homework unlocks. Progress only grows (a lesson stays learned, a practice stays
+    // done), so both sides merge by union and a late send from a phone that was offline never undoes anything.
+    window.L1_Progress = (function () {
+      const KINDS = ["mcq", "fill", "mistake"];
+      const ID = /^[A-Za-z0-9_.:-]{1,80}$/; // the server's _ID_RE
+      const practiceKey = (id) => `l1_practice_done_v2_${id}`; // = learn_hub.js pKey()
+      const sid = () => (state.authStudent && state.authStudent.id) || "";
+      const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+      const earlier = (a, b) => (!a ? b : !b ? a : Math.min(a, b)); // 0 = learned, time unknown
+
+      function merge(a, b) {
+        const out = { learned: {}, practice: {} };
+        for (const p of [a, b]) {
+          for (const [u, t] of Object.entries(obj(p.learned))) if (ID.test(u)) out.learned[u] = earlier(out.learned[u] || 0, Math.max(0, Math.round(+t) || 0));
+          for (const [u, kinds] of Object.entries(obj(p.practice))) {
+            for (const k of KINDS) if (ID.test(u) && obj(kinds)[k]) (out.practice[u] = out.practice[u] || {})[k] = 1;
+          }
+        }
+        return out;
+      }
+      // does x already hold everything y holds?
+      function covers(x, y) {
+        for (const [u, t] of Object.entries(y.learned)) if (!(u in x.learned) || earlier(x.learned[u], t) !== x.learned[u]) return false;
+        for (const [u, kinds] of Object.entries(y.practice)) for (const k in kinds) if (!(x.practice[u] && x.practice[u][k])) return false;
+        return true;
+      }
+      function local(id) {
+        const units = loadStorage(learnedKey(id), []);
+        const log = obj(loadStorage(learnedLogKey(id), {}));
+        const learned = {};
+        (Array.isArray(units) ? units : []).forEach((u) => { learned[u] = +log[u] || 0; });
+        return merge({ learned, practice: loadStorage(practiceKey(id), {}) }, {});
+      }
+      function write(id, all) {
+        const before = loadStorage(learnedKey(id), []);
+        const units = (Array.isArray(before) ? before : []).filter((u) => u in all.learned);
+        Object.keys(all.learned).filter((u) => !units.includes(u))
+          .sort((a, b) => all.learned[a] - all.learned[b]).forEach((u) => units.push(u));
+        const log = obj(loadStorage(learnedLogKey(id), {}));
+        for (const [u, t] of Object.entries(all.learned)) if (t) log[u] = t;
+        saveStorage(learnedKey(id), units);
+        saveStorage(learnedLogKey(id), log);
+        saveStorage(practiceKey(id), all.practice);
+        state.learnedUnits = units;
+      }
+
+      let timer = 0, sending = null, lastSync = 0;
+      // The server's copy arrived (with /api/state, or as the answer to a send). Anything only this phone has is sent
+      // once; the answer to a send never starts another one (a time the server refused would otherwise loop).
+      function absorb(server, id, isAnswer) {
+        if (!server || !id || id !== sid()) return;
+        lastSync = Date.now();
+        const mine = local(id), theirs = merge(server, {}), all = merge(mine, theirs);
+        if (!covers(mine, all)) {
+          write(id, all);
+          window.dispatchEvent(new CustomEvent("l1:progress-synced"));
+        }
+        if (!isAnswer && !covers(theirs, all)) changed();
+      }
+      function changed() { clearTimeout(timer); timer = setTimeout(push, 800); }
+      function push() {
+        clearTimeout(timer);
+        const id = sid();
+        if (!id || !window.l1GetToken()) return Promise.resolve();
+        if (sending) { changed(); return sending; } // one send at a time; this change goes with the next one
+        lastSync = Date.now();
+        sending = window.l1Fetch("/api/lesson_progress", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(local(id)),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => { if (d && d.progress) absorb(d.progress, id, true); })
+          .catch(() => { /* offline: sent again when the phone is back online */ })
+          .finally(() => { sending = null; });
+        return sending;
+      }
+      window.addEventListener("online", () => push());
+      // back from another app (maybe the same student on Telegram): send and fetch, at most once a minute
+      document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastSync > 60000) push(); });
+      return { changed, push, absorb: (server) => absorb(server, sid(), false) };
+    })();
+
     // Clear out any old demo student names from localStorage if previously cached
     (function cleanOldDemoData() {
       try {
@@ -151,6 +234,7 @@
       state.students = data.students || [];
       state.attempts = data.attempts || [];
       if (data.exercises && data.exercises.length > 0) state.exercises = data.exercises;
+      if (data.lessonProgress) window.L1_Progress.absorb(data.lessonProgress);
     };
 
     window.L1_LOGOUT = function(callServer) {
@@ -1255,6 +1339,7 @@
           const log = loadStorage(learnedLogKey(sid), {});
           log[unitId] = Date.now();
           saveStorage(learnedLogKey(sid), log);
+          window.L1_Progress.changed();
         }
         window.dispatchEvent(new CustomEvent("l1:lesson-learned"));
       }
