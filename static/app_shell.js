@@ -2,7 +2,7 @@
 // Loaded after the main inline script, so it can wrap updateAuthView / updateStudentViews / L1_Nav.
 (function (window, document) {
   "use strict";
-  const { Theme, Palette, Back, Haptic, Sound, Idris, avatar, api, countdown, fmtDate, html } = window.L1;
+  const { Theme, Palette, Back, Haptic, Sound, Idris, avatar, api, fmtDate, html } = window.L1;
   const TABS = ["home", "tasks", "learn", "games", "rating"];
   const LEGACY = ["learnContainer", "practiceContainer", "gamesContainer", "dictionaryView", "myProgressView", "exerciseRunnerView"];
   const $ = (id) => document.getElementById(id);
@@ -53,7 +53,6 @@
       || shown("lessonReaderView") || shown("unitExercisesListContainer") || shown("dictionaryView") || shown("myProgressView") || !!playingGame();
   }
   function backAction() {
-    syncGameBack();
     if (Back.stack.some((h) => h !== Shell.backToHome)) return () => Back.pop();
     if (shown("practiceSuiteRunnerArea") && window.L1_PracticeSuite) return () => window.L1_PracticeSuite.backToMenu();
     if (shown("exerciseRunnerView")) return press("btnBackToExercises");
@@ -63,30 +62,18 @@
     if (Shell.backToHome) return () => Back.pop();
     return null;
   }
-  // A game that is being played is the top-most layer: Back quits it and lands on that game's start screen.
-  const GAMES = { millionaire: "L1_Millionaire", dragon: "L1_DragonGame", race: "L1_WordRace", listen: "L1_Listen" };
-  function playingGame(anyTab) {
-    if ((!anyTab && Shell.tab !== "games") || !window.L1_Nav) return null;
-    const g = window[GAMES[window.L1_Nav.currentGameSub]];
-    return g && g.active ? g : null;
-  }
-  function syncGameBack() {
-    const playing = !!playingGame();
-    if (playing && !Shell.gameBack) {
-      Shell.gameBack = Back.push(() => { Shell.gameBack = null; quitGame(); });
-    } else if (!playing && Shell.gameBack) {
-      Back.remove(Shell.gameBack);
-      Shell.gameBack = null;
-    }
+  // A game being played is a full-screen layer of its own (static/arcade_core.js); it handles Back itself.
+  function playingGame() {
+    return window.L1_Arcade && window.L1_Arcade.active ? window.L1_Arcade : null;
   }
   function quitGame() {
-    if (playingGame(true)) window.L1_Nav.setGameSub(window.L1_Nav.currentGameSub);
+    if (playingGame()) window.L1_Arcade.close();
     syncBackButton();
   }
   function syncBackButton() {
-    syncGameBack();
     const b = $("l1BarBack");
-    if (b) b.classList.toggle("hidden", !(isStudentMode() && backAction()));
+    const back = !!(isStudentMode() && backAction());
+    if (b) { b.classList.toggle("hidden", !back); b.parentElement.classList.toggle("has-back", back); }
     document.body.classList.toggle("l1-deep", isStudentMode() && deepView());
   }
 
@@ -362,7 +349,8 @@
     $("l1BarAvatar").innerHTML = avatar(u, 40);
     const hello = document.querySelector("#l1AppBar .l1-hello");
     if (hello) {
-      hello.textContent = u.firstName || (u.name || "").split(" ")[0] || "";
+      // the first word only: name-only accounts keep the whole name in firstName, which did not fit the bar
+      hello.textContent = String(u.firstName || u.name || "").trim().split(/\s+/)[0] || "";
       hello.style.cssText = "font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
     }
     const me = Shell.data.me;
@@ -404,7 +392,7 @@
             <div class="text-[12px] font-semibold opacity-90 mt-1">${a.exercises.length} ta mashq · ${a.questionCount} ta savol</div>
           </div>
           <div class="flex items-center justify-between text-[12px] font-bold">
-            <span>⏰ ${open ? html(countdown(a.deadline, now)) + " qoldi" : "Muddat tugagan"}</span>
+            <span>⏰ ${open ? `<span class="l1-left" data-end="${a.deadline}"></span> qoldi` : "Muddat tugagan"}</span>
             <span class="opacity-90">${html(fmtDate(a.deadline))}</span>
           </div>
           <div class="l1-progress"><i style="width:${pct}%"></i></div>
@@ -431,7 +419,7 @@
         </div>
       </div>
       <div class="flex items-center justify-between text-[12px] font-bold text-[color:var(--l1-muted)]">
-        <span>${open ? "⏰ " + html(countdown(a.deadline, now)) + " qoldi" : "Muddat: tugagan"}</span>
+        <span class="${open ? "hw-left" : ""}">${open ? `⏰ <span class="l1-left" data-end="${a.deadline}"></span> qoldi` : "Muddat: tugagan"}</span>
         <span>${html(fmtDate(a.deadline))}</span>
       </div>
       <div class="l1-progress"><i style="width:${pct}%"></i></div>
@@ -468,9 +456,10 @@
   // Yashil shahar map (static/green_map.js), where every finished Pomodoro's tree is planted.
   const Pomo = (() => {
     const stats = () => (window.L1_Focus ? window.L1_Focus.summary() : { city: 0, mine: 0, unplanted: 0, today: 0, daily: 12, status: "idle", left: 1500000 });
-    // The card is the design's: a meadow with the 3D tree (tap = the map), the Pomodoro clock with a play / pause button
-    // and the green start button. The time is not in the markup: tickTime fills it in after a paint and on every tick, so
-    // nothing is redrawn each second.
+    // The card is the design's meadow with the 3D-look tree (tree_art.js card(), vector so it stays sharp; tap = the map) and
+    // one row of three buttons of the same size: the Pomodoro clock (play / pause and the time; tap = start or pause), Xarita
+    // and Ekish (it carries the count of trees not planted yet). The time is not in the markup: tickTime fills it in after a
+    // paint and on every tick, so nothing is redrawn each second.
     const PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.7-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z"/></svg>';
     const PAUSE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.3"/><rect x="13.5" y="5" width="4" height="14" rx="1.3"/></svg>';
     const SCENE_SVG = `<svg class="hm-city-scene" viewBox="0 0 360 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
@@ -496,17 +485,17 @@
       const label = idle ? "Boshlash" : paused ? "Davom etish" : "Pauza";
       return `<section class="hm-city" id="l1Pomo">
         ${SCENE_SVG}
-        <button type="button" class="hm-city-tree" data-pomo="map" aria-label="Yashil shahar xaritasi">${L1Icon3D("tree")}</button>
-        <div class="hm-city-body">
-          <div class="hm-city-title" data-keep-emoji>Yashil shahar</div>
-          <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b>${f.unplanted ? ` · <button type="button" class="hm-city-new" data-pomo="plant">${f.unplanted} ta ekilmagan</button>` : ""}</div>
-          <div class="hm-timer">
-            <div class="hm-timer-row">
-              <button type="button" class="hm-play" data-pomo="start" aria-label="${idle || paused ? "Boshlash" : "Pauza"}">${idle || paused ? PLAY_SVG : PAUSE_SVG}</button>
-              <span class="hm-time" id="l1PomoTime"></span>
-            </div>
-            <button type="button" class="hm-start" data-pomo="start" data-keep-emoji>${label}</button>
+        <div class="hm-city-top">
+          <div class="hm-city-head">
+            <div class="hm-city-title" data-keep-emoji>Yashil shahar</div>
+            <div class="hm-city-sub"><b>${f.city}</b> daraxt · siz <b>${f.mine}</b></div>
           </div>
+          <button type="button" class="hm-city-tree" data-pomo="map" aria-label="Yashil shahar xaritasi">${window.L1_TreeArt ? L1_TreeArt.card() : L1Icon3D("tree")}</button>
+        </div>
+        <div class="hm-city-btns">
+          <button type="button" class="hm-city-btn" data-pomo="start" aria-label="${label}"><i class="hm-play">${idle || paused ? PLAY_SVG : PAUSE_SVG}</i><span class="hm-time" id="l1PomoTime"></span></button>
+          <button type="button" class="hm-city-btn" data-pomo="map">🗺️ Xarita</button>
+          <button type="button" class="hm-city-btn" data-pomo="plant" aria-label="Ekish${f.unplanted ? `: ${f.unplanted} ta ekilmagan` : ""}">🌱 Ekish${f.unplanted ? `<b>${f.unplanted}</b>` : ""}</button>
         </div></section>`;
     }
     function paint() { repaintPart($("l1Home"), "l1Pomo", html()); tickTime(); paintGoals(); }
@@ -528,15 +517,23 @@
   const POMO_GOAL = 3; // finished Pomodoros a day
   const LESSON_GOAL = 1; // lessons learned a day
   const GAME_CARDS = [
-    { id: "dragon", ref: "dragon", name: "Ajdarho", tag: "Qoch va javob ber", icon: "dragon" },
-    { id: "race", ref: "wordrace", name: "Word Race", tag: "Do'stlar bilan poyga", icon: "flag" },
-    { id: "millionaire", ref: "millionaire", name: "Millioner", tag: "15 ta savol", icon: "diamond" },
-    { id: "listen", ref: "listen", name: "Listen and Survive", tag: "Tingla va omon qol", icon: "headphones" },
+    { id: "wordrun", ref: "wordrun", name: "Word Run", tag: "Yugur va so'z tangalarini yig'", pic: "/static/arcade/wordrun/coin.webp?v=1" },
+    { id: "penalty", ref: "penalty", name: "Penalti", tag: "To'g'ri javob — gol!", pic: "/static/arcade/penalty/ball.webp?v=1" },
+    { id: "ninja", ref: "ninja", name: "Word Ninja", tag: "To'g'ri rasmni kes", pic: "/static/arcade/ninja/t_watermelon.webp?v=1" },
+    { id: "river", ref: "river", name: "Daryodan o'tish", tag: "Kerakli narsalarni olib bor, jigar!", emoji: "⛵" },
   ];
   const CHEVRON = '<svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>';
   // A goal shows its 3D picture; a finished one gets a green tick on it and a green tile.
   const DONE_BADGE = '<i class="hm-done-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8.5"/></svg></i>';
-  const goalIcon = (g) => `<span class="hm-goal-ico">${g.pic ? L1Icon3D(g.pic) : `<span class="hm-goal-emo">${g.icon}</span>`}${g.frac >= 1 ? DONE_BADGE : ""}</span>`;
+  // A goal with a deadline wears a chip with the time left (filled by tickCountdowns, so the markup stays the same).
+  const goalIcon = (g) => `<span class="hm-goal-ico">${g.pic ? L1Icon3D(g.pic) : `<span class="hm-goal-emo">${g.icon}</span>`}${g.frac >= 1 ? DONE_BADGE : ""}${
+    g.end ? `<i class="hm-goal-left l1-left" data-end="${g.end}" aria-label="Muddatgacha qolgan vaqt"></i>` : ""}</span>`;
+  // The Vazifa goal counts down to the nearest deadline: an unfinished teacher test, or midnight for today's homework.
+  function taskDeadline(dailyOpen) {
+    const ends = activeTasks().filter((a) => !a.my.done).map((a) => a.deadline);
+    if (dailyOpen) ends.push(dayStart() + 86400);
+    return ends.length ? Math.min(...ends) : 0;
+  }
 
   // Lessons the student marked as learned today (index.html writes the time of each into l1_learned_log_v1).
   function lessonsToday() {
@@ -554,15 +551,15 @@
     const lessonDone = lessonsToday() > 0;
     const hub = window.L1_Hub;
     const goals = [
-      { key: "pomo", icon: "🍅", pic: "timer", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
+      { key: "pomo", icon: "🍅", pic: "tomato", name: "Pomidor", frac: f.today / POMO_GOAL, text: `${Math.min(f.today, POMO_GOAL)}/${POMO_GOAL}` },
     ];
     const allLearned = hub && !hub.nextLesson();
     goals.push({ key: "lessons", icon: "📖", pic: "book", name: "Dars", frac: lessonDone ? 1 : 0, text: lessonDone ? "Bajarildi" : allLearned ? "Takrorlash" : "Boshlash" });
-    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", name: "Vazifa", frac: 0, text: "Dam olish", rest: true });
+    if (isSunday()) goals.push({ key: "tasks", icon: "🌴", name: "Vazifa", frac: 0, text: "Dam olish", rest: true, end: taskDeadline(false) });
     else {
       const left = hub && hub.nextHomework();
       const done = homeworkDoneToday() || (hub && !left);
-      goals.push({ key: "tasks", icon: "📝", pic: "task", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash" });
+      goals.push({ key: "tasks", icon: "📝", pic: "task", name: "Vazifa", frac: done ? 1 : 0, text: done ? "Bajarildi" : "Boshlash", end: taskDeadline(!done) });
     }
     return goals;
   }
@@ -573,7 +570,7 @@
   function goalCount() { const g = dailyGoals().filter((x) => !x.rest); const n = g.filter((x) => x.frac >= 1).length; return `<span class="hm-count${n === g.length ? " is-done" : ""}">${n === g.length ? "🎉 " : ""}${n}/${g.length}</span>`; }
   const goalsBlock = () => `<div class="hm-goals" id="hmGoals">${goalsHtml()}</div>`;
   const countBlock = () => `<span id="hmGoalCount">${goalCount()}</span>`;
-  function paintGoals() { const page = $("l1Home"); repaintPart(page, "hmGoals", goalsBlock()); repaintPart(page, "hmGoalCount", countBlock()); }
+  function paintGoals() { const page = $("l1Home"); repaintPart(page, "hmGoals", goalsBlock()); repaintPart(page, "hmGoalCount", countBlock()); tickCountdowns(); }
   // The goal buttons are drawn again on their own (paintGoals), so their taps are caught once for the whole page. A listener
   // put on each button was lost with every redraw, and then the goal (the Pomidor most of all) did nothing when tapped.
   document.addEventListener("click", (ev) => {
@@ -593,26 +590,14 @@
   window.addEventListener("l1:lesson-learned", () => { paintGoals(); });
   window.addEventListener("l1:progress-changed", () => { paintGoals(); if (Shell.tab === "tasks") renderTasks(); });
 
-  // Listen and Survive stars (out of 3 per mission, 5 missions) come from the server; fetched once, then the home is drawn again.
-  function loadListenStars() {
-    if (Shell.data.listen !== undefined || !window.l1GetToken()) return;
-    Shell.data.listen = null;
-    api("/api/listen/progress").then((d) => {
-      const m = (d && d.missions) || {};
-      Shell.data.listen = Object.values(m).reduce((n, v) => n + ((v && v.stars) || 0), 0);
-      if (Shell.tab === "home") renderHome();
-    }).catch(() => { Shell.data.listen = 0; });
-  }
-
   function gameCardsHtml() {
     const me = Shell.data.me || {};
     const week = me.gameWeek || {};
     return GAME_CARDS.map((g) => {
       const pts = week[g.ref] || 0;
-      let status = pts ? `Bu hafta +${pts} ball` : g.tag;
-      if (g.id === "listen" && Shell.data.listen) status = `⭐ ${Shell.data.listen}/15 yulduz`;
+      const status = pts ? `Bu hafta +${pts} ball` : g.tag;
       return `<button type="button" class="hm-game" data-game="${g.id}">
-        <span class="hm-game-ico" aria-hidden="true">${L1Icon3D(g.icon)}</span>
+        <span class="hm-game-ico" aria-hidden="true">${g.pic ? `<img class="hm-game-pic" src="${g.pic}" alt="" decoding="async">` : `<span class="hm-game-emo">${g.emoji}</span>`}</span>
         <span class="hm-game-txt"><span class="hm-game-name">${g.name}</span><span class="hm-game-status">${html(status)}</span></span>${CHEVRON}</button>`;
     }).join("");
   }
@@ -816,7 +801,6 @@
     const hello = "Assalomu alaykum";
     const first = (u.firstName || (u.name || "").split(" ")[0] || "do'stim");
     const phrase = greetingText(me);
-    loadListenStars();
 
     const drawn = paint(el, `<div class="l1-page space-y-4">
       <section class="hm-hero">
@@ -847,6 +831,7 @@
       </section>` : ""}
     </div>`);
     Pomo.tickTime();
+    tickCountdowns();
     if (!drawn) return;
     wireTaskButtons(el);
     const fb = el.querySelector("[data-fact]");
@@ -902,6 +887,42 @@
     }).join("");
   }
 
+  // Lug'at vazifalari: one homework per vocabulary unit (hw_v_1a ... hw_v_2g, in that order), each open once the one before
+  // it is finished (the server checks the same).
+  const isVocabHw = (a) => String(a.id).startsWith("hw_v_");
+  function vocabPlan() {
+    const list = (Shell.data.assignments || []).filter(isVocabHw).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    let prevDone = true;
+    return list.map((a, i) => { const p = { asg: a, n: i + 1, done: !!a.my.done, open: prevDone }; prevDone = p.done; return p; });
+  }
+  const vocabName = (a) => String(a.title).replace(/^Lug'at \d+:\s*/, "");
+  function vocabToday(plan) {
+    const nv = plan.find((p) => !p.done);
+    if (!plan.length) return "";
+    if (!nv) return `<div class="hw-today is-vocab"><div class="hw-kicker">Barakalla!</div><h2>🎉 Barcha lug'at vazifalari bajarilgan</h2>
+      <p>Yangi so'zlar qo'shilganda yangi vazifalar ham chiqadi.</p></div>`;
+    const a = nv.asg;
+    return `<div class="hw-today is-vocab"><div class="hw-kicker">Keyingi lug'at vazifasi · ${html(a.weekLabel || "")}</div><h2>${html(vocabName(a))}</h2>
+      <p>${a.exercises.length} ta mashq · ${a.questionCount} ta savol</p>
+      <button type="button" class="l1-btn l1-btn-white l1-btn-sm" data-open-task="${html(a.id)}">${a.my.started ? "Davom etish" : "Boshlash"} →</button></div>`;
+  }
+  function vocabRows(plan) {
+    return plan.map((p) => {
+      const a = p.asg;
+      const state = p.done ? "is-done" : p.open ? "is-open" : "is-locked";
+      const sub = p.done ? `Bajarildi ✓ · ${a.my.points} ball`
+        : p.open ? (a.my.started ? `${a.my.resolved}/${a.my.total} savol bajarilgan` : `${a.exercises.length} ta mashq · ${a.questionCount} ta savol`)
+        : "Avval oldingi lug'at vazifasini tugating.";
+      return `<div class="hw-row ${state}" ${p.done || p.open ? `data-open-task="${html(a.id)}" role="button" tabindex="0"` : `data-hw-locked="vocab"`}>
+        <span class="hub-num ${p.done ? "is-done" : p.open ? "" : "is-locked"}">${p.done ? "✓" : p.open ? p.n : "🔒"}</span>
+        <span class="hub-body"><span class="hub-name">${html(vocabName(a))}</span><span class="hub-desc" style="display:block">${html(a.weekLabel || "")} · ${sub}</span></span>
+        <span class="hub-side">${p.done ? "" : p.open ? "›" : ""}</span></div>`;
+    }).join("");
+  }
+  let tasksSub = "grammar";
+  try { if (localStorage.getItem("l1_tasks_sub_v1") === "vocab") tasksSub = "vocab"; } catch (e) { /* first visit */ }
+
+  // Vazifalar: the teacher's tests with their time left on top, then the daily homework, Grammatika or Lug'at.
   function renderTasks() {
     const el = $("l1Tasks");
     if (!el || Shell.tab !== "tasks") return;
@@ -911,25 +932,45 @@
     const active = teacher.filter((a) => a.deadline > now).sort((a, b) => a.deadline - b.deadline);
     const past = teacher.filter((a) => a.deadline <= now);
     const plan = window.L1_Hub && all ? window.L1_Hub.plan() : [];
-    const doneN = plan.filter((p) => p.hwDone).length;
+    const vplan = all ? vocabPlan() : [];
+    const doneN = plan.filter((p) => p.hwDone).length, vDoneN = vplan.filter((p) => p.done).length;
     const banner = window.L1_Hub ? window.L1_Hub.shk("book", "homework", 121) : "";
-    if (!paint(el, `<div class="l1-page space-y-4">
-      ${banner}
-      ${all === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
-      ${homeworkToday(plan)}
-      ${plan.length ? `<details class="l1-card hw-rules text-[14px] font-bold">
+    const tests = all === null ? "" : `<section class="hw-tests">
+        <div class="flex items-center justify-between px-1"><div class="l1-h2">📝 Testlar</div>${active.length ? `<span class="l1-chip l1-chip-red">${active.length} ta</span>` : ""}</div>
+        ${active.length ? active.map((a) => taskCard(a)).join("") : `<div class="hw-tests-empty">Hozircha faol test yo'q. O'qituvchi test berganda shu yerda muddati bilan chiqadi.</div>`}</section>`;
+    const rules = `<details class="l1-card hw-rules text-[14px] font-bold">
         <summary><b class="text-[color:var(--l1-success)]">1-urinishda 25 ball</b><span class="hw-rules-more">Qoidalar</span></summary>
         <div class="hw-rules-body">2-urinishda 15 · 3–4-urinishda 5
-        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Vazifa dars → mashq → vazifa tartibida ochiladi, o'tkazib bo'lmaydi.</div></div></details>
+        <div class="l1-sub">2 ta xatodan keyin maslahat chiqadi. Grammatika vazifasi dars → mashq → vazifa tartibida, lug'at vazifalari ketma-ket ochiladi.</div></div></details>`;
+    const grammar = `${homeworkToday(plan)}${plan.length ? `${rules}
       <div class="flex items-center justify-between px-1"><div class="l1-h2">Barcha vazifalar</div><span class="l1-chip l1-chip-blue">${doneN}/${plan.length}</span></div>
-      <div class="hw-list">${homeworkRows(plan)}</div>` : ""}
-      ${active.length ? `<div class="l1-h2 px-1 pt-2">O'qituvchi vazifalari</div>${active.map((a) => taskCard(a)).join("")}` : ""}
-      ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan vazifalar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
-    </div>`)) return;
+      <div class="hw-list">${homeworkRows(plan)}</div>` : ""}`;
+    const vocab = `${vocabToday(vplan)}${vplan.length ? `
+      <div class="flex items-center justify-between px-1"><div class="l1-h2">Lug'at vazifalari</div><span class="l1-chip l1-chip-blue">${vDoneN}/${vplan.length}</span></div>
+      <div class="hw-list">${vocabRows(vplan)}</div>` : `<div class="hw-tests-empty">Lug'at vazifalari yuklanmoqda…</div>`}`;
+    const tabs = `<div class="hub-tabs hw-tabs">${[["grammar", "📘 Grammatika"], ["vocab", "📗 Lug'at"]].map(([k, n]) =>
+      `<button type="button" data-tsub="${k}" class="${k === tasksSub ? "is-active" : ""}">${n}</button>`).join("")}</div>`;
+    const drawn = paint(el, `<div class="l1-page space-y-4">
+      ${tests}
+      ${banner}
+      ${all === null ? `<div class="l1-skeleton" style="height:160px"></div><div class="l1-skeleton" style="height:160px"></div>` : ""}
+      ${all === null ? "" : tabs}
+      ${all === null ? "" : tasksSub === "vocab" ? vocab : grammar}
+      ${past.length ? `<div class="l1-h2 px-1 pt-2">O'tgan testlar</div>${past.map((a) => taskCard(a)).join("")}` : ""}
+    </div>`);
+    tickCountdowns(); // the time left is filled in here and every second, so the markup above stays the same
+    if (!drawn) return;
     wireTaskButtons(el);
+    el.querySelectorAll("[data-tsub]").forEach((b) => b.addEventListener("click", () => {
+      Haptic.tap();
+      tasksSub = b.dataset.tsub;
+      try { localStorage.setItem("l1_tasks_sub_v1", tasksSub); } catch (e) { /* private mode */ }
+      renderTasks();
+    }));
     el.querySelectorAll("[data-hw-locked]").forEach((b) => b.addEventListener("click", () => {
       const k = b.dataset.hwLocked;
-      if (typeof showToast === "function") showToast(k === "lesson" ? "🔒 Avval shu dars mavzusini o'zlashtiring." : k === "practice" ? "🔒 Avval dars mashqlarini tugating." : "🔒 Avval oldingi vazifani tugating.");
+      if (typeof showToast === "function") showToast(k === "lesson" ? "🔒 Avval shu dars mavzusini o'zlashtiring." : k === "practice" ? "🔒 Avval dars mashqlarini tugating."
+        : k === "vocab" ? "🔒 Avval oldingi lug'at vazifasini tugating." : "🔒 Avval oldingi vazifani tugating.");
     }));
     el.querySelectorAll("[data-hub]").forEach((b) => b.addEventListener("click", () => {
       Haptic.tap();
@@ -955,12 +996,22 @@
     sec = Math.max(0, Math.floor(sec));
     const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
     const p2 = (n) => String(n).padStart(2, "0");
-    return `${d}d : ${p2(h)}h : ${p2(m)}m : ${p2(s)}s`;
+    return d ? `${d} kun ${p2(h)}:${p2(m)}:${p2(s)}` : `${p2(h)}:${p2(m)}:${p2(s)}`;
   }
-  // Only a countdown on screen ticks: one in a hidden tab changed the page every second for nothing.
+  // The time left to a homework or test deadline: "2 kun 05:12", under a day "05:12:33".
+  function fmtDeadline(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const p2 = (n) => String(n).padStart(2, "0");
+    return d ? `${d} kun ${p2(h)}:${p2(m)}` : `${p2(h)}:${p2(m)}:${p2(s)}`;
+  }
+  // Only a countdown on screen ticks: one in a hidden tab changed the page every second for nothing. A text is written
+  // only when it changed.
   function tickCountdowns() {
     if (document.hidden) return;
-    document.querySelectorAll(".lb-count[data-end]").forEach((n) => { if (!n.closest(".hidden")) n.textContent = fmtLeft(Number(n.dataset.end) - nowTs()); });
+    const put = (n, text) => { if (!n.closest(".hidden") && n.textContent !== text) n.textContent = text; };
+    document.querySelectorAll(".lb-count[data-end]").forEach((n) => put(n, fmtLeft(Number(n.dataset.end) - nowTs())));
+    document.querySelectorAll(".l1-left[data-end]").forEach((n) => put(n, fmtDeadline(Number(n.dataset.end) - nowTs())));
   }
   setInterval(tickCountdowns, 1000);
 

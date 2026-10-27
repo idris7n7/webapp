@@ -177,6 +177,9 @@
       saveStorage("l1_student_ready_v2", true);
       await window.L1_REFRESH_STATE();
       updateAuthView();
+      // the sign-up form is long: without this the home page opened scrolled half-way down
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
       if (welcomeMsg) showToast(welcomeMsg);
     }
 
@@ -1293,6 +1296,39 @@
       });
     }
 
+    // The lesson pager: the track scrolls sideways one page at a time (swipe), the buttons and the bars follow it.
+    // After the last page "Tugatdim" brings the box with "Darsni o'zlashtirdim" into view.
+    function wireLessonPager(card) {
+      const track = card.querySelector(".lr-track");
+      if (!track) return;
+      const pages = track.children.length;
+      const steps = card.querySelectorAll(".lr-steps i");
+      const prev = card.querySelector('[data-lr="prev"]'), next = card.querySelector('[data-lr="next"]');
+      const count = card.querySelector(".lr-count b");
+      let at = 0;
+      const show = (i) => {
+        at = Math.max(0, Math.min(pages - 1, i));
+        steps.forEach((s, k) => { s.classList.toggle("is-on", k <= at); });
+        if (count) count.textContent = String(at + 1);
+        prev.disabled = at === 0;
+        next.textContent = at === pages - 1 ? "Tugatdim ✓" : "Keyingi ›";
+      };
+      const go = (i) => track.scrollTo({ left: Math.max(0, Math.min(pages - 1, i)) * track.clientWidth, behavior: "smooth" });
+      // the page under the middle of the track; the bars and the counter change only when it does
+      track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth)); if (i !== at) show(i); }, { passive: true });
+      prev.addEventListener("click", () => go(at - 1));
+      next.addEventListener("click", () => {
+        if (at < pages - 1) return go(at + 1);
+        const box = document.getElementById("lessonCompletionBox");
+        if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      track.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight") { e.preventDefault(); go(at + 1); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); go(at - 1); }
+      });
+      show(0);
+    }
+
     function openLessonReader(unitId) {
       let topic = null;
       let curSec = null;
@@ -1334,23 +1370,35 @@
       // Render Lesson Content Card (100% Verbatim from PDF)
       const card = document.getElementById("lessonContentCard");
       if (card) {
+        const hubLesson = window.L1_Hub ? window.L1_Hub.lessons().find(x => x.id === topic.id) : null;
+        // The grammar textbook (grammar_book.js) typesets the lesson text itself; the page pictures are the fallback.
+        const gbPages = window.L1_GrammarBook && window.L1_GrammarBook.has(topic.id) ? window.L1_GrammarBook.pages(topic.id) : null;
+        const bookPages = gbPages || topic.bookPages || [];
         let html = `
-          <div class="border-b border-slate-100 pb-4">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">${topic.badge || 'Dars'}</span>
-              <span class="text-xs font-bold text-slate-500">${curSec ? curSec.subtitle : (topic.week || 'Week')}</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 mt-2">${topic.title}</h1>
-            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">${topic.desc || ''}</p>
+          <div class="lr-hero">
+            <div class="lr-hero-top"><span class="lr-num">${hubLesson ? hubLesson.n + "-dars" : (topic.badge || 'Dars')}</span>
+              <span class="lr-week">${curSec ? curSec.subtitle : (topic.week || '')}</span></div>
+            <h1>${topic.title}</h1>
+            <p>${topic.desc || ''}</p>
+            <div class="lr-meta">${bookPages.length ? `<span>📄 ${bookPages.length} sahifa</span>` : ''}<span>${learned ? "✅ O'zlashtirilgan" : "⏳ O'rganilmoqda"}</span></div>
           </div>
         `;
 
-        if (topic.bookPages && topic.bookPages.length > 0) {
-          // The teacher's grammar book, page by page, exactly as designed.
-          html += `<div class="space-y-4 pt-2">` + topic.bookPages.map((src, i) => `
-            <figure class="m-0 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-              <img src="${src}" alt="${topic.title} — ${i + 1}-bet" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" class="block w-full h-auto" />
-            </figure>`).join('') + `</div>`;
+        if (bookPages.length > 0) {
+          // The lesson's pages one at a time, like an app: swipe or use the buttons. The pictures are the cleaned copies
+          // (tools/clean_book_pages.py: no running header, page number or thumb tab of the printed book), so the pages
+          // are counted from 1 in every lesson; the original picture stands in when a cleaned copy is missing.
+          const appPage = (src) => src.replace("/img/grammar/", "/img/grammar_app/");
+          html += `<div class="lr-pager">
+            <div class="lr-steps" aria-hidden="true">${bookPages.map((_, i) => `<i class="${i === 0 ? 'is-on' : ''}"></i>`).join('')}</div>
+            <div class="lr-track" tabindex="0" aria-label="Dars sahifalari">${gbPages ? gbPages.join('') : bookPages.map((src, i) => `
+              <figure class="lr-page"><img src="${appPage(src)}" data-orig="${src}" alt="${topic.title}: ${i + 1}-sahifa" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"
+                onerror="if(this.dataset.orig&&this.src.indexOf('/grammar_app/')>-1){this.src=this.dataset.orig}" /></figure>`).join('')}
+            </div>
+            <div class="lr-nav"><button type="button" class="lr-btn" data-lr="prev" disabled>‹ Oldingi</button>
+              <span class="lr-count"><b>1</b> / ${bookPages.length}</span>
+              <button type="button" class="lr-btn is-next" data-lr="next">${bookPages.length > 1 ? 'Keyingi ›' : 'Tugatdim ✓'}</button></div>
+          </div>`;
         } else if (topic.pages && topic.pages.length > 0) {
           html += `<div class="space-y-6 pt-2">`;
           topic.pages.forEach((p, pIdx) => {
@@ -1554,6 +1602,10 @@
         }
 
         card.innerHTML = html;
+        card.classList.toggle("lr-card", bookPages.length > 0);
+        card.classList.remove("gb-on");
+        wireLessonPager(card);
+        if (gbPages) window.L1_GrammarBook.wire(card);
       }
 
       // Render Bottom Action Box with Next/Prev and Practice Navigation

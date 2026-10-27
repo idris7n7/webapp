@@ -7,16 +7,21 @@ database and the Telegram bot. It runs on a VPS, Render, Railway, DigitalOcean, 
 - `server.py` — web server + REST API + Telegram bot.
 - `manage.py` — admin helper: list users, set a password, approve/decline, sign a user out.
 - `static/index.html` + `static/*.js` — the Mini App frontend (units, flashcards, practice suites, teacher dashboard).
-- `race_engine.py` — the server-side rules of **Word Race** (track, speeds, bots, answer checking).
+- `static/arcade_data.js` — the arcade games' content: grammar questions (A1, A2, B1+) with Uzbek explanations, the picture vocabulary (IPA, example, living or not) and the River Crossing errands. Strict JSON after `window.ARCADE_DATA =`: the server reads it to grade answers.
 - `exercises_data.json` — the workbook exercises (teachers can add more from the dashboard; those are stored in the database). Students find them under **Mashq qilish → Mavzu Mashqlari**: per unit once its lesson is learned, plus **Qo'shimcha mashqlar** (vocabulary, final tests, teacher-made) which are always open.
 - `green_city.py` — the planting rules of **Yashil shahar** (where a tree may stand, the 2 m distance).
-- `static/*_data.js`, `static/green_zones.json` — generated content (units, flashcards, Millioner questions, Listen and Survive missions, the green ground of the map). Do not edit by hand; change the script in `tools/` and run it again.
+- `static/*_data.js`, `static/green_zones.json` — generated content (units, flashcards, the green ground of the map). Do not edit by hand; change the script in `tools/` and run it again.
 - `tools/` — the scripts that generate that content (`python tools/<name>.py`, from the app folder). `extract_books.py` needs the teacher's PDF books and `pip install pymupdf pillow`.
 - `tests/` — automated tests (`python -m unittest discover -s tests -v`).
 - `Dockerfile`, `.dockerignore`, `Procfile`, `render.yaml`, `.env.example` — deployment.
 
 ## Games
-**Dragon chase** (answer to run away from the dragon), **Millioner** (a TV-studio quiz; its music and sounds are generated in the browser, nothing is recorded or copied), **Word Race** (against bots or up to 4 friends, over a WebSocket; invites go through the Telegram bot) and **Listen and Survive** (5 listening missions, the browser reads the English with its own speech voice). All games share one vocabulary memory (Leitner boxes) and earn at most 50 points a day.
+Four arcade games on the O'yinlar tab (`static/arcade_core.js` + `game_wordrun.js`, `game_penalty.js`, `game_ninja.js`, `game_river.js`, pictures from the art packs in `static/arcade/`):
+- **Shakespeare's Word Run** — swipe between lanes to collect English word coins (10 points each); a grammar question at a red light after every 10 coins; a wrong answer ends in a cartoon car bump, ten right answers bring him home to Kungil Koʻchasi 17-uy.
+- **Penalti** — landscape. Pick a kicker and a keeper (made-up characters and Shakespeare), choose an answer, press *Tayyorman!*, the referee whistles, swipe the ball to the answer on the goal: right = goal, wrong = save. 10 rounds; goals, saves and accuracy are kept apart.
+- **Word Ninja** — an Uzbek word, pictures fall from the top, swipe the right one (+10, wrong −5). Living things are never cut: a cartoon glove taps them. 20 words.
+- **Daryodan o'tish — Jigar!** — an Uzbek errand, pick the needed things at the market and row them home (3 per trip). 20 things.
+The server grades every session (`/api/arcade/start`, `/api/arcade/finish`, one report per session id, retried by the page's outbox until it arrives) and pays the game points into the rating within the daily cap of **50** (`GAME_DAILY_POINTS_CAP`). Collected words can be saved to the shared **Word Coin Dictionary** (`/api/dictionary/save`): +20 points the first time a student saves a word, from any game, and the word joins the spaced-repetition memory (`word_progress`), reviewed on the dictionary page. Question accuracy is stored apart from the points. The art packs' original prompts and rules are kept outside the app; the build script that cuts their sheets writes `static/arcade/sprites.js`.
 
 ## Pomodoro and Yashil shahar
 A small tomato floats over every screen. One finished 25-minute Pomodoro earns **one tree**, which the student plants on the shared map **Yashil shahar**:
@@ -55,7 +60,7 @@ and run `python tools/extract_books.py` then `python tools/add_card_images.py`.
 
 Frontend files: `static/app_theme.css` (design), `static/l1_core.js` (Telegram Mini App integration,
 haptics, sounds, Teacher Idris: a canvas rig that breathes, blinks and moves the hand/arm of each scene), `static/app_shell.js` (header, bottom navigation, Home/Tasks/Rating),
-`static/l1_tasks.js` (task runner and teacher panel), `static/games_engine.js` (games), `static/idris/`
+`static/l1_tasks.js` (task runner and teacher panel), `static/arcade_core.js` (games), `static/idris/`
 (Teacher Idris cut-outs).
 
 ## Accounts and roles
@@ -100,7 +105,7 @@ locked automatically at startup. Give them a new password with `set-password`.
 `POST /api/submit`, `POST /api/exercises` (staff), `POST /api/students` (staff),
 `POST /api/students/delete` (admin), `POST /api/user_status` (admin), `GET /healthz`,
 `GET /api/assignments`, `GET /api/assignments/{id}`, `POST /api/assignments/answer`,
-`POST /api/assignments|/update|/delete` (staff), `GET /api/leaderboard?period=week|all`, `POST /api/game/finish`.
+`POST /api/assignments|/update|/delete` (staff), `GET /api/leaderboard?period=week|all`, `POST /api/game/finish`, `POST /api/arcade/start|finish`, `GET /api/arcade/summary`, `GET /api/dictionary`, `POST /api/dictionary/save`.
 
 ## Data persistence
 The database is one SQLite file (`level_one.db`, or `DB_PATH`). Containers and free cloud tiers
@@ -121,16 +126,9 @@ otherwise the data disappears on every redeploy. The Dockerfile expects a volume
 - **/static/** serves only real site file types; backup files are refused. Old backups now live in `_old_backups` outside the app folder.
 
 
-## 3D graphics (Word Race and Listen and Survive)
-Both games draw real 3D scenes with Three.js. The code is in `tools/3d_src/` and is bundled into `static/l1_3d.js` (loaded by `index.html`).
-- `race3d.ts` — Word Race: a race track with kerbs, grandstand, billboards, start lights, chase camera, speed lines and boost effects. `games_wordrace.js` feeds it the cars' positions and speeds from the server.
-- `listen3d.ts`, `models.ts`, `chars.ts` — Listen and Survive: one 3D scene per mission (burning office, night camp, airport, police line-up, timed workshop). The missions, questions, hearts and stars are unchanged; the player now taps 3D objects instead of emoji tiles.
-- If a device has no WebGL, both games fall back to the old 2D lanes and emoji tiles automatically.
-- Rebuild after changing the sources: `cd tools/3d_src && npm install && npm run build`.
-
 ## Speed, offline use and backups
 - **CSS and fonts are built or bundled, never loaded from a CDN.** After adding Tailwind classes to `index.html` or a script, run `npm install` once and then `npm run build` in `tools/tailwind/` (it writes `static/tailwind.css`; bump its `?v=` in `index.html`). Fonts are in `static/fonts/` (`fonts.css`).
-- **The games load on first use.** `static/student_features.js` (`L1_Lazy`) downloads the four games and the 3D engine when a game is opened (or when the browser has been idle for a few seconds). A new game script goes into that list, not into `index.html`.
+- **The games load on first use.** `static/student_features.js` (`L1_Lazy`) runs the arcade games' scripts when the Games tab opens (when the browser is idle they are only downloaded). A new game script goes into that list, not into `index.html`.
 - **The server gzips text files** (kept in memory) and sends ETags, so a returning visitor gets `304`s. Pages carry a Content-Security-Policy that only allows this server and `telegram.org`.
 - **`/sw.js` is a service worker** that keeps versioned files, fonts and pictures for offline use. Bump `CACHE` in `static/sw.js` if you ever change its rules. It works only over https or on localhost.
 - **Database backups:** every 6 hours the server copies the database to `backups/` next to it (`BACKUP_DIR` to change, newest 14 kept). Copy that folder off the computer now and then.

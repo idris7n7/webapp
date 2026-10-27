@@ -216,6 +216,43 @@
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
   // ------------------------------------------------------------------ views
+  // "Davom etamiz": the next lesson with the whole course's progress and one big button.
+  function continueCard() {
+    const L = lessons();
+    if (!L.length) return "";
+    const done = L.filter((l) => learned(l.id)).length;
+    const next = nextLesson();
+    const bar = `<div class="hub-go-bar"><i style="width:${pct(done, L.length)}%"></i></div><div class="hub-go-count">${done} / ${L.length} dars o'zlashtirildi</div>`;
+    if (!next) return `<div class="hub-go is-done"><div class="hub-go-kicker">Barakalla!</div><h2>🎉 Hamma darslar o'zlashtirildi</h2>${bar}
+      <button type="button" class="hub-go-btn" data-act="lesson" data-id="${html(L[0].id)}">📖 Takrorlash</button></div>`;
+    const l = next.lesson;
+    return `<div class="hub-go"><div class="hub-go-kicker">Davom etamiz · ${l.week}-hafta</div><h2>${l.n}-dars: ${html(l.title)}</h2>
+      <p>${html(l.desc)}</p>${bar}
+      <button type="button" class="hub-go-btn" data-act="lesson" data-id="${html(l.id)}">▶ Darsni boshlash</button></div>`;
+  }
+
+  // The grammar lessons as a winding path, week by week: done ✓, the current one pulses, the later ones are locked.
+  const PATH_X = [0, 34, 52, 34, 0, -34, -52, -34];
+  function lessonPath() {
+    const L = lessons();
+    const current = nextLesson();
+    return weekNumbers(L).map((w) => {
+      const ls = L.filter((l) => l.week === w);
+      const doneN = ls.filter((l) => learned(l.id)).length;
+      const nodes = ls.map((l) => {
+        const idx = L.indexOf(l);
+        const open = idx === 0 || learned(L[idx - 1].id), isDone = learned(l.id), isCur = current && current.lesson.id === l.id;
+        const st = isDone ? "is-done" : isCur ? "is-current" : open ? "" : "is-locked";
+        return `<div class="hub-step ${st}" style="--x:${PATH_X[idx % PATH_X.length]}px">
+          <button type="button" class="hub-step-dot" data-act="${open ? "lesson" : "locked"}" data-id="${html(l.id)}" aria-label="${l.n}-dars: ${html(l.title)}">
+            <span>${isDone ? "✓" : open ? l.n : "🔒"}</span></button>
+          <span class="hub-step-name">${html(l.title)}</span>${isCur ? `<span class="hub-step-tag">Boshlash</span>` : ""}</div>`;
+      }).join("");
+      return `<section class="hub-path-week"><div class="hub-path-head"><b>${w}-Hafta</b><span>${doneN} / ${ls.length}</span></div>
+        <div class="hub-path">${nodes}</div></section>`;
+    }).join("");
+  }
+
   function viewRoot() {
     const learnMode = H.mode === "learn";
     const sub = H.sub[H.mode];
@@ -224,7 +261,8 @@
       : [["grammar", "📘 Grammatika"], ["vocab", "📗 Lug'at"]];
     const kind = (learnMode ? "learn-" : "practice-") + sub;
     let weeks = "";
-    if (sub === "grammar") {
+    if (learnMode && sub === "grammar") weeks = lessonPath();
+    else if (sub === "grammar") {
       const L = lessons();
       weeks = weekNumbers(L).map((w) => {
         const ls = L.filter((l) => l.week === w);
@@ -247,8 +285,9 @@
     return `${shk(learnMode ? "glasses" : "desk", learnMode ? "learn" : "practice", 121)}
       <div class="hub-modes"><button type="button" data-act="mode" data-v="learn" class="${learnMode ? "is-active" : ""}">📖 O'rganish</button>
         <button type="button" data-act="mode" data-v="practice" class="${learnMode ? "" : "is-active"}">✍️ Mashq qilish</button></div>
+      ${learnMode ? continueCard() : ""}
       <div class="hub-tabs">${tabs.map(([k, n]) => `<button type="button" data-act="sub" data-v="${k}" class="${k === sub ? "is-active" : ""}">${n}</button>`).join("")}</div>
-      <div class="hub-weeks">${weeks}</div>`;
+      <div class="hub-weeks${learnMode && sub === "grammar" ? " is-path" : ""}">${weeks}</div>`;
   }
 
   function viewWeek(p) {

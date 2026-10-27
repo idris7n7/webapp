@@ -52,7 +52,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qsl
 
-from aiohttp import WSMsgType, web, web_fileresponse
+from aiohttp import web, web_fileresponse
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -68,7 +68,6 @@ from telegram.ext import (
 )
 
 import green_city
-import race_engine
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,6 +127,7 @@ EXERCISES_JSON_PATH = os.path.join(BASE_DIR, "exercises_data.json")
 # The grammar lessons in teaching order, each with the workbook exercises that become its daily homework.
 HOMEWORK_UNITS_PATH = os.path.join(BASE_DIR, "homework_units.json")
 HOMEWORK_PREFIX = "hw_"
+VOCAB_HOMEWORK = True  # the vocabulary workbook is daily homework too, one per unit (hw_v_<unit>); the tests switch it off
 HOMEWORK_DEADLINE = 4102444800  # 2100-01-01: daily homework never expires
 # Windows' registry has no entry for .webp (the book pages and photos), and aiohttp keeps its own MimeTypes table.
 mimetypes.add_type("image/webp", ".webp")
@@ -392,30 +392,59 @@ def homework_units() -> list:
         return []
 
 
-def ensure_homework(conn: sqlite3.Connection) -> None:
-    """One permanent, server-graded homework per lesson (id hw_<lesson id>); students meet them in lesson order."""
-    for unit in homework_units():
-        asg_id = HOMEWORK_PREFIX + unit["id"]
-        fields = (
-            f"{unit['number']}-dars: {unit['title']}", f"{unit.get('week', '')} · {unit['number']}-dars",
-            json.dumps(unit["exerciseIds"]),
+_VOCAB_EXERCISE_RE = re.compile(r"^v(\d+)_([a-z0-9]+)_\d+$")
+
+
+def vocab_homework_units() -> list:
+    """The vocabulary workbook (exercises v<week>_<unit>_<n>) as one homework per unit, in week and unit order.
+
+    Their ids are v_<unit> (homework hw_v_1a ... hw_v_2g): the Lug'at half of Vazifalar, next to the grammar lessons."""
+    if not VOCAB_HOMEWORK:
+        return []
+    units = {}
+    for ex in load_base_exercises():
+        m = _VOCAB_EXERCISE_RE.match(str(ex.get("id", "")))
+        if ex.get("category") != "vocabulary" or not m:
+            continue
+        week, part = int(m.group(1)), m.group(2)
+        key = part if part[:1].isdigit() else f"{week}{part}"
+        unit = units.setdefault(key, {"id": "v_" + key, "week": week, "part": str(ex.get("part") or ""), "exerciseIds": []})
+        unit["exerciseIds"].append(ex["id"])
+    out = sorted(units.values(), key=lambda u: (u["week"], u["part"]))  # "Part A", "Part B-C", "Part D" ...
+    for n, unit in enumerate(out, 1):
+        unit["number"] = n
+        unit["title"] = unit["part"].split("·", 1)[-1].strip() or unit["id"]
+    return out
+
+
+def _put_homework(conn: sqlite3.Connection, asg_id: str, title: str, week_label: str, exercise_ids: list) -> None:
+    fields = (title, week_label, json.dumps(exercise_ids))
+    if conn.execute("SELECT 1 FROM assignments WHERE id = ?", (asg_id,)).fetchone():
+        conn.execute("UPDATE assignments SET title = ?, week_label = ?, exercise_ids_json = ? WHERE id = ?", (*fields, asg_id))
+    else:
+        # announced / reminded / summarized = 1: the bot never sends messages for these
+        conn.execute(
+            "INSERT INTO assignments (id, title, week_label, note, exercise_ids_json, starts_at, deadline, created_by, "
+            "created_at, announced, reminded, summarized) VALUES (?, ?, ?, '', ?, 0, ?, 'system', ?, 1, 1, 1)",
+            (asg_id, fields[0], fields[1], fields[2], HOMEWORK_DEADLINE, int(time.time())),
         )
-        if conn.execute("SELECT 1 FROM assignments WHERE id = ?", (asg_id,)).fetchone():
-            conn.execute(
-                "UPDATE assignments SET title = ?, week_label = ?, exercise_ids_json = ? WHERE id = ?", (*fields, asg_id)
-            )
-        else:
-            # announced / reminded / summarized = 1: the bot never sends messages for these
-            conn.execute(
-                "INSERT INTO assignments (id, title, week_label, note, exercise_ids_json, starts_at, deadline, created_by, "
-                "created_at, announced, reminded, summarized) VALUES (?, ?, ?, '', ?, 0, ?, 'system', ?, 1, 1, 1)",
-                (asg_id, fields[0], fields[1], fields[2], HOMEWORK_DEADLINE, int(time.time())),
-            )
+
+
+def ensure_homework(conn: sqlite3.Connection) -> None:
+    """One permanent, server-graded homework per lesson (id hw_<lesson id>) and per vocabulary unit (hw_v_<unit>);
+    students meet each kind in its own order."""
+    for unit in homework_units():
+        _put_homework(conn, HOMEWORK_PREFIX + unit["id"], f"{unit['number']}-dars: {unit['title']}",
+                      f"{unit.get('week', '')} · {unit['number']}-dars", unit["exerciseIds"])
+    for unit in vocab_homework_units():
+        _put_homework(conn, HOMEWORK_PREFIX + unit["id"], f"Lug'at {unit['number']}: {unit['title']}",
+                      f"{unit['week']}-hafta · Lug'at", unit["exerciseIds"])
 
 
 def previous_homework_open(conn: sqlite3.Connection, student_id: str, asg_id: str) -> bool:
-    """True when the homework before this one (in lesson order) is not finished yet."""
-    order = [HOMEWORK_PREFIX + u["id"] for u in homework_units()]
+    """True when the homework before this one (in lesson order, or in vocabulary unit order) is not finished yet."""
+    orders = ([HOMEWORK_PREFIX + u["id"] for u in homework_units()], [HOMEWORK_PREFIX + u["id"] for u in vocab_homework_units()])
+    order = next((o for o in orders if asg_id in o), [])
     if asg_id not in order or order.index(asg_id) == 0:
         return False
     prev = get_assignment(conn, order[order.index(asg_id) - 1])
@@ -594,6 +623,46 @@ def init_db() -> None:
                 polygon TEXT NOT NULL,
                 created_by TEXT NOT NULL,
                 created_at INTEGER NOT NULL
+            );
+
+            -- Arcade games: one row per played session (the id is made by the page, so a retried report is recognised).
+            -- score = the game's own points; awarded = what reached the rating (daily game cap); attempts/correct are
+            -- the answered questions, kept apart from the points.
+            CREATE TABLE IF NOT EXISTS arcade_sessions (
+                id TEXT PRIMARY KEY,
+                student_id TEXT NOT NULL,
+                game TEXT NOT NULL,
+                level TEXT NOT NULL DEFAULT 'A1',
+                started_at INTEGER NOT NULL,
+                finished_at INTEGER,
+                outcome TEXT NOT NULL DEFAULT '',
+                score INTEGER NOT NULL DEFAULT 0,
+                awarded INTEGER NOT NULL DEFAULT 0,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                correct INTEGER NOT NULL DEFAULT 0,
+                stats_json TEXT NOT NULL DEFAULT '{}'
+            );
+            CREATE INDEX IF NOT EXISTS idx_arcade_student ON arcade_sessions (student_id, game);
+
+            -- The words a finished session collected: only these can be saved from that session.
+            CREATE TABLE IF NOT EXISTS arcade_words (
+                session_id TEXT NOT NULL,
+                student_id TEXT NOT NULL,
+                word_id TEXT NOT NULL,
+                n INTEGER NOT NULL DEFAULT 1,
+                PRIMARY KEY (session_id, word_id)
+            );
+
+            -- The shared Word Coin Dictionary: a word is saved once per student, whichever game it came from.
+            CREATE TABLE IF NOT EXISTS word_dictionary (
+                student_id TEXT NOT NULL,
+                word_id TEXT NOT NULL,
+                game TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                req TEXT NOT NULL DEFAULT '',
+                bonus INTEGER NOT NULL DEFAULT 0,
+                saved_at INTEGER NOT NULL,
+                PRIMARY KEY (student_id, word_id)
             );
             """
         )
@@ -1828,6 +1897,12 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
     all_rank = ranked(students, all_points)
     me_week = next((e for e in week_rank if e["id"] == user["id"]), None)
     me_all = next((e for e in all_rank if e["id"] == user["id"]), None)
+
+    # With no points a student has no place: everyone on 0 shares one rank (2nd when one student scored), and that
+    # gave a brand-new student the "top 3 of the week" badge.
+    def place(entry):
+        return entry["rank"] if entry and entry["points"] > 0 else None
+
     return web.json_response({
         "period": period,
         "weekStart": week_start,
@@ -1837,10 +1912,10 @@ async def handle_leaderboard(request: web.Request) -> web.Response:
             "id": user["id"],
             "weekPoints": week_points.get(user["id"], 0),
             "allPoints": all_points.get(user["id"], 0),
-            "weekRank": me_week["rank"] if me_week else None,
+            "weekRank": place(me_week),
             "monthPoints": month_points.get(user["id"], 0),
-            "monthRank": me_month["rank"] if me_month else None,
-            "allRank": me_all["rank"] if me_all else None,
+            "monthRank": place(me_month),
+            "allRank": place(me_all),
             "streak": streak,
             "students": len(students),
             "gameToday": game_today,
@@ -1915,27 +1990,33 @@ async def handle_game_finish(request: web.Request) -> web.Response:
 # Shared vocabulary memory
 # ---------------------------------------------------------------------------
 _WORDS_CACHE = {"mtime": None, "ids": frozenset()}
-_GLOSSARY_CACHE = {"mtime": None, "words": {}}
+_ARCADE_CACHE = {"mtime": None, "data": {"vocab": {}, "grammar": {}, "river": {}}}
 
 
-def load_glossary() -> dict:
-    """The words the Listen and Survive missions teach (static/listen_data.js), by id (they start with 'ls_')."""
-    path = os.path.join(STATIC_DIR, "listen_data.js")
+def load_arcade() -> dict:
+    """The arcade games' content (static/arcade_data.js): vocab, grammar and river missions, each by id."""
+    path = os.path.join(STATIC_DIR, "arcade_data.js")
     try:
         mtime = os.path.getmtime(path)
     except OSError:
-        return {}
-    if _GLOSSARY_CACHE["mtime"] != mtime:
-        words = {}
+        return _ARCADE_CACHE["data"]
+    if _ARCADE_CACHE["mtime"] != mtime:
+        data = {"vocab": {}, "grammar": {}, "river": {}}
         try:
             with open(path, encoding="utf-8") as f:
                 text = f.read()
-            items, _ = json.JSONDecoder().raw_decode(text[text.index("[", text.index("LISTEN_GLOSSARY")):])
-            words = {w["id"]: w for w in items if isinstance(w, dict) and isinstance(w.get("id"), str)}
+            raw, _ = json.JSONDecoder().raw_decode(text[text.index("{", text.index("ARCADE_DATA =")):])
+            for key in data:
+                data[key] = {x["id"]: x for x in raw.get(key, []) if isinstance(x, dict) and isinstance(x.get("id"), str)}
         except (OSError, ValueError, KeyError):
-            logger.warning("Could not read the Listen and Survive glossary", exc_info=True)
-        _GLOSSARY_CACHE.update(mtime=mtime, words=words)
-    return _GLOSSARY_CACHE["words"]
+            logger.warning("Could not read the arcade game content", exc_info=True)
+        _ARCADE_CACHE.update(mtime=mtime, data=data)
+    return _ARCADE_CACHE["data"]
+
+
+def load_glossary() -> dict:
+    """Words the memory tracks besides the flashcards: the arcade vocabulary (the Word Coin Dictionary's words)."""
+    return load_arcade()["vocab"]
 
 
 def load_word_ids() -> frozenset:
@@ -1990,8 +2071,9 @@ def record_word_result(conn, student_id: str, word_id: str, ok: bool, source: st
 
 
 def word_memory(conn, student_id: str, now: int) -> dict:
-    """Every word's state. The counts are for the flashcard words (the course); the mission glossary has its own counts."""
-    ids, gids = load_word_ids(), set(load_glossary())
+    """Every word's state. The counts are for the flashcard words (the course); the arcade words have their own counts."""
+    ids = load_word_ids()
+    gids = set(load_glossary()) - ids
     words, counts, gcounts = {}, {"mastered": 0, "review": 0, "learning": 0}, {"mastered": 0, "review": 0, "learning": 0}
     for r in conn.execute("SELECT * FROM word_progress WHERE student_id = ?", (student_id,)).fetchall():
         wid = r["word_id"]
@@ -2298,8 +2380,25 @@ def read_coordinates(data: dict) -> tuple:
     return round(lat, 7), round(lon, 7)
 
 
+_PLACE_CACHE = {"key": None, "progress": None}
+
+
+def green_place_progress(conn) -> dict:
+    """How full Asaka's places are and which one is open (green_city.Zones.progress). Planted and wilted trees both
+    fill a place; the answer is kept until a tree is planted, wilts or comes back."""
+    row = conn.execute(
+        "SELECT COUNT(*), MAX(updated_at), MAX(id) FROM green_trees WHERE state IN ('planted', 'wilted')"
+    ).fetchone()
+    key = (tuple(row), id(GREEN_ZONES.places()))
+    if _PLACE_CACHE["key"] != key:
+        trees = conn.execute("SELECT lat, lon FROM green_trees WHERE state IN ('planted', 'wilted')").fetchall()
+        _PLACE_CACHE.update(key=key, progress=GREEN_ZONES.progress((r["lat"], r["lon"]) for r in trees))
+    return _PLACE_CACHE["progress"]
+
+
 def judge_green_spot(conn, lat: float, lon: float, exclude_id=None) -> dict:
-    """May a tree stand here? Checks the ground first, then the 2 m rule against every planted or wilted tree."""
+    """May a tree stand here? Checks the ground first (roads, buildings, the open place), then the 2 m rule against
+    every planted or wilted tree."""
     rings = custom_green_rings(conn)
     if not GREEN_ZONES.available() and not rings:
         raise ApiError("Yashil hududlar ma'lumoti topilmadi.", 503)
@@ -2311,7 +2410,7 @@ def judge_green_spot(conn, lat: float, lon: float, exclude_id=None) -> dict:
     ).fetchall()
     near = [r for r in near if r["id"] != exclude_id]
     distance, hit = green_city.nearest_tree(lat, lon, near)
-    verdict = GREEN_ZONES.judge(lat, lon, rings)
+    verdict = GREEN_ZONES.judge(lat, lon, rings, open_place=green_place_progress(conn)["open"])
     out = {"ok": False, "code": verdict, "distance": None if distance is None else round(distance, 2),
            "nearest": None if hit is None else {"by": hit["owner"] or "", "kind": hit["kind"], "state": hit["state"]}}
     if verdict != "ok":
@@ -2452,11 +2551,17 @@ async def handle_green_city(request: web.Request) -> web.Response:
                  for z in conn.execute("SELECT * FROM green_zones ORDER BY id")]
         counts = green_counts(conn, user["id"])
         today = focus_done_today(conn, user["id"], now)
+        progress = green_place_progress(conn)
+        places = GREEN_ZONES.places()
         payload = {
             "trees": [tree_view(r, r["name"] or "") for r in rows],
             "cityTrees": planted, "cityWilted": wilted, "todayTrees": today, "dailyTrees": FOCUS_DAILY_TREES,
             "week": board(week_start_ts(now)), "all": board(0), "zones": zones, "now": now, "meId": user["id"],
             "minDistance": green_city.MIN_DISTANCE_M, "prices": green_city.PRICES,
+            # the places of Asaka in filling order (green_zones.json indexes), the trees each takes and has
+            "places": {"order": [i for i, _ in places], "caps": [c for _, c in places], "open": progress["open"],
+                       "counts": {str(k): v for k, v in progress["counts"].items()}, "full": progress["full"], "total": progress["total"]},
+            "region": green_city.region_view(progress),
             "isAdmin": user["role"] == "admin", **counts,
         }
     return web.json_response(payload)
@@ -2502,389 +2607,297 @@ async def handle_green_zone_delete(request: web.Request) -> web.Response:
 
 
 # ---------------------------------------------------------------------------
-# Listen and Survive: mission results
+# Arcade games (Word Run, Penalty Kicks, Word Ninja, River Crossing) and the shared Word Coin Dictionary
 # ---------------------------------------------------------------------------
-LISTEN_MISSIONS = ("escape", "camp", "airport", "detective", "timed")
-LISTEN_DIFFICULTIES = ("easy", "normal", "hard")
-LISTEN_MIN_SECONDS_PER_STEP = 4
-LISTEN_POINTS_PER_CORRECT, LISTEN_MAX_CORRECT_POINTS, LISTEN_POINTS_PER_STAR = 2, 10, 5
+# A game opens a session (/api/arcade/start) and reports it once at the end (/api/arcade/finish). The server grades the
+# answers against static/arcade_data.js, works out the game points and pays them into the rating within the daily game
+# cap. Collected words can then be saved, once per student, into the Word Coin Dictionary (+20 points the first time),
+# which also puts them into the shared spaced-repetition memory (word_progress).
+ARCADE_GAMES = ("wordrun", "penalty", "ninja", "river")
+ARCADE_LEVELS = ("A1", "A2", "B1")
+ARCADE_POINTS = {
+    "coin": 10,          # Word Run: every collected word coin
+    "goal": 10,          # Penalty Kicks: every goal (a right answer)
+    "ninja_right": 10,   # Word Ninja: the right picture
+    "ninja_wrong": 5,    # Word Ninja: taken off for a wrong picture (a session never goes below 0)
+    "river_right": 10,   # River Crossing: a needed item brought home
+    "river_wrong": 5,    # River Crossing: taken off for an item that was not needed
+}
+DICTIONARY_SAVE_BONUS = 20
+WORDRUN_COINS_PER_LIGHT, WORDRUN_LIGHTS = 10, 10
+PENALTY_ROUNDS, NINJA_CHALLENGES, RIVER_ITEMS, RIVER_MAX_WRONG = 10, 20, 20, 60
+# A real game takes time: at least this many seconds per coin / round / challenge / item before a report is believed.
+ARCADE_MIN_SECONDS = {"wordrun": 0.5, "penalty": 2, "ninja": 1.5, "river": 1.5}
+_SESSION_ID_RE = re.compile(r"[A-Za-z0-9_-]{8,40}")
 
 
-def listen_stars(correct: int, steps: int, hearts: int) -> int:
-    """3 stars for a perfect mission, 2 for at least 80%, 1 for at least 60%; none when all the hearts were lost."""
-    if hearts <= 0:
-        return 0
-    if correct >= steps:
-        return 3
-    ratio = correct / steps
-    return 2 if ratio >= 0.8 else 1 if ratio >= 0.6 else 0
+def arcade_level(level) -> str:
+    """The content level for a student level: A1, A2 (also A2+), or B1 for everything above."""
+    level = str(level or "A1").upper()
+    if level.startswith("A1"):
+        return "A1"
+    if level.startswith("A2"):
+        return "A2"
+    return "B1"
 
 
-def listen_progress(conn, student_id: str) -> dict:
+def _ints(values, lo, hi) -> bool:
+    return all(isinstance(v, int) and not isinstance(v, bool) and lo <= v <= hi for v in values)
+
+
+def grade_arcade(game: str, data: dict) -> dict:
+    """Checks a finished game against the rules and the answer keys; returns score, counts and the collected words.
+    Raises ApiError for a report that no real game could produce."""
+    content = load_arcade()
+    vocab, grammar = content["vocab"], content["grammar"]
+    bad = ApiError("Natija noto'g'ri.")
+
+    def word_ids(key, limit):
+        items = data.get(key)
+        if not isinstance(items, list) or len(items) > limit or any(w not in vocab for w in items):
+            raise bad
+        return items
+
+    def graded_questions(items, limit):
+        if not isinstance(items, list) or len(items) > limit:
+            raise bad
+        out, seen = [], set()
+        for it in items:
+            if not isinstance(it, dict) or it.get("q") not in grammar or it["q"] in seen or not _ints([it.get("c")], 0, 2):
+                raise bad
+            seen.add(it["q"])
+            out.append(grammar[it["q"]]["a"] == it["c"])
+        return out
+
+    if game == "wordrun":
+        coins = word_ids("coins", WORDRUN_COINS_PER_LIGHT * WORDRUN_LIGHTS)
+        oks = graded_questions(data.get("answers"), WORDRUN_LIGHTS)
+        # the run stops at the first wrong answer; every red light comes after exactly ten coins
+        if any(not ok for ok in oks[:-1]):
+            raise bad
+        n = len(oks)
+        lost = bool(oks) and not oks[-1]
+        top = WORDRUN_COINS_PER_LIGHT * n if (lost or n == WORDRUN_LIGHTS) else WORDRUN_COINS_PER_LIGHT * (n + 1)
+        if not (WORDRUN_COINS_PER_LIGHT * n <= len(coins) <= top):
+            raise bad
+        correct = sum(oks)
+        outcome = "win" if correct == WORDRUN_LIGHTS else "lose" if lost else "quit"
+        return {"score": ARCADE_POINTS["coin"] * len(coins), "attempts": n, "correct": correct, "outcome": outcome,
+                "units": max(1, len(coins)), "words": coins, "stats": {"coins": len(coins)}}
+    if game == "penalty":
+        rounds = data.get("rounds")
+        oks = graded_questions(rounds, PENALTY_ROUNDS)
+        goals = sum(oks)
+        kicker, keeper = data.get("kicker"), data.get("keeper")
+        if not _ints([kicker], 1, 7) or not _ints([keeper], 1, 4):
+            raise bad
+        return {"score": ARCADE_POINTS["goal"] * goals, "attempts": len(oks), "correct": goals,
+                "outcome": "done" if len(oks) == PENALTY_ROUNDS else "quit", "units": max(1, len(oks)), "words": [],
+                "stats": {"goals": goals, "saves": len(oks) - goals, "kicker": kicker, "keeper": keeper}}
+    if game == "ninja":
+        items = data.get("challenges")
+        if not isinstance(items, list) or len(items) > NINJA_CHALLENGES:
+            raise bad
+        if any(not isinstance(it, dict) or it.get("w") not in vocab or it.get("p") not in vocab for it in items):
+            raise bad
+        right = sum(1 for it in items if it["w"] == it["p"])
+        wrong = len(items) - right
+        score = max(0, ARCADE_POINTS["ninja_right"] * right - ARCADE_POINTS["ninja_wrong"] * wrong)
+        return {"score": score, "attempts": len(items), "correct": right,
+                "outcome": "done" if len(items) == NINJA_CHALLENGES else "quit", "units": max(1, len(items)),
+                "words": [it["w"] for it in items], "evidence": [(it["w"], it["w"] == it["p"]) for it in items],
+                "stats": {"right": right, "wrong": wrong}}
+    if game == "river":
+        items = word_ids("items", RIVER_ITEMS)
+        wrong = data.get("wrong")
+        if not _ints([wrong], 0, RIVER_MAX_WRONG):
+            raise bad
+        score = max(0, ARCADE_POINTS["river_right"] * len(items) - ARCADE_POINTS["river_wrong"] * wrong)
+        return {"score": score, "attempts": len(items) + wrong, "correct": len(items),
+                "outcome": "done" if len(items) == RIVER_ITEMS else "quit", "units": max(1, len(items)),
+                "words": items, "stats": {"items": len(items), "wrong": wrong}}
+    raise ApiError("O'yin nomi noto'g'ri.")
+
+
+def saved_words(conn, student_id: str, ids) -> list:
+    ids = list(dict.fromkeys(ids))
+    if not ids:
+        return []
+    marks = ",".join("?" * len(ids))
+    return [r["word_id"] for r in conn.execute(
+        f"SELECT word_id FROM word_dictionary WHERE student_id = ? AND word_id IN ({marks})", (student_id, *ids))]
+
+
+def arcade_receipt(conn, row) -> dict:
+    words = [r["word_id"] for r in conn.execute("SELECT word_id FROM arcade_words WHERE session_id = ?", (row["id"],))]
     return {
-        r["mission"]: {"stars": r["stars"], "plays": r["plays"], "best": r["best_correct"]}
-        for r in conn.execute("SELECT * FROM listen_progress WHERE student_id = ?", (student_id,)).fetchall()
+        "session": row["id"], "game": row["game"], "outcome": row["outcome"], "score": row["score"],
+        "awarded": row["awarded"], "attempts": row["attempts"], "correct": row["correct"],
+        "stats": json.loads(row["stats_json"] or "{}"), "saved": saved_words(conn, row["student_id"], words),
+        "dailyCap": GAME_DAILY_POINTS_CAP,
     }
 
 
-async def handle_listen_finish(request: web.Request) -> web.Response:
-    """A mission ended: remember the best result and pay points (capped per day with the other games)."""
+async def handle_arcade_start(request: web.Request) -> web.Response:
     now = int(time.time())
     with get_db() as conn:
         user = require_user(conn, request)
-        enforce_rate_limit(f"listen:{user['id']}", 60, 3600)
+        enforce_rate_limit(f"arcadestart:{user['id']}", 120, 3600)
         data = await read_json(request)
-        mission, diff = str(data.get("mission") or ""), str(data.get("difficulty") or "")
-        nums = [data.get(k) for k in ("steps", "correct", "hearts")]
-        seconds = data.get("seconds")
-        if mission not in LISTEN_MISSIONS or diff not in LISTEN_DIFFICULTIES \
-                or any(not isinstance(n, int) or isinstance(n, bool) for n in nums) \
-                or not isinstance(seconds, (int, float)) or isinstance(seconds, bool):
-            raise ApiError("Natija noto'g'ri.")
-        steps, correct, hearts = nums
-        if not (3 <= steps <= 12 and 0 <= correct <= steps and 0 <= hearts <= 3):
-            raise ApiError("Natija noto'g'ri.")
-        stars = listen_stars(correct, steps, hearts)
-        earned = 0
-        if seconds >= steps * LISTEN_MIN_SECONDS_PER_STEP and correct >= 2:   # a real run takes time
-            earned = min(LISTEN_MAX_CORRECT_POINTS, LISTEN_POINTS_PER_CORRECT * correct) + LISTEN_POINTS_PER_STAR * stars
+        sid, game = str(data.get("id") or ""), str(data.get("game") or "")
+        level = str(data.get("level") or "")
+        if not _SESSION_ID_RE.fullmatch(sid) or game not in ARCADE_GAMES:
+            raise ApiError("O'yin noto'g'ri.")
+        if level not in ARCADE_LEVELS:
+            level = arcade_level(user["level"])
+        row = conn.execute("SELECT * FROM arcade_sessions WHERE id = ?", (sid,)).fetchone()
+        if row is not None:
+            if row["student_id"] != user["id"] or row["game"] != game:
+                raise ApiError("O'yin noto'g'ri.", 409)
+            return web.json_response({"session": sid, "startedAt": row["started_at"], "level": row["level"]})
+        conn.execute(
+            "INSERT INTO arcade_sessions (id, student_id, game, level, started_at) VALUES (?, ?, ?, ?, ?)",
+            (sid, user["id"], game, level, now),
+        )
+    return web.json_response({"session": sid, "startedAt": now, "level": level})
+
+
+async def handle_arcade_finish(request: web.Request) -> web.Response:
+    """One report per session; sending it again (a retry after a lost answer) returns the same receipt."""
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"arcadefinish:{user['id']}", 120, 3600)
+        data = await read_json(request)
+        sid = str(data.get("id") or "")
+        row = conn.execute("SELECT * FROM arcade_sessions WHERE id = ?", (sid,)).fetchone() if _SESSION_ID_RE.fullmatch(sid) else None
+        if row is None or row["student_id"] != user["id"]:
+            raise ApiError("O'yin topilmadi.", 404)
+        if row["finished_at"]:
+            return web.json_response(dict(arcade_receipt(conn, row), repeat=True))
+        result = grade_arcade(row["game"], data)
+        if now - row["started_at"] < ARCADE_MIN_SECONDS[row["game"]] * result["units"]:
+            raise ApiError("O'yin juda tez tugadi, natija saqlanmadi.", 409)
         today = conn.execute(
             "SELECT COALESCE(SUM(points), 0) FROM points_log WHERE student_id = ? AND source = 'game' AND created_at >= ?",
             (user["id"], day_start_ts(now)),
         ).fetchone()[0]
-        awarded = max(0, min(earned, GAME_DAILY_POINTS_CAP - today))
-        if awarded:
-            conn.execute(
-                "INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'game', 'listen', ?, ?)",
-                (user["id"], awarded, now),
-            )
-        conn.execute(
-            "INSERT INTO listen_progress (student_id, mission, stars, best_correct, plays, last_played) VALUES (?, ?, ?, ?, 1, ?) "
-            "ON CONFLICT(student_id, mission) DO UPDATE SET stars = MAX(stars, excluded.stars), "
-            "best_correct = MAX(best_correct, excluded.best_correct), plays = plays + 1, last_played = excluded.last_played",
-            (user["id"], mission, stars, correct, now),
+        awarded = max(0, min(result["score"], GAME_DAILY_POINTS_CAP - today))
+        # the finished_at guard makes a second, simultaneous report a no-op instead of a second payout
+        cur = conn.execute(
+            "UPDATE arcade_sessions SET finished_at = ?, outcome = ?, score = ?, awarded = ?, attempts = ?, correct = ?, "
+            "stats_json = ? WHERE id = ? AND finished_at IS NULL",
+            (now, result["outcome"], result["score"], awarded, result["attempts"], result["correct"],
+             json.dumps(result["stats"]), sid),
         )
-        progress = listen_progress(conn, user["id"])
-    return web.json_response({
-        "stars": stars, "earned": earned, "awarded": awarded,
-        "remainingToday": max(0, GAME_DAILY_POINTS_CAP - today - awarded), "progress": progress,
-    })
-
-
-async def handle_listen_progress(request: web.Request) -> web.Response:
-    with get_db() as conn:
-        user = require_user(conn, request)
-        return web.json_response({"missions": listen_progress(conn, user["id"])})
-
-
-# ---------------------------------------------------------------------------
-# Word Race: rooms, the WebSocket and the rewards (the rules live in race_engine.py)
-# ---------------------------------------------------------------------------
-RACE_MAX_ROOMS = 60
-RACE_TICK = 0.2
-RACE_LINGER_SECONDS = 300   # a finished room stays this long (results, rematch)
-RACE_EMPTY_SECONDS = 120    # a room nobody has joined, or everybody left
-RACE_PLACE_POINTS = {1: 15, 2: 8, 3: 4}
-RACE_FINISH_POINTS = 10
-RACE_MAX_CORRECT_POINTS = 20
-RACE_MIN_CORRECT = 3        # fewer right answers than this earn nothing (no points for just sitting there)
-RACE_ROOMS: dict = {}
-_RACE_DATA = {"mtimes": None, "cards": {}, "bank": []}
-
-
-def race_data():
-    """(flashcards by id, grammar bank), re-read when the files change. Questions are checked against these."""
-    paths = [os.path.join(STATIC_DIR, n) for n in ("flashcards_data.js", "millionaire_data.js")]
-    try:
-        mtimes = tuple(os.path.getmtime(p) for p in paths)
-    except OSError:
-        return {}, []
-    if _RACE_DATA["mtimes"] != mtimes:
-        loaded = []
-        for p in paths:
-            with open(p, encoding="utf-8") as f:
-                text = f.read()
-            loaded.append(json.JSONDecoder().raw_decode(text[text.index("["):])[0])
-        _RACE_DATA.update(mtimes=mtimes, cards={c["id"]: c for c in loaded[0]}, bank=loaded[1])
-    # words met in the Listen and Survive missions can be asked in a race too
-    return {**load_glossary(), **_RACE_DATA["cards"]}, _RACE_DATA["bank"]
-
-
-class RaceRoom:
-    def __init__(self, room, creator_id):
-        self.room, self.creator = room, creator_id
-        self.socks = {}          # player id -> WebSocketResponse
-        self.task = None
-        self.touched = time.time()
-        self.ended_at = None
-
-
-def race_purge(now=None):
-    now = now or time.time()
-    for code, e in list(RACE_ROOMS.items()):
-        idle = now - e.touched
-        if (e.room.state == "ended" and now - (e.ended_at or e.touched) > RACE_LINGER_SECONDS) \
-                or (not e.socks and idle > RACE_EMPTY_SECONDS) or idle > 3600:
-            if e.task and not e.task.done():
-                e.task.cancel()
-            del RACE_ROOMS[code]
-
-
-async def race_send(entry, pid, msg):
-    ws = entry.socks.get(pid)
-    if ws is not None and not ws.closed:
-        try:
-            await ws.send_json(msg)
-        except Exception:  # the connection is going away; the read loop cleans up
-            pass
-
-
-async def race_broadcast(entry, msg):
-    await asyncio.gather(*(race_send(entry, pid, msg) for pid in list(entry.socks)))
-
-
-async def race_dispatch(entry, events):
-    for e in events:
-        if e["to"] is None:
-            await race_broadcast(entry, e["msg"])
-        else:
-            await race_send(entry, e["to"], e["msg"])
-
-
-def race_flush_words(entry):
-    """What the players got right or wrong goes into the shared vocabulary memory."""
-    events, entry.room.word_events = entry.room.word_events, []
-    if not events:
-        return
-    now = int(time.time())
-    with get_db() as conn:
-        for student_id, word_id, ok in events:
-            record_word_result(conn, student_id, word_id, ok, "wordrace", now)
-
-
-def race_points(result) -> int:
-    if result["correct"] < RACE_MIN_CORRECT:
-        return 0
-    earned = min(RACE_MAX_CORRECT_POINTS, result["correct"])
-    if result["finished"]:
-        earned += RACE_FINISH_POINTS + RACE_PLACE_POINTS.get(result["rank"], 0)
-    return earned
-
-
-async def race_finish(entry, now):
-    room = entry.room
-    entry.ended_at = now
-    results = room.results()
-    awards = {}
-    with get_db() as conn:
-        for r in results:
-            if r["bot"] or not r["student_id"]:
-                continue
-            earned = race_points(r)
-            today = conn.execute(
-                "SELECT COALESCE(SUM(points), 0) FROM points_log WHERE student_id = ? AND source = 'game' AND created_at >= ?",
-                (r["student_id"], day_start_ts(int(now))),
-            ).fetchone()[0]
-            awarded = max(0, min(earned, GAME_DAILY_POINTS_CAP - today))
+        if cur.rowcount == 1:
             if awarded:
                 conn.execute(
-                    "INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'game', 'wordrace', ?, ?)",
-                    (r["student_id"], awarded, int(now)),
+                    "INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'game', ?, ?, ?)",
+                    (user["id"], row["game"], awarded, now),
                 )
-            awards[r["id"]] = {"earned": earned, "awarded": awarded, "remainingToday": max(0, GAME_DAILY_POINTS_CAP - today - awarded)}
-    race_flush_words(entry)
-    public = [{k: v for k, v in r.items() if k != "student_id"} for r in results]
-    await race_broadcast(entry, {"t": "end", "results": public, "awards": awards})
-
-
-async def run_race(entry):
-    """Ticks a started race until it ends, then pays out."""
-    room = entry.room
-    try:
-        while room.state in ("countdown", "running"):
-            await asyncio.sleep(RACE_TICK)
-            now = time.time()
-            events = room.tick(now)
-            await race_dispatch(entry, events)
-            race_flush_words(entry)
-            if room.state == "ended":
-                await race_finish(entry, now)
-            else:
-                await race_broadcast(entry, room.snapshot(now))
-    except asyncio.CancelledError:
-        raise
-    except Exception:
-        logger.exception("Race %s crashed", room.code)
-        room.state, entry.ended_at = "ended", time.time()
-        await race_broadcast(entry, {"t": "error", "message": "Poyga kutilmaganda to'xtadi."})
-
-
-async def handle_race_create(request: web.Request) -> web.Response:
-    with get_db() as conn:
-        user = require_user(conn, request)
-        enforce_rate_limit(f"racecreate:{user['id']}", 20, 3600)
-        data = await read_json(request)
-    race_purge()
-    if len(RACE_ROOMS) >= RACE_MAX_ROOMS:
-        raise ApiError("Hozir juda ko'p poyga bor. Birozdan so'ng urinib ko'ring.", 429)
-    code = race_engine.new_code(RACE_ROOMS.keys())
-    room = race_engine.Room(code, clean_text(data.get("mode"), 12), clean_text(data.get("level"), 8), now=time.time())
-    RACE_ROOMS[code] = RaceRoom(room, user["id"])
-    return web.json_response({"code": code, "capacity": race_engine.CAPACITY})
-
-
-async def handle_race_mates(request: web.Request) -> web.Response:
-    """Classmates the student can invite; those who use Telegram get the invitation as a bot message."""
-    with get_db() as conn:
-        user = require_user(conn, request)
-        rows = [r for r in rating_students(conn) if r["id"] != user["id"]]
-    rows.sort(key=lambda r: r["name"].casefold())
-    return web.json_response({"mates": [
-        {"id": r["id"], "name": r["name"], "photoUrl": avatar_url(r), "character": character_of(r), "telegram": _tg_chat_id(r["id"]) is not None}
-        for r in rows[:150]
-    ]})
-
-
-async def handle_race_invite(request: web.Request) -> web.Response:
-    with get_db() as conn:
-        user = require_user(conn, request)
-        enforce_rate_limit(f"raceinvite:{user['id']}", 30, 3600)
-        data = await read_json(request)
-    code = clean_text(data.get("code"), 8).upper()
-    entry = RACE_ROOMS.get(code)
-    ids = [i for i in (data.get("ids") or []) if isinstance(i, str)][:10]
-    if entry is None or not any(p.student_id == user["id"] for p in entry.room.humans()):
-        raise ApiError("Xona topilmadi.", 404)
-    sent = 0
-    for sid in ids:
-        chat_id = _tg_chat_id(sid)
-        if chat_id is None or TG_APP is None or sid == user["id"]:
-            continue
-        markup = None
-        if WEBAPP_URL.startswith("https://"):
-            markup = InlineKeyboardMarkup([[InlineKeyboardButton("🏎️ Poygaga qo'shilish", web_app=WebAppInfo(url=f"{WEBAPP_URL.rstrip('/')}/?race={code}"))]])
-        try:
-            await TG_APP.bot.send_message(
-                chat_id=chat_id, reply_markup=markup,
-                text=f"🏎️ {user['name']} sizni Word Race poygasiga chaqiryapti!\nXona kodi: {code}",
+            counts = {}
+            for w in result["words"]:
+                counts[w] = counts.get(w, 0) + 1
+            conn.executemany(
+                "INSERT OR IGNORE INTO arcade_words (session_id, student_id, word_id, n) VALUES (?, ?, ?, ?)",
+                [(sid, user["id"], w, n) for w, n in counts.items()],
             )
-            sent += 1
-        except Exception as e:
-            logger.info("Could not invite %s: %s", chat_id, e)
-        await asyncio.sleep(0.05)
-    return web.json_response({"sent": sent, "skipped": len(ids) - sent})
+            # Word Ninja asks the meaning of a word: that is real vocabulary evidence for the shared memory.
+            for w, ok in result.get("evidence", [])[:WORD_MAX_REPORT]:
+                record_word_result(conn, user["id"], w, ok, row["game"], now)
+        row = conn.execute("SELECT * FROM arcade_sessions WHERE id = ?", (sid,)).fetchone()
+        receipt = arcade_receipt(conn, row)
+    receipt["remainingToday"] = max(0, GAME_DAILY_POINTS_CAP - today - receipt["awarded"])
+    return web.json_response(receipt)
 
 
-async def handle_race_ws(request: web.Request) -> web.WebSocketResponse:
-    ws = web.WebSocketResponse(heartbeat=25, max_msg_size=256 * 1024)
-    await ws.prepare(request)
-    code = request.query.get("code", "").upper()[:8]
-    entry, pid, user = RACE_ROOMS.get(code), None, None
-    try:
-        # the first message is the sign-in: browsers cannot send headers on a WebSocket
-        first = await asyncio.wait_for(ws.receive(), 10)
-        data = json.loads(first.data) if first.type == WSMsgType.TEXT else {}
-        token = str(data.get("token") or "")
-        with get_db() as conn:
-            row = conn.execute(
-                "SELECT s.* FROM sessions x JOIN students s ON s.id = x.student_id WHERE x.token_hash = ? AND x.expires_at > ?",
-                (_token_hash(token), int(time.time())),
-            ).fetchone() if token else None
-            if row is None or row["status"] != "approved":
-                await ws.send_json({"t": "error", "message": "Tizimga kiring.", "fatal": True})
-                return ws
-            user = dict(row)
-            enforce_rate_limit(f"racews:{user['id']}", 60, 3600)
-        if entry is None:
-            await ws.send_json({"t": "error", "message": "Xona topilmadi. Kodni tekshiring.", "fatal": True})
-            return ws
-        room = entry.room
-        pid = room.add_human(user["id"], user["name"], character_of(user), avatar_url(user))
-        if pid is None:
-            await ws.send_json({"t": "error", "message": "Xona to'lgan yoki poyga allaqachon boshlangan.", "fatal": True})
-            return ws
-        old = entry.socks.get(pid)
-        entry.socks[pid] = ws
-        entry.touched = time.time()
-        if old is not None and old is not ws and not old.closed:
-            await old.close()
-        await ws.send_json({"t": "joined", "you": pid, "code": code, "now": time.time()})
-        await race_broadcast(entry, room.lobby())
-        if room.state == "running":  # came back during the race: continue with the current question
-            q = room.players[pid]
-            if q.questions:
-                await race_send(entry, pid, room._qmsg(q))
-        stamps = []
-        async for msg in ws:
-            if msg.type != WSMsgType.TEXT:
-                continue
-            nowt = time.time()
-            stamps = [s for s in stamps if nowt - s < 5] + [nowt]
-            if len(stamps) > 40:   # more than 8 messages a second is not a person
-                continue
-            try:
-                data = json.loads(msg.data)
-            except ValueError:
-                continue
-            if not isinstance(data, dict):
-                continue
-            entry.touched = nowt
-            await race_message(entry, pid, data, nowt)
-    except asyncio.TimeoutError:
-        pass
-    except ApiError as e:
-        await ws.send_json({"t": "error", "message": e.message if hasattr(e, "message") else str(e), "fatal": True})
-    except Exception:
-        logger.exception("Race socket failed")
-    finally:
-        if entry is not None and pid is not None and entry.socks.get(pid) is ws:
-            del entry.socks[pid]
-            gone = entry.room.remove(pid)
-            if entry.room.state == "lobby":
-                if gone and not entry.socks:
-                    RACE_ROOMS.pop(code, None)
-                else:
-                    await race_broadcast(entry, entry.room.lobby())
-        if not ws.closed:
-            await ws.close()
-    return ws
-
-
-async def race_message(entry, pid, data, now):
-    room, t = entry.room, data.get("t")
-    host = room.host == pid
-    if t in ("bots", "mode", "start", "rematch") and not host:
-        await race_send(entry, pid, {"t": "error", "message": "Buni faqat xona egasi qila oladi."})
-        return
-    if t == "questions":
-        cards, bank = race_data()
-        n = room.set_questions(pid, data.get("items"), cards, bank)
-        await race_send(entry, pid, {"t": "ack", "accepted": n, "ready": room.players[pid].ready})
-        await race_broadcast(entry, room.lobby())
-    elif t == "bots" and host:
-        room.set_bots(data.get("n") if isinstance(data.get("n"), int) else 0, clean_text(data.get("level"), 8) or None)
-        await race_broadcast(entry, room.lobby())
-    elif t == "mode" and host:
-        room.set_mode(clean_text(data.get("mode"), 12))
-        await race_broadcast(entry, room.lobby())
-    elif t == "start" and host:
-        if room.start(now):
-            await race_broadcast(entry, {"t": "countdown", "startAt": room.start_at, "now": now})
-            entry.task = asyncio.create_task(run_race(entry))
+async def handle_dictionary_save(request: web.Request) -> web.Response:
+    """Saves a collected word. Insert, the one-time +20 and the spaced-repetition entry happen in one transaction; the
+    (student, word) key makes every later save of that word (from any game, or a retry) a no-op worth 0 points."""
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        enforce_rate_limit(f"dictsave:{user['id']}", 300, 3600)
+        data = await read_json(request)
+        word, sid, req = str(data.get("word") or ""), str(data.get("session") or ""), str(data.get("req") or "")
+        if word not in load_arcade()["vocab"] or not _SESSION_ID_RE.fullmatch(sid) or not _SESSION_ID_RE.fullmatch(req):
+            raise ApiError("So'z noto'g'ri.")
+        collected = conn.execute(
+            "SELECT s.game FROM arcade_words w JOIN arcade_sessions s ON s.id = w.session_id "
+            "WHERE w.session_id = ? AND w.student_id = ? AND w.word_id = ? AND s.finished_at IS NOT NULL",
+            (sid, user["id"], word),
+        ).fetchone()
+        if collected is None:
+            raise ApiError("Bu so'z bu o'yinda yig'ilmagan.", 409)
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO word_dictionary (student_id, word_id, game, session_id, req, bonus, saved_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], word, collected["game"], sid, req, DICTIONARY_SAVE_BONUS, now),
+        )
+        if cur.rowcount == 1:
+            conn.execute(
+                "INSERT INTO points_log (student_id, source, ref, points, created_at) VALUES (?, 'dictionary', ?, ?, ?)",
+                (user["id"], word, DICTIONARY_SAVE_BONUS, now),
+            )
+            # into the shared memory: due for its first review after the first Leitner rest (a word it already
+            # tracks keeps its schedule)
+            conn.execute(
+                "INSERT OR IGNORE INTO word_progress (student_id, word_id, box, correct, wrong, streak, last_ok, last_seen, "
+                "next_review, last_source) VALUES (?, ?, 0, 0, 0, 0, 1, ?, ?, 'dictionary')",
+                (user["id"], word, now, now + int(WORD_BOX_DAYS[0] * 86400)),
+            )
+            new, bonus = True, DICTIONARY_SAVE_BONUS
         else:
-            await race_send(entry, pid, {"t": "error", "message": "Hamma o'yinchi hali tayyor emas."})
-    elif t == "answer":
-        if not isinstance(data.get("i"), int):
-            return
-        events = room.answer(pid, data["i"], str(data.get("a", ""))[:100], now)
-        await race_dispatch(entry, events)
-    elif t == "rematch" and host:
-        if room.reset_lobby():
-            await race_broadcast(entry, room.lobby())
-    elif t == "leave":
-        sock = entry.socks.get(pid)
-        if sock is not None:
-            await sock.close()
+            first = conn.execute(
+                "SELECT req, bonus FROM word_dictionary WHERE student_id = ? AND word_id = ?", (user["id"], word)
+            ).fetchone()
+            # the same request again (its answer was lost): report what that request did, not a fresh "0"
+            new = first["req"] == req
+            bonus = first["bonus"] if new else 0
+        total = conn.execute("SELECT COUNT(*) FROM word_dictionary WHERE student_id = ?", (user["id"],)).fetchone()[0]
+    return web.json_response({"word": word, "saved": True, "new": new, "bonus": bonus, "total": total})
+
+
+def dictionary_view(conn, student_id: str, now: int) -> dict:
+    rows = conn.execute(
+        "SELECT d.word_id, d.game, d.saved_at, p.box, p.last_ok, p.next_review FROM word_dictionary d "
+        "LEFT JOIN word_progress p ON p.student_id = d.student_id AND p.word_id = d.word_id "
+        "WHERE d.student_id = ? ORDER BY d.saved_at DESC",
+        (student_id,),
+    ).fetchall()
+    words, due = [], 0
+    for r in rows:
+        state = word_status(r["box"] or 0, r["last_ok"] or 0, r["next_review"] or 0, now) if r["next_review"] else "review"
+        due += state == "review"
+        words.append({"id": r["word_id"], "game": r["game"], "savedAt": r["saved_at"], "s": state,
+                      "b": r["box"] or 0, "n": r["next_review"] or now})
+    return {"words": words, "total": len(words), "due": due, "now": now}
+
+
+async def handle_dictionary_get(request: web.Request) -> web.Response:
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        return web.json_response(dictionary_view(conn, user["id"], now))
+
+
+async def handle_arcade_summary(request: web.Request) -> web.Response:
+    """For the Games page: plays and best score per game, and the dictionary counts."""
+    now = int(time.time())
+    with get_db() as conn:
+        user = require_user(conn, request)
+        games = {
+            r["game"]: {"plays": r["plays"], "best": r["best"], "correct": r["correct"], "attempts": r["attempts"]}
+            for r in conn.execute(
+                "SELECT game, COUNT(*) AS plays, MAX(score) AS best, SUM(correct) AS correct, SUM(attempts) AS attempts "
+                "FROM arcade_sessions WHERE student_id = ? AND finished_at IS NOT NULL GROUP BY game",
+                (user["id"],),
+            )
+        }
+        view = dictionary_view(conn, user["id"], now)
+    return web.json_response({"games": games, "dictionary": {"total": view["total"], "due": view["due"]},
+                              "level": arcade_level(user["level"]), "dailyCap": GAME_DAILY_POINTS_CAP})
 
 
 async def handle_avatar(request: web.Request) -> web.StreamResponse:
@@ -3538,12 +3551,11 @@ def build_web_app() -> web.Application:
     web_app.router.add_get("/api/progress/level", handle_progress_level)
     web_app.router.add_post("/api/progress/events", handle_progress_events)
     web_app.router.add_post("/api/game/finish", handle_game_finish)
-    web_app.router.add_post("/api/listen/finish", handle_listen_finish)
-    web_app.router.add_get("/api/listen/progress", handle_listen_progress)
-    web_app.router.add_post("/api/race/create", handle_race_create)
-    web_app.router.add_get("/api/race/mates", handle_race_mates)
-    web_app.router.add_post("/api/race/invite", handle_race_invite)
-    web_app.router.add_get("/ws/race", handle_race_ws)
+    web_app.router.add_post("/api/arcade/start", handle_arcade_start)
+    web_app.router.add_post("/api/arcade/finish", handle_arcade_finish)
+    web_app.router.add_get("/api/arcade/summary", handle_arcade_summary)
+    web_app.router.add_get("/api/dictionary", handle_dictionary_get)
+    web_app.router.add_post("/api/dictionary/save", handle_dictionary_save)
     web_app.router.add_post("/api/words/report", handle_words_report)
     web_app.router.add_get("/api/words", handle_words_get)
     web_app.router.add_post("/api/focus/start", handle_focus_start)

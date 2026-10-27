@@ -213,7 +213,7 @@
     { id: "s3", ico: "🔥", name: "3 kun ketma-ket", r: "bronze", ok: (m) => (m.streak || 0) >= 3 },
     { id: "s7", ico: "⚡", name: "7 kun ketma-ket", r: "silver", ok: (m) => (m.streak || 0) >= 7 },
     { id: "s30", ico: "👑", name: "30 kun ketma-ket", r: "gold", ok: (m) => (m.streak || 0) >= 30 },
-    { id: "top3", ico: "🚀", name: "Haftaning top-3", r: "holo", ok: (m) => !!m.weekRank && m.weekRank <= 3 },
+    { id: "top3", ico: "🚀", name: "Haftaning top-3", r: "holo", ok: (m) => m.weekPoints > 0 && !!m.weekRank && m.weekRank <= 3 },
   ];
   function paintBadges() {
     const m = me(), page = $("#l1Home .l1-page");

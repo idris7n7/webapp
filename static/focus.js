@@ -175,6 +175,8 @@
   }
 
   // ------------------------------------------------------------------ the sheet
+  // A card in the middle of the screen. Its frame is made once per opening (that is when it pops in); later paints only
+  // swap the card's content, and only when it changed, so fresh numbers from the server never make it jump again.
   let sheet = null, sheetOpen = false, sheetView = "main"; // main | leave | earned
   function ensureSheet() {
     if (sheet) return sheet;
@@ -190,11 +192,14 @@
     // an idle student gets the full-page intro with Shakespeare; the sheet is for a running block
     if (!force && !view && St.status === "idle" && window.L1_Flow) { window.L1_Flow.intro(); refreshState(); return; }
     ensureSheet();
+    if (!sheetOpen) {
+      sheet.innerHTML = `<div class="gv-back" data-gv="close"></div><section class="gv-sheet" id="gvCard" role="dialog" aria-modal="true" aria-label="Pomidor"></section>`;
+    }
     sheetOpen = true; sheetView = view || "main"; sheet.hidden = false;
     renderSheet();
     refreshState(); // always show fresh numbers
   }
-  function closeSheet() { sheetOpen = false; if (sheet) { sheet.hidden = true; sheet.innerHTML = ""; } }
+  function closeSheet() { sheetOpen = false; cardMarkup = ""; if (sheet) { sheet.hidden = true; sheet.innerHTML = ""; } }
 
   function latestHtml() {
     const t = St.latest;
@@ -228,10 +233,10 @@
       const paused = St.status === "paused";
       body = `
         <div class="gv-run">
-          <div class="gv-big-ring">${ringSvg(progress(), "gvBigRing")}<span class="gv-big-time" id="gvBigTime">${mmss(leftMs())}</span></div>
-          <div class="gv-grow"><span class="gv-grow-art" id="gvGrow">${growingTree()}</span>
+          <div class="gv-big-ring">${ringSvg(0, "gvBigRing")}<span class="gv-big-time" id="gvBigTime"></span></div>
+          <div class="gv-grow"><span class="gv-grow-art" id="gvGrow"></span>
             <span class="gv-grow-text" id="gvGrowText">${paused ? "Pauza: vaqt to'xtab turibdi" : "Daraxtingiz o'smoqda"}</span></div>
-          <div class="gv-pause-line" id="gvPauseLine">${paused ? `Pauza tugashiga <b>${mmss(St.pauseEndsAt - now())}</b>` : `Pauza uchun <b>${mmss(St.pauseMs)}</b> qoldi`}</div>
+          <div class="gv-pause-line" id="gvPauseLine">${paused ? "" : `Pauza uchun <b>${mmss(St.pauseMs)}</b> qoldi`}</div>
           <div class="gv-actions">
             ${paused ? `<button type="button" class="gv-btn is-green" data-gv="resume">▶ Davom etish</button>`
                      : `<button type="button" class="gv-btn" data-gv="pause" ${St.pauseMs <= 0 ? "disabled" : ""}>⏸ Pauza</button>`}
@@ -249,15 +254,21 @@
           </div></div>`;
     }
     const chip = `<span class="gv-chip" title="Kuniga ko'pi bilan ${St.daily} ta daraxt ekiladi">Bugun <b>${St.today}</b> ta</span>`;
-    sheet.innerHTML = `
-      <div class="gv-back" data-gv="close"></div>
-      <section class="gv-sheet" role="dialog" aria-label="Pomidor" data-state="${St.status}">
+    const card = $("gvCard");
+    if (!card) return;
+    card.dataset.state = St.status;
+    // the clock parts are filled by tickSheet, so the same block gives the same markup and nothing is redrawn
+    const markup = `
         <div class="gv-head">${chip}<button type="button" class="gv-x" data-gv="close" aria-label="Yopish">✕</button></div>
         ${body}
         <button type="button" class="gv-city-btn" data-gv="map"><span class="gv-city-art">${Art() ? Art().svg("apple", 3, false) : ""}</span>
-          <span><b>Yashil shahar</b><i>${St.city} daraxt${St.wilted ? ` · ${St.wilted} so'lgan` : ""}</i></span><span class="gv-city-go">›</span></button>
-      </section>`;
+          <span><b>Yashil shahar</b><i>${St.city} daraxt${St.wilted ? ` · ${St.wilted} so'lgan` : ""}</i></span><span class="gv-city-go">›</span></button>`;
+    if (card.firstElementChild && cardMarkup === markup) return tickSheet();
+    cardMarkup = markup;
+    card.innerHTML = markup;
+    tickSheet();
   }
+  let cardMarkup = "";
 
   function tickSheet() {
     if (!sheetOpen || sheetView !== "main" || St.status === "idle") return;

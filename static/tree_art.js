@@ -90,5 +90,85 @@
     return svg("oak", stage, false);
   }
 
-  window.L1_TreeArt = { KINDS, svg, growing, name: (kind) => (KINDS[kind] || KINDS.oak).name, color: (kind, wilted) => (wilted ? WILT : (KINDS[kind] || KINDS.oak)).c1 };
+  // The big tree of the Yashil shahar card on Asosiy: a puffy 3D-look oak on a stone planter, drawn as vectors so it is
+  // sharp at any size (the 160 px picture it replaced looked blurry at ~160 CSS px). Every lobe of the crown has its own
+  // light (a gradient in user space), so the bumps on its rim share one shading; small bumps with a soft highlight and a
+  // dark lower edge give the cauliflower texture. Built once, viewBox 240x240.
+  let cardSvg = "";
+  function card() {
+    if (cardSvg) return cardSvg;
+    const n = (v) => Math.round(v * 10) / 10;
+    const C = (x, y, r, fill) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${fill}"/>`;
+    const defs = [];
+    let gid = 0;
+    const FRONT = ["#b9ef84", "#62c447", "#2f963c", "#17672b"], BACK = ["#94dc6a", "#4cad40", "#237d33", "#124f22"];
+    function lobe(x, y, R, tone, turn) {
+      const id = `hmt${gid++}`;
+      defs.push(`<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${n(x - R * 0.35)}" cy="${n(y - R * 0.45)}" r="${n(R * 1.55)}">` +
+        `<stop offset="0" stop-color="${tone[0]}"/><stop offset=".35" stop-color="${tone[1]}"/><stop offset=".7" stop-color="${tone[2]}"/><stop offset="1" stop-color="${tone[3]}"/></radialGradient>`);
+      const fill = `url(#${id})`;
+      let s = C(x, y, R * 0.8, fill);
+      const rim = Math.max(7, Math.round(R / 3.2));
+      for (let i = 0; i < rim; i++) {
+        const a = (i / rim) * 2 * Math.PI + turn;
+        s += C(x + Math.cos(a) * R * 0.7, y + Math.sin(a) * R * 0.66, R * (0.28 + 0.04 * Math.sin(i * 2.7 + turn)), fill);
+      }
+      // texture bumps spread evenly (sunflower spiral); the upper ones first, so the lower ones overlap them
+      const bumps = [], cnt = Math.round((R * R) / 60);
+      for (let i = 0; i < cnt; i++) {
+        const d = R * 0.82 * Math.sqrt((i + 0.5) / cnt), a = i * 2.39996 + turn;
+        bumps.push([y + Math.sin(a) * d * 0.95, x + Math.cos(a) * d, R * (0.17 + 0.04 * Math.sin(i * 1.3 + turn))]);
+      }
+      bumps.sort((p, q) => p[0] - q[0]).forEach(([by, bx, br]) => { s += C(bx, by, br, "url(#hmtB)"); });
+      return s;
+    }
+    function flower(x, y, k) {
+      let s = "";
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+        s += C(x + Math.cos(a) * 3.1 * k, y + Math.sin(a) * 2.5 * k, 2.6 * k, "url(#hmtP)");
+      }
+      return s + C(x, y, 1.9 * k, "#f6b21b");
+    }
+
+    // stone planter: the side band with seams, the rim with seams, the grass
+    const px = 120, py = 194, rx = 100, ry = 22, h = 15, irx = rx - 13, iry = ry - 5;
+    let planter = `<path d="M${px - rx} ${py}A${rx} ${ry} 0 0 0 ${px + rx} ${py}V${py + h}A${rx} ${ry} 0 0 1 ${px - rx} ${py + h}Z" fill="url(#hmtS)"/>`;
+    for (let k = 1; k < 9; k++) {
+      const a = (Math.PI * k) / 9;
+      planter += `<path d="M${n(px - Math.cos(a) * rx)} ${n(py + Math.sin(a) * ry + 1)}v${h - 1}" stroke="#8e8879" stroke-width="1.4" opacity=".55"/>`;
+    }
+    planter += `<ellipse cx="${px}" cy="${py}" rx="${rx}" ry="${ry}" fill="url(#hmtR)"/>`;
+    for (let k = 0; k < 12; k++) {
+      const a = (2 * Math.PI * k) / 12 + 0.2;
+      planter += `<path d="M${n(px + Math.cos(a) * rx)} ${n(py + Math.sin(a) * ry)}L${n(px + Math.cos(a) * irx)} ${n(py + Math.sin(a) * iry)}" stroke="#b9b3a4" stroke-width="1.3"/>`;
+    }
+    planter += `<ellipse cx="${px}" cy="${py - 1}" rx="${irx}" ry="${iry}" fill="url(#hmtG)"/>`;
+
+    const trunk = `<path d="M94 199c10-4 13-13 13-28v-19c-9-10-21-17-34-22l5-6c12 4 23 11 31 18l2-34h17l1 32c9-9 21-16 34-20l4 6c-13 6-24 13-31 23v22c0 15 3 23 13 28-9 2-17 1-23-3-6 4-15 5-32 3z" fill="url(#hmtT)"/>` +
+      `<path d="M124 112v62c0 9 2 16 6 21" stroke="#d29455" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".5"/>` +
+      `<path d="M112 150c0 14-1 28-5 40M131 140c-1 16 0 30 3 46" stroke="#5a3016" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".45"/>` +
+      `<ellipse cx="121" cy="140" rx="30" ry="9" fill="url(#hmtH)"/>`;
+
+    const crown = [[58, 112, 32, BACK, 0.2], [184, 106, 34, BACK, 1.1], [90, 60, 34, BACK, 2.0], [152, 54, 36, BACK, 2.9], [122, 40, 30, BACK, 0.6],
+      [78, 104, 32, FRONT, 0.7], [164, 96, 33, FRONT, 1.7], [118, 72, 36, FRONT, 2.4], [122, 118, 30, FRONT, 3.3]].map((l) => lobe(...l)).join("");
+    const BUSH = ["#b6ea8c", "#68c150", "#33913d", "#1d6a2e"];
+    const backBushes = lobe(48, 176, 20, BUSH, 0.4) + lobe(194, 174, 21, BUSH, 1.3);
+    const front = lobe(72, 192, 10, BUSH, 0.9) + lobe(170, 192, 10, BUSH, 2.1) +
+      [[92, 196, 1.15], [150, 197, 1.15], [58, 186, 0.9], [184, 185, 0.9], [132, 203, 0.8]].map(([x, y, k]) => flower(x, y, k)).join("");
+
+    defs.push(`<radialGradient id="hmtB" cx=".38" cy=".32" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset=".42" stop-color="#fff" stop-opacity=".06"/>` +
+        `<stop offset=".78" stop-color="#0b4a17" stop-opacity="0"/><stop offset="1" stop-color="#0b4a17" stop-opacity=".26"/></radialGradient>`,
+      `<linearGradient id="hmtT" gradientUnits="userSpaceOnUse" x1="100" x2="146"><stop offset="0" stop-color="#5e3418"/><stop offset=".45" stop-color="#a26834"/><stop offset=".7" stop-color="#bd7d44"/><stop offset="1" stop-color="#6e3f1d"/></linearGradient>`,
+      `<linearGradient id="hmtS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8d3c6"/><stop offset="1" stop-color="#a39d8f"/></linearGradient>`,
+      `<linearGradient id="hmtR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f1e8"/><stop offset="1" stop-color="#dcd7ca"/></linearGradient>`,
+      `<radialGradient id="hmtG" cx=".45" cy=".35" r=".7"><stop offset="0" stop-color="#8fd468"/><stop offset="1" stop-color="#3f9637"/></radialGradient>`,
+      `<radialGradient id="hmtP" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e3e6dc"/></radialGradient>`,
+      `<radialGradient id="hmtH"><stop offset="0" stop-color="#0d3a16" stop-opacity=".45"/><stop offset="1" stop-color="#0d3a16" stop-opacity="0"/></radialGradient>`);
+    cardSvg = `<svg class="l1-tree-card" viewBox="0 0 240 240" aria-hidden="true"><defs>${defs.join("")}</defs>` +
+      `<ellipse cx="120" cy="216" rx="108" ry="16" fill="url(#hmtH)"/>${planter}${backBushes}${trunk}${crown}${front}</svg>`;
+    return cardSvg;
+  }
+
+  window.L1_TreeArt = { KINDS, svg, growing, card, name: (kind) => (KINDS[kind] || KINDS.oak).name, color: (kind, wilted) => (wilted ? WILT : (KINDS[kind] || KINDS.oak)).c1 };
 })();

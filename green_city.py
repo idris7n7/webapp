@@ -7,6 +7,10 @@ Allowed ground comes from static/green_zones.json (built from OpenStreetMap by t
   block  building footprints: never inside one
   roads  roads for vehicles, kept as lines: never within `w` metres of one
 Teachers can add more green polygons from the map (stored in the database, passed in as `extra`).
+
+Places: every green area is a place the class fills with trees, nearest to the middle of Asaka first. A place takes one
+tree per M2_PER_TREE of its ground (PLACE_MIN_TREES .. PLACE_MAX_TREES). Only the first place that is not full is open;
+the others are locked until it is. When every place of Asaka is full, Andijan has one city fewer left to green.
 """
 import json
 import math
@@ -25,6 +29,15 @@ ALL_KINDS = (FREE_KIND,) + tuple(PRICES)
 ZONES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "green_zones.json")
 CELL = 0.005  # degrees (~550 m) of the lookup grid
 _M_PER_DEG_LAT = 111320.0
+
+CITY_CENTRE = (40.6417, 72.2383)  # the middle of Asaka town: the places are filled from here outwards
+M2_PER_TREE = 400  # about one tree every 20 m
+PLACE_MIN_TREES, PLACE_MAX_TREES = 5, 30
+REGION = "Andijon"
+HOME_CITY = "Asaka"
+# The 14 districts and the 2 cities of Andijan region: the cities the classes green one after another.
+REGION_CITIES = ("Andijon shahri", "Xonobod shahri", "Andijon", "Asaka", "Baliqchi", "Bo'ston", "Buloqboshi", "Izboskan",
+                 "Jalaquduq", "Xo'jaobod", "Qo'rg'ontepa", "Marhamat", "Oltinko'l", "Paxtaobod", "Shahrixon", "Ulug'nor")
 
 
 def owned_kinds(bought) -> list:
@@ -86,6 +99,23 @@ def _segment_distance_m(lat, lon, a, b) -> float:
     return math.hypot(ax + t * dx, ay + t * dy)
 
 
+def _ring_area_m2(ring) -> float:
+    if len(ring) < 3:
+        return 0.0
+    k = math.cos(math.radians(sum(p[0] for p in ring) / len(ring))) * _M_PER_DEG_LAT
+    s = 0.0
+    for i in range(len(ring)):
+        (y1, x1), (y2, x2) = ring[i], ring[(i + 1) % len(ring)]
+        s += x1 * k * y2 * _M_PER_DEG_LAT - x2 * k * y1 * _M_PER_DEG_LAT
+    return abs(s) / 2
+
+
+def place_capacity(rings) -> int:
+    """How many trees fill a place: one per M2_PER_TREE of its ground (holes left out), within the limits."""
+    area = _ring_area_m2(rings[0]) - sum(_ring_area_m2(h) for h in rings[1:]) if rings else 0.0
+    return max(PLACE_MIN_TREES, min(PLACE_MAX_TREES, round(area / M2_PER_TREE)))
+
+
 def _cells(box):
     s, w, n, e = box
     for cy in range(math.floor(s / CELL), math.floor(n / CELL) + 1):
@@ -101,6 +131,7 @@ class Zones:
         self._mtime = None
         self.green, self.block, self.roads = [], [], []
         self._grid = {"green": {}, "block": {}, "roads": {}}
+        self._places = []
 
     def _load(self):
         try:
@@ -108,6 +139,7 @@ class Zones:
         except OSError:
             self._mtime, self.green, self.block, self.roads = None, [], [], []
             self._grid = {"green": {}, "block": {}, "roads": {}}
+            self._places = []
             return
         if mtime == self._mtime:
             return
@@ -125,39 +157,81 @@ class Zones:
                     box = [box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad]
                 for c in _cells(box):
                     g.setdefault(c, []).append(idx)
+        centre = lambda it: ((it["b"][0] + it["b"][2]) / 2, (it["b"][1] + it["b"][3]) / 2)  # noqa: E731
+        order = sorted(range(len(self.green)), key=lambda i: (meters_between(*centre(self.green[i]), *CITY_CENTRE), i))
+        self._places = [(i, place_capacity(self.green[i]["r"])) for i in order]
 
     def available(self) -> bool:
         self._load()
         return bool(self.green)
 
-    def _candidates(self, name, lat, lon):
-        items = getattr(self, name)
-        return [items[i] for i in self._grid[name].get((math.floor(lat / CELL), math.floor(lon / CELL)), ())]
-
-    def judge(self, lat: float, lon: float, extra=()) -> str:
-        """'ok', or why the spot is refused: 'outside' (not green ground), 'building' or 'road'."""
+    def places(self) -> list:
+        """Every green area as a place to fill, nearest to the middle of the town first: [(green index, trees it takes)]."""
         self._load()
-        green = any(
-            it["b"][0] <= lat <= it["b"][2] and it["b"][1] <= lon <= it["b"][3] and _inside_shape(lat, lon, it["r"])
-            for it in self._candidates("green", lat, lon)
-        ) or any(_inside_shape(lat, lon, [ring]) for ring in extra)
-        if not green:
-            return "outside"
-        for it in self._candidates("block", lat, lon):
+        return self._places
+
+    def _candidates(self, name, lat, lon):
+        return self._grid[name].get((math.floor(lat / CELL), math.floor(lon / CELL)), ())
+
+    def _in_green(self, idx: int, lat: float, lon: float) -> bool:
+        it = self.green[idx]
+        return it["b"][0] <= lat <= it["b"][2] and it["b"][1] <= lon <= it["b"][3] and _inside_shape(lat, lon, it["r"])
+
+    def place_of(self, lat: float, lon: float):
+        """The green index of the place this point lies in, or None."""
+        self._load()
+        return next((i for i in self._candidates("green", lat, lon) if self._in_green(i, lat, lon)), None)
+
+    def judge(self, lat: float, lon: float, extra=(), open_place=None) -> str:
+        """'ok', or why the spot is refused: 'road', 'building', 'locked' (a place that is not open yet) or 'outside'.
+
+        With `open_place` (a green index) only that place and the areas a teacher drew take trees; without it every
+        green area does."""
+        self._load()
+        for i in self._candidates("roads", lat, lon):
+            pts, w = self.roads[i]["p"], self.roads[i].get("w", 3.0)
+            if any(_segment_distance_m(lat, lon, pts[k], pts[k + 1]) <= w for k in range(len(pts) - 1)):
+                return "road"
+        for i in self._candidates("block", lat, lon):
+            it = self.block[i]
             if it["b"][0] <= lat <= it["b"][2] and it["b"][1] <= lon <= it["b"][3] and _inside_shape(lat, lon, it["r"]):
                 return "building"
-        for it in self._candidates("roads", lat, lon):
-            pts, w = it["p"], it.get("w", 3.0)
-            if any(_segment_distance_m(lat, lon, pts[i], pts[i + 1]) <= w for i in range(len(pts) - 1)):
-                return "road"
-        return "ok"
+        if any(_inside_shape(lat, lon, [ring]) for ring in extra):
+            return "ok"
+        if open_place is not None and open_place < len(self.green) and self._in_green(open_place, lat, lon):
+            return "ok"
+        inside = [i for i in self._candidates("green", lat, lon) if self._in_green(i, lat, lon)]
+        if not inside:
+            return "outside"
+        return "ok" if open_place is None else "locked"
+
+    def progress(self, trees) -> dict:
+        """How far the places are filled by `trees` (lat, lon pairs): the open place (None when all are full), the trees
+        in every place that has some, and how many places are full."""
+        self._load()
+        counts = {}
+        for lat, lon in trees:
+            p = self.place_of(lat, lon)
+            if p is not None:
+                counts[p] = counts.get(p, 0) + 1
+        full = sum(1 for i, cap in self._places if counts.get(i, 0) >= cap)
+        open_place = next((i for i, cap in self._places if counts.get(i, 0) < cap), None)
+        return {"open": open_place, "counts": counts, "full": full, "total": len(self._places)}
 
 
 REASONS = {
-    "outside": "Bu yer yashil hudud emas. Park, bog', maktab hovlisi yoki maysazor tanlang.",
+    "outside": "Bu yer daraxt ekishga mos emas. Xaritada yashil chiziq bilan belgilangan ochiq joyni tanlang.",
     "building": "Bu yerda bino bor. Binodan tashqarida joy tanlang.",
-    "road": "Bu yer yo'lga juda yaqin. Yo'ldan uzoqroq joy tanlang.",
+    "road": "Yo'lning o'rtasiga daraxt ekilganini qayerda ko'rgansiz? Yo'ldan chetroq joy tanlang.",
+    "locked": "Bu joy hali yopiq. Avval ochiq joyni (yashil chiziq bilan belgilangan) daraxtlarga to'ldiramiz.",
 }
+
+
+def region_view(progress: dict) -> dict:
+    """Andijan's cities left to green: Asaka counts as done once every one of its places is full."""
+    home_done = progress["total"] > 0 and progress["open"] is None
+    return {"name": REGION, "cities": len(REGION_CITIES), "left": len(REGION_CITIES) - (1 if home_done else 0),
+            "home": HOME_CITY, "homeDone": home_done}
 
 
 def too_close_message(distance_m: float) -> str:

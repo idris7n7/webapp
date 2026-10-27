@@ -26,6 +26,8 @@ tunnel_out*
 # Rebuild it locally from the PDFs with tools/extract_books.py
 books/
 static/img/grammar/
+# the same pages without the printed book's header, page number and thumb tab (tools/clean_book_pages.py)
+static/img/grammar_app/
 static/img/vocab/
 static/img/books_manifest.json
 

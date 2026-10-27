@@ -70,7 +70,7 @@
   // a text-only button or heading gets an emoji in front, chosen by its label
   const LABELLED = "button, h2, h3, .hm-city-title, .hw-kicker, .hub-section-label, .wd-kicker, .pg-title, .l1-sub, .sc-sub, .sc-stats span, .pg-stats span";
   function labelIcon(el) {
-    if (el.querySelector("svg, img") || el.hasAttribute("data-keep-emoji")) return;
+    if (el.querySelector("svg, img") || el.closest("[data-keep-emoji]")) return;
     const label = el.textContent.replace(/[ʻ’‘`]/g, "'").replace(/\s+/g, " ").trim().toLowerCase();
     if (!label || label.length > 40) return;
     const hit = LABELS.find(([re]) => re.test(label));

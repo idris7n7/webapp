@@ -45,6 +45,8 @@ html[data-theme="dark"] .gb-h2 { color: #fff; }
 .gb-p, .gb-box p, .gb-oops p, .gb-note p, .gb-say p, .gb-foot, .gb-key p, .gb-warn p, .gb-uz, .gb-gloss { font: 500 15px/1.62 "Plus Jakarta Sans", system-ui, sans-serif; color: var(--ink); }
 .gb-lead { padding-left: 12px; border-left: 4px solid var(--u); font-size: 16px; font-weight: 600; }
 .gb-hl { color: inherit; background: linear-gradient(transparent 55%, rgb(246 190 59 / .7) 55%); padding: 0 1px; }
+/* on the dark page the bright band ran through light letters like a strike-through */
+html[data-theme="dark"] .gb-hl { background: linear-gradient(transparent 62%, rgb(246 190 59 / .45) 62%); }
 .gb-uz { font-size: 14.5px; font-weight: 600; color: var(--ink2); margin-top: 3px !important; }
 .gb-gloss { margin-top: 6px !important; padding-left: 10px; border-left: 3px solid var(--u); font-size: 13.5px; line-height: 1.55; color: var(--ink2); }
 .gb-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 2px dotted var(--line); font-style: italic; color: var(--ink2); }

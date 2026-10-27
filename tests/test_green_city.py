@@ -91,5 +91,47 @@ class ZonesTests(unittest.TestCase):
         self.assertEqual(self.zones.judge(40.6105, 72.2105), "ok")
 
 
+class PlacesTests(unittest.TestCase):
+    """The class fills one place at a time, nearest to the middle of Asaka first."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        far = square(40.6300, 72.2300, 40.6310, 72.2320)  # ~1.4 km from the middle, ~18 700 m²: takes the most trees
+        near = square(40.6400, 72.2380, 40.6403, 72.2384)  # next to the middle, ~1 100 m²: takes the fewest
+        data = {
+            "green": [{"b": [40.6300, 72.2300, 40.6310, 72.2320], "r": [far]}, {"b": [40.6400, 72.2380, 40.6403, 72.2384], "r": [near]}],
+            "roads": [{"b": [40.6350, 72.2300, 40.6350, 72.2400], "p": [[40.6350, 72.2300], [40.6350, 72.2400]], "w": 4}],
+        }
+        path = os.path.join(self._tmp.name, "z.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        self.zones = green_city.Zones(path)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_the_nearest_place_opens_first_and_the_others_wait(self):
+        z = self.zones
+        self.assertEqual(z.places(), [(1, green_city.PLACE_MIN_TREES), (0, green_city.PLACE_MAX_TREES)])
+        start = z.progress([])
+        self.assertEqual((start["open"], start["full"], start["total"]), (1, 0, 2))
+        self.assertEqual(z.judge(40.64015, 72.2382, open_place=1), "ok")
+        self.assertEqual(z.judge(40.6305, 72.2310, open_place=1), "locked")
+        filled = z.progress([(40.64015, 72.2382)] * green_city.PLACE_MIN_TREES)
+        self.assertEqual((filled["open"], filled["full"], filled["counts"]), (0, 1, {1: green_city.PLACE_MIN_TREES}))
+        self.assertEqual(z.judge(40.6305, 72.2310, open_place=0), "ok")
+
+    def test_a_road_is_refused_even_outside_the_places(self):
+        self.assertEqual(self.zones.judge(40.6350, 72.2350, open_place=1), "road")
+        self.assertIn("Yo'lning o'rtasiga", green_city.REASONS["road"])
+        self.assertEqual(self.zones.judge(40.6380, 72.2350, open_place=1), "outside")
+
+    def test_andijan_has_one_city_fewer_once_every_place_of_asaka_is_full(self):
+        cities = len(green_city.REGION_CITIES)
+        self.assertEqual(green_city.region_view({"open": 1, "total": 2})["left"], cities)
+        done = green_city.region_view({"open": None, "total": 2})
+        self.assertEqual((done["left"], done["homeDone"], done["home"]), (cities - 1, True, "Asaka"))
+
+
 if __name__ == "__main__":
     unittest.main()

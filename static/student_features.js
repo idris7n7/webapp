@@ -711,11 +711,11 @@
   // =========================================================================
   // 4. MAIN NAVIGATION CONTROLLER
   // =========================================================================
-  // The four games and the 3D engine are about 900 KB; they run the first time a game is opened. When the browser is idle
-  // they are only downloaded (prefetch), not run: running the 3D engine early froze the Home page for a moment on phones.
+  // The arcade games (static/arcade_core.js and game_*.js, their content and picture frames) run the first time the Games
+  // tab opens. When the browser is idle they are only downloaded (prefetch), not run, so the Home page stays light.
   const Lazy = {
-    files: ["millionaire_data.js?v=2", "listen_data.js?v=2", "questions.js?v=3", "millionaire_music.js?v=2", "games_millionaire.js?v=10",
-      "l1_3d.js?v=2", "games_wordrace.js?v=4", "games_listen.js?v=6", "shakespeare_puppet.js?v=1", "dragon_chase.js?v=32"],
+    files: ["arcade_data.js?v=2", "arcade/sprites.js?v=2", "arcade_core.js?v=4", "game_wordrun.js?v=4", "game_penalty.js?v=5",
+      "game_ninja.js?v=4", "game_river.js?v=4"],
     ready: false,
     promise: null,
     games() {
@@ -737,16 +737,34 @@
     },
   };
   window.L1_Lazy = Lazy;
-  let inviteLink = false;
-  try { inviteLink = new URLSearchParams(location.search).has("race"); } catch (e) {}
-  if (inviteLink) Lazy.games();
-  else setTimeout(() => (window.requestIdleCallback || setTimeout)(() => Lazy.prefetch()), 6000);
+  // A game result that could not reach the server yet waits in the arcade outbox (per student); load the games so it
+  // is sent now, not only when the Games tab is opened again.
+  function arcadeOutboxWaiting() {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("l1_arcade_outbox_") && (localStorage.getItem(k) || "[]") !== "[]") return true;
+      }
+    } catch (e) { /* private mode */ }
+    return false;
+  }
+  setTimeout(() => (window.requestIdleCallback || setTimeout)(() => (arcadeOutboxWaiting() ? Lazy.games() : Lazy.prefetch())), 6000);
+  // Flashcard sounds (the old games engine used to provide them): the app's shared sounds under the old names.
+  if (!window.L1_Sound) {
+    const snd = () => (window.L1 ? window.L1.Sound : null);
+    window.L1_Sound = {
+      correct() { const s = snd(); if (s) s.right(); },
+      wrong() { const s = snd(); if (s) s.wrong(); },
+      tick() { const s = snd(); if (s) s.tone(800, "triangle", 0.04, 0, 0.06); },
+      victory() { const s = snd(); if (s) s.finish(); },
+    };
+  }
 
   const Nav = {
     currentMode: 'learn', // 'learn' | 'practice' | 'games'
     currentLearnSub: 'grammar', // 'grammar' | 'vocab'
     currentPracticeSub: 'grammar', // 'grammar' | 'vocab' | 'workbook'
-    currentGameSub: 'millionaire', // 'millionaire' | 'dragon' | 'race' | 'listen'
+    currentGameSub: 'hub', // 'hub' (the Games page) or a game being opened: 'wordrun' | 'penalty' | 'ninja' | 'river'
 
     setMode: function(mode) {
       this.currentMode = mode;
@@ -843,40 +861,19 @@
       }
     },
 
+    // The Games tab shows the arcade hub; a game id (from a Home card) opens that game full screen on top of it.
     setGameSub: function(sub) {
-      // Leaving a game that is being played stops it, so it never keeps running behind another one.
-      const prevGame = { millionaire: window.L1_Millionaire, dragon: window.L1_DragonGame, race: window.L1_WordRace, listen: window.L1_Listen }[this.currentGameSub];
-      if (this.currentGameSub !== sub && prevGame && prevGame.active && prevGame.showIntro) prevGame.showIntro();
-      this.currentGameSub = sub;
-
-      const games = [
-        { id: 'millionaire', btn: "btnGameSubMillionaire", area: "gameMillionaireArea", game: window.L1_Millionaire },
-        { id: 'dragon', btn: "btnGameSubDragon", area: "gameDragonArea", game: window.L1_DragonGame },
-        { id: 'race', btn: "btnGameSubRace", area: "gameRaceArea", game: window.L1_WordRace },
-        { id: 'listen', btn: "btnGameSubListen", area: "gameListenArea", game: window.L1_Listen },
-      ];
-      const waiting = !Lazy.ready;
-
-      const activeCls = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2";
-      const inactiveCls = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center gap-2";
-
-      games.forEach((g) => {
-        const btn = document.getElementById(g.btn);
-        const area = document.getElementById(g.area);
-        if (btn) btn.className = sub === g.id ? activeCls : inactiveCls;
-        if (area) area.classList.toggle("hidden", sub !== g.id);
-      });
-
-      const current = games.find((g) => g.id === sub);
-      if (waiting) { // the game files are still downloading: draw the tabs now, start the game when they arrive
-        Lazy.games().then(() => { if (this.currentGameSub === sub) this.setGameSub(sub); });
+      this.currentGameSub = 'hub';
+      const host = document.getElementById("arcadeHub");
+      if (!Lazy.ready) {
+        if (host && !host.firstChild) host.innerHTML = "<p class='text-sm text-slate-500 p-4'>O'yinlar yuklanmoqda…</p>";
+        Lazy.games().then(() => this.setGameSub(sub));
         return;
       }
-      if (current && current.game) {
-        // Timed games wait on a start screen; the others start right away.
-        if (typeof current.game.showIntro === "function") current.game.showIntro();
-        else current.game.init();
-      }
+      const A = window.L1_Arcade;
+      if (!A) return;
+      if (host) A.renderHub(host);
+      if (sub && sub !== 'hub') A.open(sub);
     }
   };
 

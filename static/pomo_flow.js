@@ -2,10 +2,12 @@
  *
  *   intro     Shakespeare with the sapling: "25 daqiqani tamomlab..." and Boshlash, which starts the 25 minutes
  *   done      the 25 minutes are over: Shakespeare planting, "Daraxt ekish" opens the map (static/green_map.js)
- *   rest      after the tree is planted: 5 minute break with Shakespeare's invitation to stretch
+ *   rest      after the tree is planted (or "Keyinroq"): Shakespeare's invitation to stretch
  *   exercise  five stretches, 45 s of work and 15 s of rest each (5 minutes), Shakespeare shows every one
+ *   break     the same 5 minutes without the stretches, for a student who does not want them
  *
- * When the break is over the intro comes back, so the next 25 minutes start in the same way.
+ * The 5 minute break starts the moment the 25 minutes are over, so its clock already runs on the done page and keeps
+ * running while the tree is planted. When it is over the intro comes back, so the next 25 minutes start in the same way.
  */
 (function () {
   "use strict";
@@ -38,7 +40,9 @@
     const s = snd(); if (!s) return;
     [0, 1.1].forEach((d) => [784, 988, 1175, 1568].forEach((f, i) => s.tone(f, "sine", 0.5, d + i * 0.2, 0.15)));
   }
-  const save = () => { try { if (F.phase === "rest" || F.phase === "exercise") localStorage.setItem(KEY, JSON.stringify({ phase: F.phase, restEnd: F.restEnd, exStart: F.exStart })); else localStorage.removeItem(KEY); } catch (e) {} };
+  const BREAK_PHASES = ["rest", "break", "exercise"];
+  const save = () => { try { if (BREAK_PHASES.includes(F.phase)) localStorage.setItem(KEY, JSON.stringify({ phase: F.phase, restEnd: F.restEnd, exStart: F.exStart })); else localStorage.removeItem(KEY); } catch (e) {} };
+  const clock = (label) => `<div class="pl-clock"><span class="pl-clock-label">${label}</span><b id="plRest">${mmss(F.restEnd - Date.now())}</b></div>`;
 
   function ensureRoot() {
     if (root) return root;
@@ -93,15 +97,22 @@
     } else if (F.phase === "done") {
       h = `<div class="pl-card is-done"><img class="pl-hero" src="${IMG("plant")}" alt="Shakespeare daraxt ekmoqda"><span class="pl-spark s1">✦</span><span class="pl-spark s2">✦</span><span class="pl-spark s3">✦</span>
           ${bubble(`<h2>Ajoyib! Siz 25 daqiqani tugatdingiz.</h2><p>Endi daraxtingizni o'z shahringizda ekishingiz mumkin.${F.awarded ? ` <b class="pl-pts">+${F.awarded} ball</b>` : ""}</p>`)}
+          ${clock("5 daqiqalik dam olish boshlandi")}
           <button type="button" class="pl-btn is-green" data-pl="plant">🌱 Daraxt ekish</button>
           <button type="button" class="pl-link" data-pl="later">Keyinroq</button></div>`;
     } else if (F.phase === "rest") {
       h = `<div class="pl-card"><img class="pl-hero" src="${IMG("wrists")}" alt="Shakespeare">
-          <div class="pl-clock"><span class="pl-clock-label">Dam olish</span><b id="plRest">${mmss(F.restEnd - Date.now())}</b></div>
+          ${clock("Dam olish")}
           ${bubble(`<h2>Qoyil! Yorvordingiz!</h2><p>Endi bir turingchi, cho'zilish mashqlarini qilib qo'yaylik. Tanamiz zanglab ketmasin.</p>`)}
           <p class="pl-note">${esc(NOTE)}</p>
           <button type="button" class="pl-btn is-green" data-pl="exercise">🤸 Mashqni boshlash</button>
-          <button type="button" class="pl-link" data-pl="skip">Mashqsiz davom etish</button></div>`;
+          <button type="button" class="pl-link" data-pl="skip">Mashqsiz dam olish</button></div>`;
+    } else if (F.phase === "break") {
+      h = `<div class="pl-card"><img class="pl-hero" src="/static/shakespeare/shakespeare-reading.webp" alt="Shakespeare dam olmoqda">
+          ${clock("Dam olish")}
+          ${bubble(`<h2>Mayli, mashqsiz dam oling.</h2><p>Ko'zingizni ekrandan uzing, suv iching. Vaqt tugagach keyingi pomidor boshlanadi.</p>`)}
+          <button type="button" class="pl-btn is-quiet" data-pl="exercise">🤸 Baribir mashq qilaman</button>
+          <button type="button" class="pl-link" data-pl="stop">Dam olishni tugatish</button></div>`;
     } else if (F.phase === "exercise") {
       const st = stepAt((Date.now() - F.exStart) / 1000), s = STEPS[st.i], nxt = STEPS[st.i + 1];
       h = `<div class="pl-card is-ex">
@@ -120,10 +131,11 @@
   }
 
   function tick() {
-    if (F.phase === "rest") {
+    if (F.phase === "rest" || F.phase === "break" || F.phase === "done") {
       const left = F.restEnd - Date.now();
-      const el = $("plRest"); if (el) el.textContent = mmss(left);
-      if (left <= 0) { bell(); finishBreak(); }
+      const el = $("plRest"), text = mmss(left); if (el && el.textContent !== text) el.textContent = text;
+      // on the done page the tree is still waiting to be planted, so the page stays; the others end the break
+      if (left <= 0 && F.phase !== "done") { bell(); finishBreak(); }
     } else if (F.phase === "exercise") {
       const elapsed = (Date.now() - F.exStart) / 1000;
       const st = stepAt(elapsed);
@@ -138,7 +150,7 @@
     }
   }
 
-  function finishBreak() { hide(); intro(); }
+  function finishBreak() { F.restEnd = 0; hide(); intro(); }
 
   async function begin() {
     if (!window.L1_Focus || !window.L1_Focus.begin) return;
@@ -151,11 +163,12 @@
     if (!b) return;
     const act = b.dataset.pl;
     if (act !== "close") haptic("tap");
-    if (act === "close" || act === "later") return hide();
+    if (act === "close") return hide();
+    if (act === "later") return rest();
     if (act === "begin") return begin();
     if (act === "plant") { hide(); if (window.L1_Green) window.L1_Green.open({ plant: true, flow: true }); return; }
     if (act === "exercise") { F.exStart = Date.now(); F.restEnd = F.exStart + REST_MS; beep(true); return show("exercise"); }
-    if (act === "skip") return finishBreak();
+    if (act === "skip") return show("break");
     if (act === "stop") return finishBreak();
     if (act === "next") { const st = stepAt((Date.now() - F.exStart) / 1000); F.exStart = Date.now() - (st.i + 1) * STEP_S * 1000; save(); return tick(); }
   }
@@ -165,8 +178,13 @@
     if (window.L1_Focus && window.L1_Focus.summary().status !== "idle") return window.L1_Focus.sheet();
     show("intro");
   }
-  function done(info) { F.awarded = (info && info.awarded) || 0; bell(); show("done"); }
-  function rest() { F.restEnd = Date.now() + REST_MS; show("rest"); }
+  // the break starts right away; planting the tree happens inside it
+  function done(info) { F.awarded = (info && info.awarded) || 0; F.restEnd = Date.now() + REST_MS; bell(); show("done"); }
+  function rest() {
+    if (!F.restEnd) F.restEnd = Date.now() + REST_MS; // a break that did not come from a finished block
+    if (F.restEnd <= Date.now()) { F.restEnd = 0; return finishBreak(); } // the 5 minutes ran out while the tree was planted
+    show("rest");
+  }
 
   window.L1_Flow = { intro, done, rest, active: () => !!F.phase };
 
@@ -175,7 +193,7 @@
     let v = null;
     try { v = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
     if (!v || !(window.l1GetToken && window.l1GetToken())) return;
-    if (v.phase === "rest" && v.restEnd > Date.now()) { F.restEnd = v.restEnd; show("rest"); }
+    if ((v.phase === "rest" || v.phase === "break") && v.restEnd > Date.now()) { F.restEnd = v.restEnd; show(v.phase); }
     else if (v.phase === "exercise" && v.exStart + REST_MS > Date.now()) { F.exStart = v.exStart; F.restEnd = v.exStart + REST_MS; show("exercise"); }
     else try { localStorage.removeItem(KEY); } catch (e) {}
   }, 2500);

@@ -34,6 +34,7 @@ body.pl-open .gv-pomo { display: none; }
 .pl-clock { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
 .pl-clock-label { font-size: 14px; font-weight: 800; color: var(--l1-muted); }
 .pl-clock b { font-size: 48px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: #1f9d55; }
+.is-done .pl-clock b { font-size: 30px; }
 
 /* stretching */
 .pl-card.is-ex { gap: 10px; }

@@ -63,6 +63,7 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         server.RATE_LIMITER.reset()
         # no daily homework unless a test asks for it (the real lessons would show up in every assignment list)
         self._saved_hw, server.HOMEWORK_UNITS_PATH = server.HOMEWORK_UNITS_PATH, os.path.join(self._tmp.name, "no_homework.json")
+        self._saved_vocab_hw, server.VOCAB_HOMEWORK = server.VOCAB_HOMEWORK, False
         server.init_db()
         self.client = TestClient(TestServer(server.build_web_app()))
         await self.client.start_server()
@@ -73,6 +74,7 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         server.GAME_MIN_SECONDS = self._saved_gap
         server.GREEN_ZONES = self._saved_zones
         server.HOMEWORK_UNITS_PATH = self._saved_hw
+        server.VOCAB_HOMEWORK = self._saved_vocab_hw
         self._tmp.cleanup()
 
     # -- helpers ---------------------------------------------------------
@@ -609,6 +611,23 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         status, data = await self.answer(token, "hw_u2", ex2, 0, "yes")
         self.assertEqual(status, 200, data)
 
+    async def test_vocabulary_homework_comes_from_the_workbook_unit_by_unit(self):
+        server.VOCAB_HOMEWORK = True
+        with server.get_db() as conn:
+            server.ensure_homework(conn)
+            server.ensure_homework(conn)  # seeding twice must not duplicate
+        units = server.vocab_homework_units()
+        self.assertEqual([u["id"] for u in units][:4], ["v_1a", "v_1b", "v_1c", "v_1d"])
+        self.assertEqual([u["number"] for u in units], list(range(1, len(units) + 1)))
+        token, _ = await self.student_token()
+        _, data = await self.call("GET", "/api/assignments", token)
+        self.assertEqual(sorted(a["id"] for a in data["assignments"]), sorted("hw_" + u["id"] for u in units))
+        first, second = units[0], units[1]
+        status, data = await self.answer(token, "hw_" + second["id"], second["exerciseIds"][0], 0, "x")
+        self.assertEqual(status, 403, data)  # the second unit waits until the first one is finished
+        status, data = await self.answer(token, "hw_" + first["id"], first["exerciseIds"][0], 0, "x")
+        self.assertEqual(status, 200, data)
+
     def test_homework_units_file_matches_exercises(self):
         with open(self._saved_hw, encoding="utf-8") as fh:
             units = json.load(fh)
@@ -762,6 +781,20 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(all_time["entries"][0]["points"], 125)
         self.assertNotIn("Boss Admin", [e["name"] for e in all_time["entries"]])  # staff are not ranked
 
+    async def test_student_without_points_has_no_place(self):
+        # everyone on 0 shares one rank; that must not count as a place (it gave new students the top-3 badge)
+        admin = await self.admin_token()
+        ali, _ = await self.student_token("Ali", "Valiyev")
+        vali, _ = await self.student_token("Vali", "Aliyev")
+        asg_id, ex_id = await self.make_assignment(admin)
+        await self.answer(ali, asg_id, ex_id, 0, "am")
+        _, board = await self.call("GET", "/api/leaderboard?period=week", vali)
+        self.assertEqual((board["me"]["weekPoints"], board["me"]["weekRank"]), (0, None))
+        self.assertIsNone(board["me"]["allRank"])
+        self.assertIsNone(board["me"]["monthRank"])
+        _, board = await self.call("GET", "/api/leaderboard?period=week", ali)
+        self.assertEqual(board["me"]["weekRank"], 1)
+
     async def test_game_points_follow_try_rules_and_daily_cap(self):
         token, _ = await self.student_token()
         status, r = await self.call("POST", "/api/game/finish", token, {"game": "quiz", "tries": [1, 2, 0, 9, True]})
@@ -783,202 +816,151 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         status, _ = await self.call("POST", "/api/game/finish", token, {"game": "match", "tries": [1]})
         self.assertEqual(status, 200)  # another game has its own clock
 
-    # -- Listen and Survive ---------------------------------------------------
-    async def test_mission_results_give_stars_points_and_unlocks(self):
-        token, _ = await self.student_token()
-        body = {"mission": "escape", "difficulty": "normal", "steps": 5, "correct": 5, "hearts": 3, "seconds": 90}
-        status, r = await self.call("POST", "/api/listen/finish", token, body)
-        self.assertEqual((status, r["stars"], r["earned"], r["awarded"]), (200, 3, 25, 25))
-        # a worse replay never lowers the best stars
-        status, r = await self.call("POST", "/api/listen/finish", token, dict(body, correct=3, hearts=1, seconds=60))
-        self.assertEqual((r["stars"], r["progress"]["escape"]), (1, {"stars": 3, "plays": 2, "best": 5}))
-        status, r = await self.call("POST", "/api/listen/finish", token, dict(body, mission="camp", hearts=0, correct=4))
-        self.assertEqual(r["stars"], 0)                      # all hearts lost: the mission is failed
-        _, p = await self.call("GET", "/api/listen/progress", token)
-        self.assertEqual(sorted(p["missions"]), ["camp", "escape"])
+    # -- arcade games and the Word Coin Dictionary ---------------------------
+    async def arcade_start(self, token, game, sid, level="A1", age=600):
+        status, r = await self.call("POST", "/api/arcade/start", token, {"id": sid, "game": game, "level": level})
+        self.assertEqual(status, 200, r)
+        # the game "took" `age` seconds: the server refuses reports that arrive faster than a real game
+        self.db_exec("UPDATE arcade_sessions SET started_at = started_at - ? WHERE id = ?", (age, sid))
+        return sid
 
-    async def test_mission_results_reject_nonsense_and_instant_runs(self):
+    def arcade_content(self, level="A1"):
+        data = server.load_arcade()
+        grammar = [g for g in data["grammar"].values() if g["lvl"] == level]
+        vocab = [w["id"] for w in data["vocab"].values() if w["lvl"] == level]
+        return grammar, vocab
+
+    @staticmethod
+    def pick(q, right=True):
+        return {"q": q["id"], "c": q["a"] if right else (q["a"] + 1) % 3}
+
+    async def test_word_run_pays_ten_points_a_coin_and_a_retry_pays_nothing_more(self):
         token, _ = await self.student_token()
-        good = {"mission": "airport", "difficulty": "easy", "steps": 5, "correct": 4, "hearts": 2, "seconds": 70}
-        for bad in (dict(good, mission="nope"), dict(good, difficulty="ultra"), dict(good, correct=9), dict(good, hearts=4),
-                    dict(good, steps=1), dict(good, correct="5"), dict(good, seconds="fast"), dict(good, hearts=True)):
-            status, _ = await self.call("POST", "/api/listen/finish", token, bad)
-            self.assertEqual(status, 400, bad)
-        status, r = await self.call("POST", "/api/listen/finish", token, dict(good, seconds=3))
-        self.assertEqual((status, r["earned"], r["awarded"]), (200, 0, 0))      # nobody finishes 5 steps in 3 seconds
-        status, _ = await self.call("POST", "/api/listen/finish", None, good)
+        grammar, vocab = self.arcade_content()
+        sid = await self.arcade_start(token, "wordrun", "run_lost_at_3")
+        body = {"id": sid, "coins": (vocab * 2)[:30],
+                "answers": [self.pick(grammar[0]), self.pick(grammar[1]), self.pick(grammar[2], right=False)]}
+        status, r = await self.call("POST", "/api/arcade/finish", token, body)
+        self.assertEqual(status, 200, r)
+        self.assertEqual((r["outcome"], r["score"], r["attempts"], r["correct"], r["stats"]["coins"]), ("lose", 300, 3, 2, 30))
+        self.assertEqual(r["awarded"], server.GAME_DAILY_POINTS_CAP)   # 300 game points, the rating gets the daily game cap
+        status, again = await self.call("POST", "/api/arcade/finish", token, body)
+        self.assertEqual((status, again["repeat"], again["awarded"], again["score"]), (200, True, r["awarded"], 300))
+        _, lb = await self.call("GET", "/api/leaderboard?period=all", token)
+        self.assertEqual((lb["me"]["allPoints"], lb["me"]["gameWeek"]), (server.GAME_DAILY_POINTS_CAP, {"wordrun": server.GAME_DAILY_POINTS_CAP}))
+
+    async def test_word_run_home_after_ten_right_answers_and_a_hundred_coins(self):
+        token, _ = await self.student_token()
+        grammar, vocab = self.arcade_content("A2")
+        sid = await self.arcade_start(token, "wordrun", "run_won_all_ten", level="A2")
+        status, r = await self.call("POST", "/api/arcade/finish", token, {
+            "id": sid, "coins": (vocab * 3)[:100], "answers": [self.pick(q) for q in grammar[:10]]})
+        self.assertEqual((status, r["outcome"], r["score"], r["correct"]), (200, "win", 1000, 10))
+
+    async def test_word_run_refuses_runs_no_real_game_could_produce(self):
+        token, _ = await self.student_token()
+        grammar, vocab = self.arcade_content()
+        good = [self.pick(grammar[0]), self.pick(grammar[1])]
+        cases = [
+            {"coins": vocab[:31], "answers": good},                                             # 2 lights: at most 30 coins
+            {"coins": vocab[:19], "answers": good},                                             # ...and at least 20
+            {"coins": vocab[:30], "answers": [self.pick(grammar[0], False), self.pick(grammar[1])]},  # ran on after a red light
+            {"coins": ["nope"] * 20, "answers": good},                                          # not a known word
+            {"coins": vocab[:20], "answers": [good[0], good[0]]},                               # the same question twice
+            {"coins": vocab[:20], "answers": [{"q": grammar[0]["id"], "c": 7}, good[1]]},       # not one of the options
+        ]
+        for i, case in enumerate(cases):
+            sid = await self.arcade_start(token, "wordrun", f"bad_run_{i:02d}")
+            status, r = await self.call("POST", "/api/arcade/finish", token, dict(case, id=sid))
+            self.assertEqual(status, 400, (i, r))
+        sid = await self.arcade_start(token, "wordrun", "too_fast_run", age=0)
+        status, _ = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "coins": vocab[:20], "answers": good})
+        self.assertEqual(status, 409)
+        other, _ = await self.student_token("Vali", "Aliyev")
+        sid = await self.arcade_start(token, "wordrun", "someone_elses")
+        status, _ = await self.call("POST", "/api/arcade/finish", other, {"id": sid, "coins": vocab[:20], "answers": good})
+        self.assertEqual(status, 404)
+        status, _ = await self.call("POST", "/api/arcade/start", other, {"id": "someone_elses", "game": "wordrun"})
+        self.assertEqual(status, 409)
+        status, _ = await self.call("POST", "/api/arcade/start", None, {"id": "nobody_at_all", "game": "wordrun"})
         self.assertEqual(status, 401)
 
-    async def test_mission_words_join_the_shared_memory_without_inflating_the_course_counts(self):
+    async def test_penalty_kicks_count_goals_saves_and_accuracy_apart_from_points(self):
         token, _ = await self.student_token()
-        status, r = await self.call("POST", "/api/words/report", token, {"source": "listen", "results": [
-            {"id": "ls_straight", "ok": False}, {"id": "ls_gate", "ok": True}, {"id": "w1_a01", "ok": True}, {"id": "ls_nope", "ok": True}]})
+        grammar, _ = self.arcade_content("B1")
+        sid = await self.arcade_start(token, "penalty", "penalty_ten", level="B1")
+        rounds = [dict(self.pick(q, right=i < 7), d=0) for i, q in enumerate(grammar[:10])]
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "kicker": 3, "keeper": 1, "rounds": rounds})
+        self.assertEqual(status, 200, r)
+        self.assertEqual((r["outcome"], r["score"], r["attempts"], r["correct"]), ("done", 70, 10, 7))
+        self.assertEqual((r["stats"]["goals"], r["stats"]["saves"]), (7, 3))
+        sid = await self.arcade_start(token, "penalty", "penalty_bad_kicker")
+        status, _ = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "kicker": 9, "keeper": 1, "rounds": rounds})
+        self.assertEqual(status, 400)
+
+    async def test_word_ninja_rewards_penalises_and_feeds_the_word_memory(self):
+        token, _ = await self.student_token()
+        _, vocab = self.arcade_content()
+        sid = await self.arcade_start(token, "ninja", "ninja_twenty")
+        items = [{"w": w, "p": w if i < 16 else vocab[(i + 1) % len(vocab)]} for i, w in enumerate(vocab[:20])]
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "challenges": items})
+        self.assertEqual((status, r["score"], r["correct"], r["attempts"]), (200, 16 * 10 - 4 * 5, 16, 20))
+        _, mem = await self.call("GET", "/api/words", token)
+        self.assertEqual((mem["words"][vocab[0]]["s"], mem["words"][vocab[19]]["s"]), ("learning", "review"))
+        sid = await self.arcade_start(token, "ninja", "ninja_all_wrong")
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "challenges": [{"w": vocab[0], "p": vocab[1]}] * 3})
+        self.assertEqual((status, r["score"]), (200, 0))   # a session never goes below zero
+
+    async def test_river_crossing_pays_for_needed_items_and_takes_off_for_the_rest(self):
+        token, _ = await self.student_token()
+        _, vocab = self.arcade_content()
+        sid = await self.arcade_start(token, "river", "river_twenty")
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "items": vocab[:20], "wrong": 3})
+        self.assertEqual((status, r["score"], r["correct"], r["attempts"], r["outcome"]), (200, 185, 20, 23, "done"))
+        sid = await self.arcade_start(token, "river", "river_too_many")
+        status, _ = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "items": vocab[:21], "wrong": 0})
+        self.assertEqual(status, 400)
+
+    async def test_a_saved_word_pays_twenty_once_across_all_games_and_joins_the_review(self):
+        token, _ = await self.student_token()
+        grammar, vocab = self.arcade_content()
+        word = vocab[0]
+        run = await self.arcade_start(token, "wordrun", "run_for_saving")
+        await self.call("POST", "/api/arcade/finish", token, {"id": run, "coins": [word] * 10, "answers": [self.pick(grammar[0], False)]})
+        status, r = await self.call("POST", "/api/dictionary/save", token, {"word": word, "session": run, "req": "req_first_1"})
+        self.assertEqual((status, r["new"], r["bonus"], r["total"]), (200, True, 20, 1))
+        # the same request again (its answer got lost) reports the same +20, but nothing is paid twice
+        status, r = await self.call("POST", "/api/dictionary/save", token, {"word": word, "session": run, "req": "req_first_1"})
+        self.assertEqual((status, r["new"], r["bonus"]), (200, True, 20))
+        status, r = await self.call("POST", "/api/dictionary/save", token, {"word": word, "session": run, "req": "req_second"})
+        self.assertEqual((r["new"], r["bonus"]), (False, 0))
+        # collected again in another game: still worth nothing
+        ninja = await self.arcade_start(token, "ninja", "ninja_for_saving")
+        await self.call("POST", "/api/arcade/finish", token, {"id": ninja, "challenges": [{"w": word, "p": word}]})
+        status, r = await self.call("POST", "/api/dictionary/save", token, {"word": word, "session": ninja, "req": "req_third"})
+        self.assertEqual((status, r["new"], r["bonus"]), (200, False, 0))
+        # a word this student never collected cannot be saved
+        status, _ = await self.call("POST", "/api/dictionary/save", token, {"word": vocab[5], "session": run, "req": "req_fourth"})
+        self.assertEqual(status, 409)
+        _, lb = await self.call("GET", "/api/leaderboard?period=all", token)
+        cap = server.GAME_DAILY_POINTS_CAP
+        self.assertEqual(lb["me"]["allPoints"], min(100 + 10, cap) + 20)   # coins and ninja within the daily game cap, plus one +20
+        _, d = await self.call("GET", "/api/dictionary", token)
+        self.assertEqual((d["total"], [w["id"] for w in d["words"]], d["words"][0]["game"]), (1, [word], "wordrun"))
+        _, s = await self.call("GET", "/api/arcade/summary", token)
+        self.assertEqual((s["dictionary"]["total"], s["games"]["wordrun"]["plays"], s["games"]["ninja"]["best"]), (1, 1, 10))
+        # the finish receipt of a later game knows which of its words are already in the dictionary
+        status, again = await self.call("POST", "/api/arcade/finish", token, {"id": ninja})
+        self.assertEqual(again["saved"], [word])
+
+    async def test_arcade_words_join_the_shared_memory_without_inflating_the_course_counts(self):
+        token, _ = await self.student_token()
+        status, r = await self.call("POST", "/api/words/report", token, {"source": "dictionary", "results": [
+            {"id": "ac_apple", "ok": False}, {"id": "ac_cat", "ok": True}, {"id": "w1_a01", "ok": True}, {"id": "ac_nope", "ok": True}]})
         self.assertEqual((status, r["applied"]), (200, 3))
-        self.assertEqual((r["words"]["ls_straight"]["s"], r["words"]["ls_gate"]["s"]), ("review", "learning"))
+        self.assertEqual((r["words"]["ac_apple"]["s"], r["words"]["ac_cat"]["s"]), ("review", "learning"))
         self.assertEqual((r["glossary"]["seen"], r["glossary"]["review"], r["glossary"]["learning"]), (2, 1, 1))
         self.assertEqual((r["counts"]["learning"], r["counts"]["total"]), (1, 146))   # the course counts only know the flashcards
-
-    # -- Word Race ----------------------------------------------------------
-    async def race_setup(self):
-        import race_engine as RE
-        self._race_saved = (RE.TRACK, RE.COUNTDOWN, RE.MIN_ANSWER_SECONDS, server.RACE_TICK)
-        RE.TRACK, RE.COUNTDOWN, RE.MIN_ANSWER_SECONDS, server.RACE_TICK = 90.0, 0.3, 0.02, 0.05
-        server.RACE_ROOMS.clear()
-        self.addCleanup(self.race_teardown)
-
-    def race_teardown(self):
-        import race_engine as RE
-        RE.TRACK, RE.COUNTDOWN, RE.MIN_ANSWER_SECONDS, server.RACE_TICK = self._race_saved
-        for e in server.RACE_ROOMS.values():
-            if e.task and not e.task.done():
-                e.task.cancel()
-        server.RACE_ROOMS.clear()
-
-    async def race_join(self, token, code):
-        ws = await self.client.ws_connect(f"/ws/race?code={code}")
-        await ws.send_json({"t": "auth", "token": token})
-        first = await ws.receive_json(timeout=3)
-        return ws, first
-
-    async def race_wait(self, ws, kind, timeout=5):
-        """Next message of this kind (the others are skipped)."""
-        import asyncio
-        end = time.time() + timeout
-        while True:
-            msg = await ws.receive_json(timeout=max(0.1, end - time.time()))
-            if msg["t"] == kind:
-                return msg
-            if time.time() > end:
-                self.fail(f"no {kind} message")
-
-    async def race_room(self, token, mode="sprint"):
-        status, r = await self.call("POST", "/api/race/create", token, {"mode": mode})
-        self.assertEqual(status, 200, r)
-        return r["code"]
-
-    async def test_solo_race_against_bots_pays_points_and_feeds_the_word_memory(self):
-        import asyncio
-        from test_race_engine import questions
-        await self.race_setup()
-        token, _ = await self.student_token()
-        code = await self.race_room(token)
-        ws, joined = await self.race_join(token, code)
-        self.assertEqual(joined["t"], "joined")
-        pid = joined["you"]
-        qs = questions(30)
-        await ws.send_json({"t": "bots", "n": 2, "level": "easy"})
-        await ws.send_json({"t": "questions", "items": qs})
-        ack = await self.race_wait(ws, "ack")
-        self.assertEqual((ack["accepted"], ack["ready"]), (30, True))
-        lobby = await self.race_wait(ws, "lobby")
-        self.assertEqual((len(lobby["players"]), lobby["canStart"]), (3, True))
-        await ws.send_json({"t": "start"})
-        await self.race_wait(ws, "countdown")
-        await self.race_wait(ws, "go")
-        end = None
-        while end is None:   # answer every question right, quickly
-            msg = await ws.receive_json(timeout=15)
-            if msg["t"] == "q":
-                await asyncio.sleep(0.05)
-                await ws.send_json({"t": "answer", "i": msg["i"], "a": qs[msg["i"] % len(qs)]["a"]})
-            elif msg["t"] == "end":
-                end = msg
-        me = next(r for r in end["results"] if r["id"] == pid)
-        self.assertTrue(me["finished"])
-        self.assertEqual(me["rank"], 1)   # perfect, quick answers beat easy bots
-        self.assertNotIn("student_id", me)
-        self.assertGreater(end["awards"][pid]["awarded"], 0)
-        _, lb = await self.call("GET", "/api/leaderboard?period=all", token)
-        self.assertEqual(lb["me"]["allPoints"], end["awards"][pid]["awarded"])
-        _, mem = await self.call("GET", "/api/words", token)
-        self.assertGreater(len(mem["words"]), 0)
-        await ws.close()
-
-    async def test_race_questions_may_use_the_words_from_the_listening_missions(self):
-        await self.race_setup()
-        token, _ = await self.student_token()
-        ws, _ = await self.race_join(token, await self.race_room(token))
-        glossary = server.load_glossary()
-        words = [g for g in glossary.values()][:24]
-        items = []
-        for i, g in enumerate(words):
-            others = [x["meaning_uz"] for x in words if x["id"] != g["id"]][i % 5:][:3]
-            items.append({"k": "en2uz", "q": f"“{g['word']}” — o'zbekcha qanday?", "o": [g["meaning_uz"], *others], "a": g["meaning_uz"], "w": g["id"]})
-        await ws.send_json({"t": "questions", "items": items})
-        ack = await self.race_wait(ws, "ack")
-        self.assertEqual((ack["accepted"], ack["ready"]), (24, True))
-        await ws.close()
-
-    async def test_race_rejects_bad_tokens_unknown_rooms_and_fake_questions(self):
-        await self.race_setup()
-        token, _ = await self.student_token()
-        code = await self.race_room(token)
-        ws, first = await self.race_join("garbage", code)
-        self.assertEqual((first["t"], first.get("fatal")), ("error", True))
-        ws, first = await self.race_join(token, "ZZZZ")
-        self.assertEqual((first["t"], first.get("fatal")), ("error", True))
-        ws, joined = await self.race_join(token, code)
-        from test_race_engine import questions
-        fake = [dict(q, a="hacked") for q in questions(30)]
-        await ws.send_json({"t": "questions", "items": fake})
-        ack = await self.race_wait(ws, "ack")
-        self.assertEqual((ack["accepted"], ack["ready"]), (0, False))
-        await ws.send_json({"t": "start"})
-        err = await self.race_wait(ws, "error")
-        self.assertIn("tayyor", err["message"])
-        status, _ = await self.call("POST", "/api/race/create", None, {})
-        self.assertEqual(status, 401)
-        await ws.close()
-
-    async def test_friends_share_a_room_and_only_the_host_runs_it(self):
-        from test_race_engine import questions
-        await self.race_setup()
-        ali, _ = await self.student_token("Ali", "Valiyev")
-        vali, _ = await self.student_token("Vali", "Aliyev")
-        code = await self.race_room(ali)
-        a, ja = await self.race_join(ali, code)
-        b, jb = await self.race_join(vali, code)
-        lobby = await self.race_wait(a, "lobby")
-        while len(lobby["players"]) < 2:
-            lobby = await self.race_wait(a, "lobby")
-        self.assertEqual((lobby["host"], sorted(p["name"] for p in lobby["players"])), (ja["you"], ["Ali Valiyev", "Vali Aliyev"]))
-        for ws in (a, b):
-            await ws.send_json({"t": "questions", "items": questions(30)})
-        await b.send_json({"t": "start"})   # not the host
-        await self.race_wait(b, "error")
-        await a.send_json({"t": "bots", "n": 3})
-        lobby = None
-        for _ in range(8):
-            lobby = await self.race_wait(a, "lobby")
-            if len(lobby["players"]) == 4:
-                break
-        self.assertEqual((len(lobby["players"]), lobby["canStart"]), (4, True))   # two people, and only two bots fit
-        carol, _ = await self.student_token("Carol", "Third")
-        late, err = await self.race_join(carol, code)
-        self.assertEqual((err["t"], err.get("fatal")), ("error", True))   # the room is full
-        # the host leaves: the other person becomes the host
-        await a.close()
-        for _ in range(10):
-            lobby = await self.race_wait(b, "lobby")
-            if lobby["host"] == jb["you"]:
-                break
-        self.assertEqual(lobby["host"], jb["you"])
-        await b.close()
-
-    async def test_classmates_and_telegram_invites(self):
-        await self.race_setup()
-        ali, _ = await self.student_token("Ali", "Valiyev")
-        await self.student_token("Vali", "Aliyev")
-        status, mates = await self.call("GET", "/api/race/mates", ali)
-        self.assertEqual((status, [m["name"] for m in mates["mates"]]), (200, ["Vali Aliyev"]))
-        code = await self.race_room(ali)
-        ws, _ = await self.race_join(ali, code)
-        status, r = await self.call("POST", "/api/race/invite", ali, {"code": code, "ids": ["stu_x", "tg_123"]})
-        self.assertEqual((status, r["sent"]), (200, 0))   # no Telegram bot in the test: nothing sent, nothing breaks
-        stranger, _ = await self.student_token("Eve", "Stranger")
-        status, _ = await self.call("POST", "/api/race/invite", stranger, {"code": code, "ids": []})
-        self.assertEqual(status, 404)                      # only people in the room can invite
-        await ws.close()
 
     # -- shared vocabulary memory -------------------------------------------
     async def test_word_memory_moves_words_between_boxes(self):
@@ -1611,7 +1593,7 @@ class FrontendFilesTests(unittest.TestCase):
 
     def test_game_scripts_are_not_loaded_up_front(self):
         html = self.html()
-        for name in ("l1_3d.js", "dragon_chase.js", "games_millionaire.js", "games_wordrace.js", "games_listen.js"):
+        for name in ("game_wordrun.js", "game_penalty.js", "game_ninja.js", "game_river.js", "arcade/sprites.js"):
             self.assertNotIn("/static/" + name, html, name)
 
     def test_every_local_script_and_stylesheet_exists(self):

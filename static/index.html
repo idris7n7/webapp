@@ -43,32 +43,29 @@
 
   <link rel="stylesheet" href="/static/app_theme.css?v=42">
   <link rel="stylesheet" href="/static/tf_design.css?v=53">
-  <link rel="stylesheet" href="/static/learn_hub.css?v=3">
-  <link rel="stylesheet" href="/static/focus.css?v=11">
-  <link rel="stylesheet" href="/static/pomo_flow.css?v=3">
-  <link rel="stylesheet" href="/static/green_map.css?v=9">
-  <link rel="stylesheet" href="/static/millionaire.css?v=7">
-  <link rel="stylesheet" href="/static/wordrace.css?v=6">
-
-  <link rel="stylesheet" href="/static/listen.css?v=5">
+  <link rel="stylesheet" href="/static/learn_hub.css?v=6">
+  <link rel="stylesheet" href="/static/grammar_book.css?v=4">
+  <link rel="stylesheet" href="/static/focus.css?v=13">
+  <link rel="stylesheet" href="/static/pomo_flow.css?v=4">
+  <link rel="stylesheet" href="/static/green_map.css?v=10">
+  <link rel="stylesheet" href="/static/arcade.css?v=4">
   <link rel="stylesheet" href="/static/polish.css?v=12">
   <link rel="stylesheet" href="/static/modern.css?v=11">
-  <link rel="stylesheet" href="/static/sculpt.css?v=6">
+  <link rel="stylesheet" href="/static/sculpt.css?v=12">
   <!-- Tailwind goes last, like the old CDN style tag did, so its utilities keep winning over the app CSS. -->
   <link rel="stylesheet" href="/static/tailwind.css?v=7">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="/static/icons_ui.js?v=12"></script>
+  <script src="/static/icons_ui.js?v=14"></script>
   <script src="/static/l1_core.js?v=27"></script>
   <script src="/static/units_data.js?v=4"></script>
   <script src="/static/flashcards_data.js?v=5"></script>
   <script src="/static/practicing_suite.js?v=3"></script>
-  <script src="/static/games_engine.js?v=15"></script>
   <script src="/static/words.js?v=3"></script>
-  <script src="/static/student_features.js?v=22"></script>
-  <script src="/static/tree_art.js?v=2"></script>
-  <script src="/static/green_map.js?v=9" defer></script>
-  <script src="/static/focus.js?v=13" defer></script>
-  <script src="/static/pomo_flow.js?v=1" defer></script>
+  <script src="/static/student_features.js?v=27"></script>
+  <script src="/static/tree_art.js?v=4"></script>
+  <script src="/static/green_map.js?v=10" defer></script>
+  <script src="/static/focus.js?v=14" defer></script>
+  <script src="/static/pomo_flow.js?v=2" defer></script>
   <script>
     // Shared helpers: HTML escaping + authenticated API access.
     // The server decides who a user is from the session token; nothing stored in the browser is trusted by it.
@@ -813,74 +810,9 @@
 
         <!-- ==================== 3. GAMES CONTAINER (O'YINLAR) ==================== -->
         <div id="gamesContainer" class="hidden space-y-4">
-          <!-- Top Sub-Navigation: the games -->
-          <div class="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2" id="gameTabs">
-            <button id="btnGameSubMillionaire" type="button" onclick="window.L1_Nav.setGameSub('millionaire')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-2">
-              <span>💎</span>
-              <span>Millioner</span>
-            </button>
-            <button id="btnGameSubDragon" type="button" onclick="window.L1_Nav.setGameSub('dragon')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
-              <span>🐲</span>
-              <span>Shakespeare va Ajdarho</span>
-            </button>
-            <button id="btnGameSubRace" type="button" onclick="window.L1_Nav.setGameSub('race')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
-              <span>🏎️</span>
-              <span>Word Race</span>
-            </button>
-            <button id="btnGameSubListen" type="button" onclick="window.L1_Nav.setGameSub('listen')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center gap-2">
-              <span>🎧</span>
-              <span>Listen and Survive</span>
-            </button>
-          </div>
-
-          <!-- A. MILLIONER — "Who wants to be a millionaire" (static/games_millionaire.js builds it) -->
-          <div id="gameMillionaireArea" class="ml-area space-y-3"></div>
-
-          <!-- C. WORD RACE — English questions drive a race car, alone or with friends (static/games_wordrace.js) -->
-          <div id="gameRaceArea" class="wr-area hidden space-y-3"></div>
-
-          <!-- D. LISTEN AND SURVIVE — five missions you play by listening (static/games_listen.js) -->
-          <div id="gameListenArea" class="ls-area hidden space-y-3"></div>
-
-          <!-- B. SHAKESPEARE & THE DRAGON — canvas chase (static/dragon_chase.js) -->
-          <div id="gameDragonArea" class="hidden space-y-3">
-            <div id="dragonStage" class="dc-stage">
-              <canvas aria-label="Shakespeare yugurmoqda, ajdarho uni quvmoqda"></canvas>
-              <div class="dc-hud">
-                <div class="dc-pill dc-track">
-                  <span class="dc-ico dc-ico-dragon" aria-hidden="true"></span>
-                  <div class="dc-bar"><i id="dragonProgressFill"></i><b id="dragonProgressIdris" class="dc-face"></b></div>
-                  <svg class="dc-ico dc-ico-school" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 11.5 12 4l10 7.5" fill="#ef4444" stroke="#ef4444" stroke-width="2.2" stroke-linejoin="round"/><path d="M4.5 11h15v9.5h-15z" fill="#fde68a"/><path d="M10 20.5v-5h4v5z" fill="#9a3412"/><path d="M6.5 13h2.5v2.5H6.5zM15 13h2.5v2.5H15z" fill="#7dd3fc"/></svg>
-                </div>
-                <div class="dc-pill dc-lives" id="dragonLives" title="Xato qilish imkoniyati"></div>
-              </div>
-              <div id="dragonBanner" class="dc-banner"></div>
-              <div id="dragonVignette" class="dc-vignette"></div>
-              <div id="dragonLoading" class="dc-loading hidden">Sahna yuklanmoqda…</div>
-            </div>
-
-            <div class="max-w-xl mx-auto">
-              <div id="dragonQuestionCard" class="dc-qcard bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-2.5">
-                <div class="flex items-center justify-between gap-2">
-                  <span id="dragonQCategory" class="l1-chip l1-chip-blue">Grammatika</span>
-                  <span id="dragonQNumber" class="text-xs font-bold text-slate-400">1-qadam</span>
-                </div>
-                <div id="dragonQText" class="l1-qtext">Yuklanmoqda...</div>
-                <div id="dragonOptionsContainer" class="dc-opts grid grid-cols-2 gap-2"></div>
-              </div>
-            </div>
-
-            <!-- Result Modal (Victory / Defeat) -->
-            <div id="dragonResultModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-              <div class="relative bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 text-center">
-                <button type="button" id="dragonResultClose" class="dc-close" aria-label="Yopish">✕</button>
-                <h3 id="dragonResultTitle" class="text-xl font-black text-slate-900 px-6"></h3>
-                <div id="dragonResultBody"></div>
-                <button type="button" id="dragonResultBtn" class="l1-btn l1-btn-primary w-full">Qaytadan o’ynash</button>
-                <button type="button" id="dragonResultLeave" class="l1-btn w-full" style="background:var(--l1-primary-50);color:var(--l1-primary)">Chiqish</button>
-              </div>
-            </div>
-          </div>
+          <!-- The four arcade games (Word Run, Penalti, Word Ninja, Daryodan o'tish) and the Word Coin Dictionary:
+               static/arcade_core.js draws this hub; each game opens full screen (game_*.js). -->
+          <div id="arcadeHub"></div>
         </div>
 
         <!-- ==================== 4. STANDALONE UTILITY VIEWS ==================== -->
@@ -1171,16 +1103,18 @@
 
   </main>
 
-  <script src="/static/app_main.js?v=1"></script>
+  <script src="/static/flat_art.js?v=1" defer></script>
+  <script src="/static/grammar_book.js?v=3" defer></script>
+  <script src="/static/app_main.js?v=6"></script>
   <script src="/static/icons3d.js?v=2"></script>
   <script src="/static/daily_facts.js?v=1"></script>
-  <script src="/static/app_shell.js?v=87"></script>
+  <script src="/static/app_shell.js?v=95"></script>
   <script src="/static/l1_tasks.js?v=5"></script>
   <script src="/static/shakespeare.js?v=27"></script>
-  <script src="/static/learn_hub.js?v=6"></script>
+  <script src="/static/learn_hub.js?v=7"></script>
 
   <script src="/static/characters.js?v=8"></script>
-  <script src="/static/modern.js?v=6"></script>
+  <script src="/static/modern.js?v=7"></script>
   <script>
     // Offline support: only on https (or localhost), never blocks the page.
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
