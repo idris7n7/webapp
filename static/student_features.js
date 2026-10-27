@@ -715,7 +715,7 @@
   // tab opens. When the browser is idle they are only downloaded (prefetch), not run, so the Home page stays light.
   const Lazy = {
     files: ["arcade_data.js?v=2", "arcade/sprites.js?v=2", "arcade_core.js?v=4", "game_wordrun.js?v=4", "game_penalty.js?v=5",
-      "game_ninja.js?v=4", "game_river.js?v=4"],
+      "game_ninja.js?v=4", "game_river.js?v=5"],
     ready: false,
     promise: null,
     games() {

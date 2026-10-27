@@ -238,6 +238,7 @@
     const bar = $("l1AppBar");
     const nav = $("l1BottomNav");
     if (!u) {
+      document.body.classList.remove("l1-teacher-view");
       bar.classList.add("hidden");
       nav.classList.add("hidden");
       document.body.classList.remove("l1-has-nav");
@@ -248,6 +249,7 @@
     $("l1BarStaff").classList.toggle("hidden", !staff);
     $("l1BarStaff").textContent = state.mode === "teacher" ? "🎓 Talaba" : "🛠 Panel"; $("l1BarStaff").title = state.mode === "teacher" ? "Talaba ko'rinishiga o'tish" : "Boshqaruv paneliga o'tish";
     renderBar();
+    document.body.classList.toggle("l1-teacher-view", !isStudentMode()); // no Pomodoro tomato over the teacher panel
     if (isStudentMode()) {
       nav.classList.remove("hidden");
       document.body.classList.add("l1-has-nav");
@@ -312,11 +314,18 @@
   }
 
   // ------------------------------------------------------------------ data
-  Shell.refresh = async function () {
+  // Calls that come while one is on its way share it: sign-in, tab switches and the timers asked for the same
+  // assignments and leaderboard two or three times in a row.
+  let refreshing = null;
+  Shell.refresh = function () {
+    if (!refreshing) refreshing = refreshNow().finally(() => { refreshing = null; });
+    return refreshing;
+  };
+  async function refreshNow() {
     if (!user() || !window.l1GetToken()) return;
     Shell.lastRefresh = Date.now();
     try {
-      const [asg, board] = await Promise.all([api("/api/assignments"), api("/api/leaderboard?period=week")]);
+      const [asg, board] = await Promise.all([api("/api/assignments"), loadBoard("week")]);
       Shell.data.assignments = asg.assignments;
       Shell.data.now = asg.now;
       Shell.data.board.week = board;
@@ -331,7 +340,7 @@
     if (Shell.tab === "rating") renderRating();
     const dot = $("l1TasksDot");
     if (dot) dot.classList.toggle("hidden", !(activeTasks().some((a) => !a.my.done) || (!isSunday() && openHomework() && !homeworkDoneToday())));
-  };
+  }
   const nowTs = () => Shell.data.now + (Date.now() / 1000 - (Shell.data.fetchedAt || Date.now() / 1000));
   // hw_<lesson> are the permanent daily homeworks (Vazifalar); everything else is a teacher's assignment
   const isHw = (a) => String(a.id).startsWith("hw_");
@@ -535,10 +544,10 @@
     return ends.length ? Math.min(...ends) : 0;
   }
 
-  // Lessons the student marked as learned today (index.html writes the time of each into l1_learned_log_v1).
+  // Lessons the student marked as learned today (app_main.js keeps the time of each, per student).
   function lessonsToday() {
     try {
-      const log = JSON.parse(localStorage.getItem("l1_learned_log_v1") || "{}");
+      const log = (window.l1LearnedLog && window.l1LearnedLog()) || {};
       const start = new Date(); start.setHours(0, 0, 0, 0);
       return Object.values(log).filter((at) => at >= start.getTime()).length;
     } catch (e) { return 0; }
@@ -981,11 +990,16 @@
   }
 
   // ------------------------------------------------------------------ Rating
-  async function loadBoard(period) {
-    const data = await api("/api/leaderboard?period=" + period);
-    Shell.data.board[period] = data;
-    Shell.data.me = data.me;
-    return data;
+  const boardsOnTheWay = {};
+  function loadBoard(period) {
+    if (!boardsOnTheWay[period]) {
+      boardsOnTheWay[period] = api("/api/leaderboard?period=" + period).then((data) => {
+        Shell.data.board[period] = data;
+        Shell.data.me = data.me;
+        return data;
+      }).finally(() => { delete boardsOnTheWay[period]; });
+    }
+    return boardsOnTheWay[period];
   }
   Shell.loadBoard = loadBoard;
 

@@ -241,7 +241,7 @@
   function boot() {
     initTilt(); watchNumbers();
     const iv = setInterval(() => { tick(); if (++tries > 8) clearInterval(iv); }, 400);
-    setInterval(tick, 2000);
+    setInterval(() => { if (!document.hidden) tick(); }, 2000); // nothing to paint while the app is in the background
     new MutationObserver(onceAFrame(() => { if (window.L1_Shell && window.L1_Shell.tab === "home") paintBadges(); }))
       .observe(document.body, { childList: true, subtree: true });
     enter();

@@ -172,9 +172,12 @@
       // zoom 20 is the tiles of zoom 19 enlarged: at that scale the 2 m circle of a new tree is big enough to place it by eye
       this.map = Lf.map(div, { zoomControl: false, attributionControl: true, minZoom: 11, maxZoom: 20, maxBounds: bounds.pad(0.25), maxBoundsViscosity: 0.9, zoomSnap: 0.5, doubleClickZoom: false });
       this.map.attributionControl.setPrefix(false);
+      // the cards at the bottom cover the bottom corners: the OpenStreetMap credit (the tiles' licence asks for it to be
+      // seen) and the scale go to the top
+      this.map.attributionControl.setPosition("topright");
       this.map.fitBounds(bounds, { padding: [10, 10] });
       Lf.control.zoom({ position: "topleft", zoomInText: "+", zoomOutText: "−" }).addTo(this.map);
-      Lf.control.scale({ position: "bottomleft", imperial: false, maxWidth: 90 }).addTo(this.map);
+      Lf.control.scale({ position: "topleft", imperial: false, maxWidth: 90 }).addTo(this.map);
       this.tiles = Lf.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 20, maxNativeZoom: 19, keepBuffer: 3, updateWhenIdle: true,
         referrerPolicy: "origin", // OpenStreetMap's tile policy wants to see which site asks

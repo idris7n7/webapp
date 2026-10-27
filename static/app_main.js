@@ -19,6 +19,26 @@
       } catch (e) {}
     }
 
+    // Learned lessons (and when each was learned) are kept per student: with one shared list the next student on a
+    // shared phone started with the first one's lessons and unlocks. The old shared list goes, once, to the first
+    // student who signs in on this phone.
+    const learnedKey = (id) => `l1_learned_units_v1_${id}`;
+    const learnedLogKey = (id) => `l1_learned_log_v1_${id}`;
+    function useLearnedOf(student) {
+      const id = student && student.id;
+      if (!id) { state.learnedUnits = []; return; }
+      try {
+        if (localStorage.getItem(learnedKey(id)) == null && localStorage.getItem("l1_learned_units_v1") != null) {
+          saveStorage(learnedKey(id), loadStorage("l1_learned_units_v1", []));
+          saveStorage(learnedLogKey(id), loadStorage("l1_learned_log_v1", {}));
+          localStorage.removeItem("l1_learned_units_v1");
+          localStorage.removeItem("l1_learned_log_v1");
+        }
+      } catch (e) { /* private mode */ }
+      state.learnedUnits = loadStorage(learnedKey(id), []);
+    }
+    window.l1LearnedLog = () => (state.authStudent ? loadStorage(learnedLogKey(state.authStudent.id), {}) : {});
+
     // Clear out any old demo student names from localStorage if previously cached
     (function cleanOldDemoData() {
       try {
@@ -58,7 +78,7 @@
       activeSectionId: loadStorage("l1_active_section_v2", "section_1"),
       mainSection: loadStorage("l1_main_section_v1", "learn"),
       subCategory: loadStorage("l1_sub_category_v1", "grammar"),
-      learnedUnits: loadStorage("l1_learned_units_v1", []),
+      learnedUnits: [], // per student, filled by useLearnedOf()
       activeLearnUnitId: null,
       activePracticeUnitId: null,
       mode: "student",
@@ -74,6 +94,7 @@
       activeInputId: null,
       userAnswers: {}
     };
+    useLearnedOf(state.authStudent);
 
     function isStaffRole(role) {
       return role === "teacher" || role === "admin";
@@ -118,6 +139,7 @@
           state.authStudent = data.student;
           state.currentStudentId = data.student.id;
           saveStorage("l1_auth_student_v2", data.student);
+          useLearnedOf(data.student);
         } else {
           window.L1_LOGOUT(false);
           if (data.message) showAuthAlert(data.message);
@@ -138,6 +160,7 @@
       }
       window._activePendingUserId = null;
       state.authStudent = null;
+      state.learnedUnits = [];
       state.studentReady = false;
       state.currentStudentId = null;
       state.mode = "student";
@@ -170,6 +193,7 @@
     async function completeLogin(student, token, welcomeMsg) {
       window.l1SetToken(token);
       state.authStudent = student;
+      useLearnedOf(student);
       state.studentReady = true;
       state.currentStudentId = student.id;
       state.mode = isStaffRole(student.role) ? "teacher" : "student";
@@ -1224,16 +1248,21 @@
       if (!state.learnedUnits) state.learnedUnits = [];
       if (!state.learnedUnits.includes(unitId)) {
         state.learnedUnits.push(unitId);
-        saveStorage("l1_learned_units_v1", state.learnedUnits);
-        // when it happened, for the "Dars" goal of the day on the home screen
-        const log = loadStorage("l1_learned_log_v1", {});
-        log[unitId] = Date.now();
-        saveStorage("l1_learned_log_v1", log);
+        const sid = state.authStudent && state.authStudent.id;
+        if (sid) {
+          saveStorage(learnedKey(sid), state.learnedUnits);
+          // when it happened, for the "Dars" goal of the day on the home screen
+          const log = loadStorage(learnedLogKey(sid), {});
+          log[unitId] = Date.now();
+          saveStorage(learnedLogKey(sid), log);
+        }
         window.dispatchEvent(new CustomEvent("l1:lesson-learned"));
       }
       const unit = UNITS_DATA.find(u => u.id === unitId);
-      showToast(`🎉 Barakalla! "${unit ? unit.title : 'Unit'}" darsini o'zlashtirdingiz! Ushbu darsning Mashq qilish bo'limi ochildi.`);
-      showTeacherIdrisCelebration(unit ? unit.title : 'Unit');
+      // the data titles read "01 📝 BIRLIK VA KOʻPLIK: Birlik va koʻplik": the student sees the name after the colon
+      const name = unit ? (String(unit.title).split(":").pop().trim() || unit.title) : "Dars";
+      showToast(`🎉 Barakalla! «${name}» darsini o'zlashtirdingiz! Ushbu darsning Mashq qilish bo'limi ochildi.`);
+      showTeacherIdrisCelebration(name);
       renderLearnUnitsList();
       openLessonReader(unitId);
     }
@@ -1313,12 +1342,19 @@
         prev.disabled = at === 0;
         next.textContent = at === pages - 1 ? "Tugatdim ✓" : "Keyingi ›";
       };
-      const go = (i) => track.scrollTo({ left: Math.max(0, Math.min(pages - 1, i)) * track.clientWidth, behavior: "smooth" });
+      // `want` is the page the track is sliding to: a second tap during the slide goes one page further
+      // (counting from `at`, the page under the middle, two quick taps moved only one page)
+      let want = 0;
+      const go = (i) => { want = Math.max(0, Math.min(pages - 1, i)); track.scrollTo({ left: want * track.clientWidth, behavior: "smooth" }); };
       // the page under the middle of the track; the bars and the counter change only when it does
-      track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth)); if (i !== at) show(i); }, { passive: true });
-      prev.addEventListener("click", () => go(at - 1));
+      track.addEventListener("scroll", () => {
+        const w = Math.max(1, track.clientWidth), i = Math.round(track.scrollLeft / w);
+        if (i !== at) show(i);
+        if (Math.abs(track.scrollLeft - i * w) < 2) want = i; // settled, also after a swipe by hand
+      }, { passive: true });
+      prev.addEventListener("click", () => go(want - 1));
       next.addEventListener("click", () => {
-        if (at < pages - 1) return go(at + 1);
+        if (want < pages - 1) return go(want + 1);
         const box = document.getElementById("lessonCompletionBox");
         if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
       });
@@ -2451,7 +2487,7 @@
       const stuFilter = document.getElementById("mistakeFilterStudent");
       const prevStu = stuFilter.value || "all";
       stuFilter.innerHTML = `<option value="all">Barcha talabalar</option>`;
-      state.students.forEach(s => {
+      state.students.filter(s => !isStaffRole(s.role)).forEach(s => { // teachers make no mistakes to look at
         const opt = document.createElement("option");
         opt.value = s.id;
         opt.textContent = s.name;

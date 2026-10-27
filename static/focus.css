@@ -9,6 +9,7 @@
   transition: transform .15s ease, box-shadow .2s ease;
 }
 .gv-pomo[hidden] { display: none; }
+body.l1-teacher-view .gv-pomo { display: none; } /* Pomodoro is for students; it covered scores in the teacher panel */
 /* room under the last card for the tomato (it floats over the page's bottom-right corner and hid buttons there);
    Home has no tomato */
 body.l1-has-nav:not([data-l1-tab="home"]) main { padding-bottom: calc(var(--l1-nav-h) + 92px + var(--l1-safe-bottom-total)) !important; }
