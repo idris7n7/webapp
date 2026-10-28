@@ -92,7 +92,7 @@
   function need3D() {
     if (window.THREE && window.L1_3D) return Promise.resolve();
     if (!three) {
-      three = ["vendor/three-0.186.1.min.js?v=1", "arcade3d.js?v=2"].reduce((chain, f) => chain.then(() => new Promise((resolve, reject) => {
+      three = ["vendor/three-0.186.1.min.js?v=1", "arcade3d.js?v=3", "arcade_cinema.js?v=4"].reduce((chain, f) => chain.then(() => new Promise((resolve, reject) => {
         const el = document.createElement("script");
         el.src = "/static/" + f;
         el.onload = resolve;

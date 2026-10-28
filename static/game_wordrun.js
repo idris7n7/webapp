@@ -3,9 +3,10 @@
  * The student's hero (one of six made-up children, picked on the start page: L1_Arcade.heroId) runs down a sunny street of cream houses with terracotta roofs. Swipe (or arrow keys) left/right to
  * change lanes, up to jump, down to slide. Barriers must be jumped, banners slid under, crates avoided; a hit costs a
  * heart (three in all). Word coins carry English words (10 game points each); magnets, shields and hearts float on the
- * road now and then. After every 10 coins he stops at a red traffic light while cars cross and a grammar question
- * appears: right = green light, he crosses and runs on; wrong = he steps onto the road, a car bumps him and he flies off
- * in a cartoon way (no injury shown) and the run ends. Ten right answers bring him home to Kungil Koʻchasi 17-uy.
+ * road now and then. After every 10 coins an answer gate stands across the street: a grammar question and three boards,
+ * one per lane, each with an answer. He runs through the lane of his answer (swipe, or tap the coloured chip). A right
+ * answer lights the board green and he runs on; a wrong answer costs a heart, he stops for the explanation and runs on
+ * again; the third wrong answer ends the run (the server keeps the same rule). Ten gates bring him home to Kungil Koʻchasi 17-uy.
  *
  * The world is a treadmill: the player stays near z = 0 and the street (a group moved by the distance run) slides
  * towards the camera; street blocks are recycled. The far street bends below the horizon (L1_3D.bend).
@@ -23,6 +24,8 @@
   const GRAVITY = 24, JUMP_V = 8.2, SLIDE_TIME = 0.7;
   const COLORS = { sky: "#4d9af0", horizon: "#d7ecff", facade: ["#f2e0be", "#eed4a8", "#f5e7cd", "#ead2ac", "#f0dcc4"], roof: ["#c4552b", "#b8482a", "#cf6435", "#a9452b"] };
   const TUTORIAL_KEY = "l1_arcade_wordrun_tutorial_v1";
+  const MAX_WRONG = 3; // the third wrong answer ends the run (the server's WORDRUN_MAX_WRONG)
+  const LANE_COLORS = ["#2f7de1", "#27a862", "#ef7d22"]; // left, middle, right: the board, the mat on the road and the chip
 
   const G = {
     // ---------------------------------------------------------------- open / close
@@ -32,7 +35,7 @@
       root.innerHTML = `<div class="ac-stage" data-stage></div>
         <div class="ac-hud" data-hud hidden><span class="ac-pill" title="So'z tangalari">${A.ICON.coin}<b data-hud-v="coins">0</b></span>
           <span class="ac-pill" title="Keyingi svetoforgacha"><span aria-hidden="true">🚦</span><b data-hud-v="group">0/${PER_LIGHT}</b></span>
-          <span class="ac-pill" title="O'tilgan chorrahalar"><b data-hud-v="lights">0/${LIGHTS}</b></span>
+          <span class="ac-pill" title="O'tilgan eshiklar"><b data-hud-v="lights">0/${LIGHTS}</b></span>
           <span class="ac-pill wr3-hearts" data-hud-v="hearts" aria-label="Yuraklar"></span>
           <span class="ac-pill wr3-power" data-hud-v="power" hidden></span><span class="ac-hud-fill"></span>${A.hudButtons()}</div>
         <div class="ac-banner" data-banner></div><div class="wr3-hint" data-hint hidden></div>`;
@@ -74,7 +77,7 @@
       this.root = null;
     },
     onBack() {
-      if (["run", "brake", "question", "cross", "accident", "home", "fall", "intro"].includes(this.phase) && !this.paused) { this.pause(); return true; }
+      if (["run", "brake", "explain", "home", "fall", "intro"].includes(this.phase) && !this.paused) { this.pause(); return true; }
       return false;
     },
 
@@ -84,17 +87,17 @@
       this.D = D; this.THREE = THREE;
       const st = this.st = D.stage(this.stageEl, { fov: 62, far: 260, maxDpr: 1.6 });
       D.curve.value = 0.0017;
-      D.sky(st.scene, COLORS.sky, COLORS.horizon, { radius: 240 });
-      st.scene.fog = new THREE.Fog(COLORS.horizon, 34, 125);
-      st.scene.add(new THREE.HemisphereLight("#d4ecff", "#e7cf9f", 1.15));
-      const sun = this.sun = new THREE.DirectionalLight("#fff0d2", 2.5);
+      // the animated-movie look: the run is a journey home that ends at sunset (setTime follows the right answers)
+      const mood = this.mood = D.cinema.mood(st, { from: "afternoon", to: "sunset", fog: [30, 120], radius: 240 });
+      D.cinema.grade(this.stageEl.parentNode);
+      this.timeK = 0;
+      const sun = this.sun = mood.key;
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
       Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 9, bottom: -9, near: 1, far: 40 });
       sun.shadow.bias = -0.0008;
-      st.scene.add(sun, sun.target);
-      // clouds on the horizon (no fog on them)
-      const cloudM = new THREE.MeshBasicMaterial({ color: "#ffffff", fog: false, transparent: true, opacity: 0.92 });
+      // clouds on the horizon (no fog on them), lit by the sun: they take the colour of the sky's glow
+      const cloudM = this.cloudM = new THREE.MeshBasicMaterial({ color: "#ffffff", fog: false, transparent: true, opacity: 0.92 });
       for (let i = 0; i < 9; i++) {
         const g = new THREE.Group();
         for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(D.shape("sphere"), cloudM); s.position.set(k * 5 - 7, Math.random() * 1.5, 0); s.scale.set(9 + Math.random() * 4, 5 + Math.random() * 2, 4); g.add(s); }
@@ -122,7 +125,7 @@
       const c = document.createElement("canvas");
       c.width = 256; c.height = 512;
       const g = c.getContext("2d");
-      g.fillStyle = "#4b505a"; g.fillRect(0, 0, 256, 512);
+      g.fillStyle = "#625b6c"; g.fillRect(0, 0, 256, 512);
       for (let i = 0; i < 2200; i++) { const v = 60 + Math.random() * 40; g.fillStyle = `rgba(${v},${v + 3},${v + 10},.35)`; g.fillRect(Math.random() * 256, Math.random() * 512, 2, 2); }
       const lx = (x) => 128 + (x / 5.9) * 256; // road x (metres) to texture x
       g.fillStyle = "#f2f2ee";
@@ -220,7 +223,7 @@
         this.chunks.push({ g, env, i });
       }
     },
-    // obstacles, coins, power-ups, cars for the crossing
+    // obstacles, coins and power-ups
     buildProps() {
       const THREE = this.THREE, D = this.D, P = D.part, S = D.shape;
       const mk = (parts) => D.merge(parts);
@@ -269,23 +272,6 @@
       this.powGeo = { magnet: mk(magnet), heart: mk([P(hg, "#ff3d5a", [0, 0.1, 0])]), shield: mk(shield) };
       this.ringGeo = new THREE.TorusGeometry(0.62, 0.035, 8, 40);
       this.ringMat = D.bend(new THREE.MeshBasicMaterial({ color: "#fff1a8", transparent: true, opacity: 0.85 }));
-      // cars for the crossing (side view, driving along x)
-      const car = (color) => {
-        const p = [];
-        p.push(P(S("rbox"), color, [0, 0.62, 0], null, [3.4, 0.75, 1.6]));
-        p.push(P(S("rbox"), color, [-0.15, 1.18, 0], null, [1.9, 0.62, 1.45]));
-        p.push(P(S("box"), "#2b3b52", [-0.15, 1.2, 0], null, [1.7, 0.42, 1.47]));
-        [[-1.1, -0.8], [1.1, -0.8], [-1.1, 0.8], [1.1, 0.8]].forEach(([x, z]) => {
-          p.push(P(S("cyl"), "#1c1c20", [x, 0.36, z], [Math.PI / 2, 0, 0], [0.72, 0.28, 0.72]));
-          p.push(P(S("cyl"), "#cfd4dc", [x, 0.36, z + Math.sign(z) * 0.15], [Math.PI / 2, 0, 0], [0.34, 0.02, 0.34]));
-        });
-        p.push(P(S("sphere"), "#fff6c9", [1.68, 0.72, 0.5], null, [0.12, 0.16, 0.22]));
-        p.push(P(S("sphere"), "#fff6c9", [1.68, 0.72, -0.5], null, [0.12, 0.16, 0.22]));
-        p.push(P(S("box"), "#d8dde4", [0, 0.32, 0], null, [3.42, 0.1, 1.62]));
-        return mk(p);
-      };
-      this.carGeo = { blue: car("#2f7de1"), red: car("#e04545") };
-      this.carMat = D.vcMaterial(true, { roughness: 0.35 });
     },
     wordMat(id) {
       if (this.wordMats[id]) return this.wordMats[id];
@@ -307,7 +293,7 @@
     // ---------------------------------------------------------------- the track: blocks, obstacles, coins
     resetTrack() {
       (this.items || []).forEach((it) => this.world.remove(it.obj));
-      if (this.crossing) { this.world.remove(this.crossing.g); this.crossing = null; }
+      this.removeGate();
       if (this.home) { this.world.remove(this.home.g); this.home = null; }
       this.items = [];
       this.travel = 0;
@@ -317,7 +303,7 @@
       // two blocks behind the start too: the menu camera looks back past him down the street
       this.chunks.forEach((c, i) => { c.i = i - 2; c.g.position.z = -c.i * CHUNK; c.g.visible = true; c.env.visible = true; });
       Object.assign(this, { lane: 1, px: 0, py: 0, vy: 0, sliding: 0, stumble: 0, invuln: 0, magnet: 0, shieldT: 0, speed: 0, group: 0, shake: 0, fly: null, inside: false, slowmo: 0 });
-      this.pending = null; // "crossing" when ten coins are in and the light is coming; "home" after the tenth light
+      this.pending = null; // "gate" when ten coins are in and the answer gate is coming; "home" after the tenth gate
       if (this.player) { this.player.root.visible = true; this.player.root.rotation.set(0, 0, 0); this.player.body.position.set(0, 0, 0); }
     },
     addItem(type, lane, z, extra) {
@@ -390,71 +376,45 @@
       if (!this.bag || !this.bag.length) this.bag = A.shuffle(A.vocabFor(this.level || "A1", true).map((w) => w.id));
       return this.bag.pop();
     },
-    // Ten coins: no more track; the crossing appears a little way ahead and everything beyond it goes.
-    queueCrossing() {
-      const cz = this.travel + 46;
-      // nothing beyond the light, and no more coins before it: a stretch is exactly ten coins
+    // Ten coins: no more track; the answer gate appears a little way ahead and everything beyond it goes.
+    queueGate() {
+      const gz = this.travel + 52;
       this.items = this.items.filter((it) => {
-        if (it.z > cz - 14 || it.type === "coin") { this.world.remove(it.obj); return false; }
+        if (it.z > gz - 14 || it.type === "coin") { this.world.remove(it.obj); return false; } // a stretch is exactly ten coins
         return true;
       });
-      this.buildCrossing(cz);
-      this.genZ = cz + 18;
-      this.lastCoinZ = cz + 10;
-      this.pending = "crossing";
+      this.buildGate(gz);
+      this.genZ = gz + 18;
+      this.lastCoinZ = gz + 10;
+      this.pending = "gate";
     },
-    buildCrossing(cz) {
+    // A gate across the street: three boards, one per lane, each with an answer, over a coloured mat in the lane.
+    buildGate(gz) {
       const THREE = this.THREE, D = this.D, P = D.part, S = D.shape;
+      const q = this.questions[this.answers.length];
       const g = new THREE.Group();
       const parts = [];
-      // the side street crosses ours: asphalt from far left to far right, kerb corners, a zebra in our road
-      parts.push(P(S("box"), "#4b505a", [0, 0.005, 0], null, [90, 0.01, 8]));
-      for (let k = -2; k <= 2; k++) parts.push(P(S("box"), "#f4f4f0", [k * 1.15, 0.015, 0], null, [0.62, 0.012, 5.2]));
-      parts.push(P(S("box"), "#f4f4f0", [0, 0.015, 3.2], null, [5.8, 0.012, 0.25]));
-      [-1, 1].forEach((side) => [-1, 1].forEach((ez) => {
-        parts.push(P(S("box"), "#eadbc0", [side * 30, 0.06, ez * 8.6], null, [54, 0.12, 9.2]));
-        parts.push(P(S("box"), "#cfc2ac", [side * 30, 0.08, ez * 4.1], null, [54, 0.16, 0.2]));
-      }));
-      for (let x = -40; x <= 40; x += 6) parts.push(P(S("box"), "#f2c94c", [x, 0.014, 0], null, [3, 0.01, 0.14]));
-      const base = new THREE.Mesh(D.merge(parts), D.vcMaterial(true, { roughness: 0.9 }));
-      base.receiveShadow = true;
-      g.add(base);
-      // traffic lights on both far corners, facing the runner (seen from any lane), sharing three lamp materials
-      const lp = [];
-      lp.push(P(S("cyl"), "#23262c", [0, 1.9, 0], null, [0.16, 3.8, 0.16]));
-      lp.push(P(S("rbox"), "#1d2025", [0, 3.75, 0], null, [0.5, 1.4, 0.42]));
-      lp.push(P(S("box"), "#1d2025", [0, 4.5, 0.05], null, [0.6, 0.06, 0.52]));
-      const poleGeo = D.merge(lp), poleMat = D.vcMaterial(true, { roughness: 0.5 });
-      const lampMat = () => D.bend(new THREE.MeshBasicMaterial({ color: "#2a2a2a" })); // unlit: a lit lamp glows in any light
-      const lamps = { red: lampMat(), amber: lampMat(), green: lampMat() };
-      const lampGeo = new THREE.SphereGeometry(0.17, 16, 12);
-      const lights = [-3.35, 3.35].map((x) => {
-        const light = new THREE.Group();
-        const pole = new THREE.Mesh(poleGeo, poleMat);
-        pole.castShadow = true;
-        light.add(pole);
-        [["red", 4.15], ["amber", 3.75], ["green", 3.35]].forEach(([k, y]) => { const s = new THREE.Mesh(lampGeo, lamps[k]); s.position.set(0, y, 0.22); light.add(s); });
-        light.position.set(x, 0, -4.6);
-        g.add(light);
-        return light;
+      [-1, 1].forEach((side) => parts.push(P(S("cyl"), "#3a3f48", [side * 3.15, 2.3, 0], null, [0.22, 4.6, 0.22])));
+      parts.push(P(S("rbox"), "#e8682a", [0, 4.55, 0], null, [6.9, 0.7, 0.4]));
+      for (let k = 0; k < 7; k++) parts.push(P(S("box"), "#ffffff", [-3 + k, 4.55, 0.21], null, [0.34, 0.7, 0.02]));
+      LANES.forEach((x, i) => parts.push(P(S("box"), LANE_COLORS[i], [x, 0.03, 3.4], null, [1.45, 0.02, 5.4])));
+      const frame = new THREE.Mesh(D.merge(parts), D.vcMaterial(true, { roughness: 0.6 }));
+      frame.castShadow = true;
+      g.add(frame);
+      const boards = LANES.map((x, i) => {
+        const tex = D.textTexture(q ? q.o[i] : "?", { w: 512, h: 320, bg: LANE_COLORS[i], round: 40, border: "#ffffff", borderW: 18, color: "#ffffff", shadow: "rgba(0,0,0,.35)", size: 120 });
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.0), D.bend(new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
+        m.position.set(x, 3.2, 0.3);
+        g.add(m);
+        return m;
       });
-      const light = lights[1];
-      const cars = [
-        { mesh: new THREE.Mesh(this.carGeo.blue, this.carMat), lane: 1.9, dir: 1, x: -26, speed: 11, wait: 0 },
-        { mesh: new THREE.Mesh(this.carGeo.red, this.carMat), lane: -1.9, dir: -1, x: 18, speed: 10, wait: 0.8 },
-      ];
-      cars.forEach((c) => { c.mesh.castShadow = true; if (c.dir < 0) c.mesh.rotation.y = Math.PI; c.mesh.position.set(c.x, 0, c.lane); g.add(c.mesh); });
-      g.position.z = -cz;
+      g.position.z = -gz;
       this.world.add(g);
-      this.crossing = { g, cz, stop: cz - 5.2, lamps, cars, light, state: "red" };
-      this.setLight("red");
+      this.gate = { g, gz, boards, q };
     },
-    setLight(state) {
-      const L = this.crossing.lamps;
-      L.red.color.set(state === "red" ? "#ff2b2b" : "#3a1f1f");
-      L.amber.color.set("#3a321c");
-      L.green.color.set(state === "green" ? "#2bff66" : "#1d3a24");
-      this.crossing.state = state;
+    removeGate() {
+      if (this.gate) { this.world.remove(this.gate.g); this.gate = null; }
+      this.hideGateQuestion();
     },
     buildHome(hz) {
       const THREE = this.THREE, D = this.D, P = D.part, S = D.shape;
@@ -512,10 +472,10 @@
       const lvl = A.level();
       const el = A.overlay(this.root, `<div class="ac-start"><h2>Word Run</h2>${A.heroPicker()}
         <ul class="ac-rules"><li>Suring: ⬅️ ➡️ yo'lak, ⬆️ sakrash, ⬇️ sirpanish. To'siqqa urilsangiz — yurak kamayadi (${HEARTS} ta).</li>
-          <li>So'z tangalari — 10 ball. Har 10 tangadan keyin svetoforda grammatika savoli.</li>
-          <li>10 ta to'g'ri javob — uyga, ${esc(ADDRESS)}ga!</li></ul>
+          <li>So'z tangalari — 10 ball. Har 10 tangadan keyin eshik: savolning javobi yozilgan yo'lakka yuguring.</li>
+          <li>Noto'g'ri javob — bir yurak, ${MAX_WRONG} ta xato — o'yin tugaydi. 10 ta eshikdan o'tsangiz — uyga, ${esc(ADDRESS)}ga!</li></ul>
         <span class="ac-lvl-line">Daraja: <b>${A.levelName(lvl)}</b></span>
-        <div class="ac-actions is-col">${ck ? A.btn(`Davom ettirish (${ck.answers.length}/${LIGHTS} chorraha)`, 'data-ac="resume"', "is-primary") : ""}
+        <div class="ac-actions is-col">${ck ? A.btn(`Davom ettirish (${ck.answers.length}/${LIGHTS} eshik)`, 'data-ac="resume"', "is-primary") : ""}
           ${A.btn(ck ? "Yangi o'yin" : "Boshlash", 'data-ac="new"', ck ? "" : "is-primary")}${A.btn("Chiqish", 'data-ac="exit"', "is-ghost")}</div></div>`, "is-menu");
       A.paintShk(el);
       A.bindHeroPicker(el, (id) => this.swapHero(id));
@@ -623,7 +583,7 @@
         return;
       }
       if (ph === "run" || ph === "brake") this.updateRun(dt);
-      else if (ph === "question" || ph === "cross" || ph === "accident") this.updateCrossing(dt);
+      else if (ph === "explain") this.updateExplain(dt);
       else if (ph === "home") this.updateHome(dt);
       else if (ph === "fall") this.updateFall(dt);
       this.sparks.update(dt);
@@ -634,24 +594,24 @@
       // recycle street blocks that went behind the camera
       for (const c of this.chunks) {
         if (this.travel - (c.i + 1) * CHUNK > BEHIND) { c.i += NCHUNK; c.g.position.z = -c.i * CHUNK; }
-        // at the crossing the houses step back (its corners bring their own pavement); past the home garden nothing is left
+        // past the home garden nothing is left
         const z0 = c.i * CHUNK;
-        c.env.visible = !(this.crossing && z0 + CHUNK > this.crossing.cz - 4 && z0 < this.crossing.cz + 4);
         c.g.visible = !(this.home && z0 > this.home.hz - 2);
       }
       this.items = this.items.filter((it) => {
         if (this.travel - it.z > BEHIND) { this.world.remove(it.obj); return false; }
         return true;
       });
-      if (this.crossing && this.travel - this.crossing.cz > 30 && this.phase === "run") { this.world.remove(this.crossing.g); this.crossing = null; }
+      if (this.gate && this.pending !== "gate" && this.travel - this.gate.gz > 14) this.removeGate();
     },
     updateRun(dt) {
       const [v0, v1] = SPEED[this.level] || SPEED.A1;
-      let target = v0 + (v1 - v0) * Math.min(1, (this.rightCount() * PER_LIGHT + this.group) / 80);
+      let target = v0 + (v1 - v0) * Math.min(1, (this.answers.length * PER_LIGHT + this.group) / 80);
       if (this.stumble > 0) target *= 0.55;
+      if (this.pending === "gate" && this.gate && this.gate.gz - this.travel < 60) target *= 0.72; // time to choose a lane
       if (this.phase === "brake") {
-        // braking smoothly to the stop line of a red light, or to the garden gate at home
-        const stop = this.pending === "home" ? this.home.stopZ : this.crossing.stop;
+        // braking smoothly to the garden gate at home
+        const stop = this.home.stopZ;
         const d = stop - this.travel;
         target = Math.max(0, Math.min(target, Math.sqrt(Math.max(0, 2 * 9 * d))));
         if (d < 0.05) { this.speed = 0; this.advance(Math.max(0, d)); this.atStop(); return; }
@@ -659,7 +619,11 @@
       this.speed += (target - this.speed) * Math.min(1, dt * (this.phase === "brake" ? 6 : 1.5));
       this.advance(this.speed * dt);
       if (this.phase === "run") this.generate(this.travel + AHEAD);
-      if (this.phase === "run" && this.pending === "crossing" && this.crossing && this.crossing.stop - this.travel < 18) { this.phase = "brake"; this.banner("🚦 Qizil chiroq!", "bad"); }
+      if (this.phase === "run" && this.pending === "gate" && this.gate) {
+        const left = this.gate.gz - this.travel;
+        if (left < 44 && !this.gateEl) this.showGateQuestion();
+        if (left <= 0.2) { this.resolveGate(); return; }
+      }
       if (this.phase === "run" && this.pending === "home" && this.home && this.home.stopZ - this.travel < 16) this.phase = "brake";
       // the player: lanes, jump, slide
       this.px += (LANES[this.lane] - this.px) * Math.min(1, dt * 11);
@@ -718,6 +682,7 @@
       A.sfx.bump();
     },
     hit() {
+      this.combo = 0;
       this.hearts--;
       this.stumble = 0.7;
       this.invuln = 2.0;
@@ -730,13 +695,19 @@
     collect(it) {
       this.coins.push(it.word);
       this.group++;
+      // coins in a row without a bump: a fiery callout every five
+      this.combo = (this.combo || 0) + 1;
+      if (this.combo % 5 === 0) {
+        this.banner(`🔥 ${this.combo} ta tanga ketma-ket!`, "good");
+        this.sparks.burst(this.px, this.py + 1.7, -0.6, "#ff8a3d", 46, 4.6, 0.9, 3);
+      }
       A.sfx.coin();
       const p = it.obj.position;
       this.sparks.burst(p.x, p.y, -0.6, "#ffd34d", 22, 3.2, 0.6, 5);
       const w = A.word(it.word);
       if (w) this.floatWord(`${w.en} — ${w.uz}`);
       this.hud();
-      if (this.group >= PER_LIGHT && !this.pending) this.queueCrossing();
+      if (this.group >= PER_LIGHT && !this.pending) this.queueGate();
     },
     powerUp(it) {
       A.sfx.power();
@@ -760,127 +731,98 @@
       setTimeout(() => { this.slowFor = null; }, 2400);
       if (this.tutorial.low && this.tutorial.high && this.tutorial.block) { try { localStorage.setItem(TUTORIAL_KEY, "1"); } catch (e) { /* private mode */ } this.tutorial = null; }
     },
-    atStop() {
-      if (this.pending === "home") { this.phase = "home"; this.t2 = 0; return; }
-      this.phase = "question";
+    atStop() { // the brake only brings him to the garden gate at home
+      this.phase = "home";
       this.t2 = 0;
-      this.showQuestion();
     },
 
-    // ---------------------------------------------------------------- the red light
-    showQuestion() {
-      const q = this.questions[this.answers.length];
-      if (!q) { this.finishRun("quit"); return; }
-      this.q = q;
-      this.locked = false;
+    // ---------------------------------------------------------------- the answer gate
+    isRight(a) { const g = window.ARCADE_DATA.grammar.find((x) => x.id === a.q); return !!g && g.a === a.c; },
+    wrongCount() { return this.answers.filter((a) => !this.isRight(a)).length; },
+    showGateQuestion() {
+      const q = this.gate && this.gate.q;
+      if (!q || this.gateEl) return;
+      this.chipLane = -1;
       const wrap = document.createElement("div");
-      wrap.className = "ac-q-wrap wr3-q";
+      wrap.className = "ac-q-wrap wr3-q wr3-gate";
       wrap.innerHTML = `<div class="ac-q" role="group" aria-label="Grammatika savoli">
-        <span class="ac-q-tag">🚦 Qizil chiroq · ${this.answers.length + 1}/${LIGHTS}-savol</span>
+        <span class="ac-q-tag">🚪 ${this.answers.length + 1}/${LIGHTS}-eshik · javobli yo'lakka yuguring</span>
         <div class="ac-q-text">${esc(q.q).replace("___", "<b>___</b>")}</div>
-        <div class="ac-opts">${q.o.map((o, i) => `<button type="button" class="ac-opt" data-opt="${i}">${esc(o)}</button>`).join("")}</div>
-        <div class="ac-why" hidden></div></div>`;
+        <div class="wr3-lanes">${q.o.map((o, i) => `<button type="button" class="wr3-lane" style="--c:${LANE_COLORS[i]}" data-lane="${i}">${esc(o)}</button>`).join("")}</div></div>`;
       this.root.appendChild(wrap);
-      this.qEl = wrap;
-      wrap.addEventListener("click", (ev) => { const b = ev.target.closest("[data-opt]"); if (b) this.answer(+b.dataset.opt); });
+      this.gateEl = wrap;
+      wrap.addEventListener("click", (ev) => {
+        const b = ev.target.closest("[data-lane]");
+        const to = b ? +b.dataset.lane : -1;
+        if (to >= 0 && this.phase === "run" && !this.paused && to !== this.lane) { this.lane = to; A.sfx.whoosh(); A.haptic("tap"); }
+      });
     },
-    answer(i) {
-      if (this.locked || this.phase !== "question" || this.paused) return;
-      this.locked = true; // one answer per light
-      const q = this.q, ok = i === q.a;
-      this.answers.push({ q: q.id, c: i });
+    hideGateQuestion() { if (this.gateEl) { this.gateEl.remove(); this.gateEl = null; } },
+    removeQuestion() { this.hideGateQuestion(); if (this.explainEl) { this.explainEl.remove(); this.explainEl = null; } },
+    // He runs through the gate: the lane he is in is his answer.
+    resolveGate() {
+      const G = this.gate, q = G.q, c = this.lane, ok = c === q.a;
+      this.answers.push({ q: q.id, c });
       A.askedQuestion(q.id);
-      this.qEl.querySelectorAll("[data-opt]").forEach((b, k) => { b.disabled = true; if (k === q.a) b.classList.add("is-right"); else if (k === i) b.classList.add("is-wrong"); });
+      this.hideGateQuestion();
+      this.pending = null;
+      this.group = 0;
+      const decided = this.answers.length >= LIGHTS || this.wrongCount() >= MAX_WRONG;
+      // the run is decided here (the tenth gate, or the third wrong answer): report it now, before the animation
+      if (decided) { A.Ckpt.clear("wordrun"); A.finishSession(this.s, { coins: this.coins, answers: this.answers }); } else this.checkpoint();
+      // the right board glows green, a wrong pick turns red, the third greys out
+      G.boards.forEach((b, i) => b.material.color.set(i === q.a ? "#8dffa8" : i === c ? "#ff8f8f" : "#9a9a9a"));
       this.hud();
-      // the run is decided here (a wrong answer, or the tenth right one): report it now, before the animation
-      if (!ok || this.answers.length >= LIGHTS) { A.Ckpt.clear("wordrun"); A.finishSession(this.s, { coins: this.coins, answers: this.answers }); }
       if (ok) {
         A.sfx.right();
         A.haptic("ok");
-        this.setLight("green");
-        this.banner("To'g'ri! Yashil chiroq", "good");
-        if (this.answers.length < LIGHTS) this.checkpoint();
-        setTimeout(() => { if (this.root && this.phase === "question") { this.removeQuestion(); this.phase = "cross"; this.t2 = 0; } }, 900);
-      } else {
-        A.sfx.wrong();
-        A.haptic("err");
-        const why = this.qEl.querySelector(".ac-why");
-        why.hidden = false;
-        why.innerHTML = `Noto'g'ri. To'g'ri javob: <b>${esc(q.o[q.a])}</b>. ${esc(q.why)}`;
-        this.banner("Noto'g'ri javob", "bad");
-        setTimeout(() => { if (this.root && this.phase === "question") this.startAccident(); }, 2300);
-      }
+        this.sparks.burst(this.px, 1.7, -0.6, "#7dff9e", 44, 4.2, 0.9, 3);
+        if (this.answers.length >= LIGHTS) { this.goHome(); this.banner("To'g'ri! Uy ko'rinyapti!", "good"); }
+        else this.banner("To'g'ri! Yana 10 ta tanga!", "good");
+      } else this.wrongAnswer(q, c);
     },
-    removeQuestion() { if (this.qEl) { this.qEl.remove(); this.qEl = null; } },
-    startAccident() {
-      this.removeQuestion();
-      this.phase = "accident";
+    // A wrong answer costs a heart. He stops while the right answer is explained, then runs on (or the run ends).
+    wrongAnswer(q, c) {
+      A.sfx.wrong();
+      A.haptic("err");
+      this.hearts--;
+      this.combo = 0;
+      this.shake = 0.3;
+      this.sparks.burst(this.px, 1.2, -0.5, "#ffffff", 18, 3, 0.5, 4);
+      this.hud();
+      const over = this.wrongCount() >= MAX_WRONG, out = this.hearts <= 0;
+      this.phase = "explain";
       this.t2 = 0;
-      this.hitDone = false;
-      // the blue car in the near lane comes now; it meets him when he steps into its lane
-      const car = this.crossing.cars[0];
-      car.x = -30; car.wait = 0; car.speed = 16; car.crash = true;
-      this.crossing.cars[1].x = 40; // the other car is out of the way
-      setTimeout(() => A.sfx.honk(), 600);
+      const wrap = document.createElement("div");
+      wrap.className = "ac-q-wrap wr3-q";
+      wrap.innerHTML = `<div class="ac-q" role="group" aria-label="To'g'ri javob">
+        <span class="ac-q-tag" style="background:#e5484d">Noto'g'ri · ${over || out ? "yuraklar tugadi" : `♥ ${this.hearts} ta qoldi`}</span>
+        <div class="ac-q-text">${A.filled(q, true)}</div>
+        <div class="ac-why">To'g'ri javob: <b>${esc(q.o[q.a])}</b>. ${esc(q.why)}</div>
+        <button type="button" class="ac-btn is-primary is-wide" data-ac="go" disabled>${over || out ? "Natijalar" : "Yugurishda davom etish"}</button></div>`;
+      this.root.appendChild(wrap);
+      this.explainEl = wrap;
+      const go = wrap.querySelector("[data-ac=go]");
+      let armed = false;
+      this.timer = setTimeout(() => { go.disabled = false; }, 700); // a finger that was still swiping cannot press it
+      go.addEventListener("pointerdown", () => { armed = true; });
+      go.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") armed = true; });
+      go.addEventListener("click", () => {
+        if (go.disabled || !armed || this.phase !== "explain") return;
+        this.removeQuestion();
+        if (over || out) { this.finishRun(over ? "lose" : "fall"); return; }
+        this.phase = "run";
+        this.invuln = 1.5;
+        if (this.answers.length >= LIGHTS) { this.goHome(); this.banner("Uy ko'rinyapti!", "good"); }
+        else this.banner("Yana 10 ta tanga!", "good");
+      });
     },
-    updateCrossing(dt) {
-      const C = this.crossing;
+    updateExplain(dt) {
       this.t2 += dt;
-      // cars: across and round again while the light is red; on green they stop short of the zebra
-      for (const c of C.cars) {
-        if (c.wait > 0) { c.wait -= dt; continue; }
-        let sp = c.speed;
-        if (C.state === "green" && !c.crash) {
-          const front = c.x + c.dir * 1.8, edge = -c.dir * 3.6;
-          const before = c.dir > 0 ? front < edge : front > edge;
-          if (before) sp = Math.max(0, Math.min(sp, Math.abs(edge - front) * 3));
-        }
-        c.x += c.dir * sp * dt;
-        if (this.phase === "question" && (c.x > 30 || c.x < -30)) { c.x = -c.dir * 30; c.wait = 0.4 + Math.random() * 1.2; }
-        c.mesh.position.x = c.x;
-      }
-      const P = this.player;
-      if (this.phase === "question") {
-        P.pose(this.t2 > 0.5 ? "think" : "idle", this.t);
-        P.root.rotation.set(0, 0, 0);
-      } else if (this.phase === "cross") {
-        const sp = Math.min(4.5, 1 + this.t2 * 2.5); // across the zebra, then off again
-        this.advance(sp * dt);
-        P.pose(sp < 3 ? "walk" : "run", this.t, { speed: sp < 3 ? 7 : 10 });
-        if (this.travel > C.cz + 5) {
-          this.pending = null;
-          this.group = 0;
-          this.phase = "run";
-          this.speed = sp;
-          if (this.rightCount() >= LIGHTS) this.goHome();
-          this.banner(this.rightCount() >= LIGHTS ? "Uy ko'rinyapti!" : "Yana 10 ta tanga!", "good");
-          this.hud();
-        }
-      } else if (this.phase === "accident") {
-        const car = C.cars[0];
-        if (!this.hitDone) {
-          // he steps onto the road against the red light, into the near lane, where the car meets him
-          if (this.travel < C.cz - 1.9) { this.advance(2.4 * dt); P.pose("walk", this.t, { speed: 6 }); }
-          else P.pose("stumble", this.t);
-          if (car.x + 1.75 >= this.px - 0.3 && this.travel >= C.cz - 2.4) {
-            this.hitDone = true;
-            this.fly = { t: 0, vx: 4.2, vy: 8.5, x: this.px, y: 0.2, rot: 0 };
-            this.slowmo = 0.8;
-            A.sfx.crash();
-            A.haptic("err");
-            this.shake = 0.45;
-            this.sparks.burst(this.px, 1.2, 0, "#ffffff", 40, 5, 0.7, 2);
-          }
-        } else {
-          const f = this.fly;
-          f.t += dt;
-          f.vy -= 9 * dt;
-          f.x += f.vx * dt; f.y += f.vy * dt; f.rot += dt * 7;
-          P.pose("fly", this.t);
-          if (Math.floor(f.t * 12) % 3 === 0) this.sparks.burst(f.x, f.y + 1, 0, "#ffe066", 2, 1, 0.5, 0); // cartoon stars
-          if (f.t > 2.4 && !this.over) { this.over = true; this.finishRun("lose"); }
-        }
-      }
+      this.speed = Math.max(0, this.speed - dt * 18);
+      this.advance(this.speed * dt);
+      this.player.pose(this.t2 < 0.6 ? "stumble" : "think", this.t);
+      this.player.root.rotation.set(0, 0, 0);
     },
     goHome() {
       // after the tenth light: a short street, then his house across the end of it
@@ -949,8 +891,13 @@
         P.root.visible = !(this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0);
       }
       let px = this.px, py = this.py;
-      if (ph === "accident" && this.fly) { px = this.fly.x; py = this.fly.y; P.root.rotation.set(this.fly.rot * 0.4, 0, -this.fly.rot); }
       P.root.position.set(px, py, 0);
+      // the board of the lane he is in grows a little; the chip of that lane lights up
+      if (this.gate) this.gate.boards.forEach((b, i) => { const k = i === this.lane ? 1.12 : 1; b.scale.x += (k - b.scale.x) * 0.2; b.scale.y = b.scale.x; });
+      if (this.gateEl && this.chipLane !== this.lane) {
+        this.chipLane = this.lane;
+        this.gateEl.querySelectorAll("[data-lane]").forEach((b) => b.classList.toggle("is-on", +b.dataset.lane === this.lane));
+      }
       this.shield.visible = this.shieldT > 0 && ph === "run";
       if (this.shield.visible) { this.shield.position.set(px, py + 0.95, 0); this.shield.material.opacity = 0.16 + 0.08 * Math.sin(this.t * 8); }
       // camera: facing him in the menu, behind him while running, higher at a light, wide at home
@@ -961,12 +908,7 @@
         const k = Math.min(1, this.t / 1.1), e = k * k * (3 - 2 * k);
         const a = e * Math.PI; // round him in a half circle, ending behind him
         pos = new THREE.Vector3(Math.sin(a) * 3.2 + 0.8 * (1 - e), 1.3 + e * 1.45, -3.9 * Math.cos(a) + e * 1.1); look = new THREE.Vector3(0, 0.25 + e * 0.9, -e * 8);
-      } else if (ph === "question") { pos = new THREE.Vector3(px * 0.5, 3.7, 6.6); look = new THREE.Vector3(px * 0.4, 1.9, -8); }
-      else if (ph === "accident") { // a fixed camera that looks up after him as he flies off
-        const f = this.fly;
-        pos = new THREE.Vector3(this.px * 0.5 - 1.2, 3.2, 7.4);
-        look = f ? new THREE.Vector3(f.x * 0.7, 1.4 + f.y * 0.75, -3) : new THREE.Vector3(this.px * 0.4 - 1.5, 1.4, -4);
-      }
+      } else if (ph === "explain") { pos = new THREE.Vector3(px * 0.5, 3.4, 6.2); look = new THREE.Vector3(px * 0.4, 1.7, -8); }
       else if (ph === "home") { pos = new THREE.Vector3(1.8, 3.4, 8.2); look = new THREE.Vector3(0, 2.7, -6); }
       else { pos = new THREE.Vector3(px * 0.75, 2.75 + py * 0.3, 5.0); look = new THREE.Vector3(px * 0.6, 1.15 + py * 0.25, -8); }
       if (!this.camPos) { this.camPos = pos.clone(); this.camLook = look.clone(); }
@@ -978,8 +920,15 @@
       cam.lookAt(this.camLook);
       const fov = (st.w < st.h ? 66 : 58) + Math.min(10, (this.speed || 0) * 0.45);
       if (Math.abs(cam.fov - fov) > 0.05) { cam.fov += (fov - cam.fov) * 0.1; cam.updateProjectionMatrix(); }
-      this.sun.position.set(px - 5, 11, 5); // the sun follows him so his shadow stays sharp
+      // the sun is low and ahead (long shadows run towards the camera); the light follows him so the shadow stays sharp
+      const ld = this.mood.lightDir;
+      this.sun.position.set(px + ld.x * 9, 8 + ld.y * 4, -3 + ld.z * 9);
       this.sun.target.position.set(px, 0, -3);
+      // the afternoon turns to sunset as the right answers pile up
+      const goal = Math.min(1, this.answers.length / LIGHTS);
+      this.timeK += (goal - this.timeK) * Math.min(1, 0.016 * 0.9);
+      if (Math.abs(this.timeK - this.mood.time) > 0.002) { this.mood.setTime(this.timeK); this.cloudM.color.set(this.mood.sky.material.uniforms.glow.value).lerp(new THREE.Color("#ffffff"), 0.45); }
+      this.mood.update(0.016, cam, this.speed || 0);
       st.render();
     },
 
@@ -996,7 +945,7 @@
     results() {
       const right = this.rightCount();
       const win = this.outcome === "win";
-      const title = win ? "Uyga yetdingiz!" : this.outcome === "lose" ? "Voy! Qizil chiroqda shoshildingiz" : this.outcome === "fall" ? "Yuraklar tugadi" : "O'yin tugadi";
+      const title = win ? "Uyga yetdingiz!" : this.outcome === "lose" ? `Uyga yetib bo'lmadi: ${MAX_WRONG} ta xato` : this.outcome === "fall" ? "Yuraklar tugadi" : "O'yin tugadi";
       const name = esc(A.heroName());
       const sub = win ? `${esc(ADDRESS)} — ${name} uyida!` : `Unga hech narsa bo'lmadi — ${name} kulib, yana yugurishga tayyor.`;
       const el = A.overlay(this.root, `<div class="ac-results ac-start">${A.shk(win ? "celebrate" : "encourage", 120)}
@@ -1020,7 +969,7 @@
       });
     },
     pause() {
-      if (this.paused || !["run", "brake", "question", "cross", "accident", "home", "fall", "intro"].includes(this.phase)) return;
+      if (this.paused || !["run", "brake", "explain", "home", "fall", "intro"].includes(this.phase)) return;
       this.paused = true;
       A.pauseMenu(this.root, {
         resume: () => { this.paused = false; this.last = performance.now(); },
@@ -1043,7 +992,7 @@
       const set = (k, v) => { const el = this.root.querySelector(`[data-hud-v="${k}"]`); if (el) el.innerHTML = v; };
       set("coins", this.coins.length);
       set("group", `${Math.min(PER_LIGHT, this.group)}/${PER_LIGHT}`);
-      set("lights", `${this.rightCount()}/${LIGHTS}`);
+      set("lights", `${this.answers.length}/${LIGHTS}`);
       set("hearts", [0, 1, 2].map((i) => `<i class="${i < this.hearts ? "is-on" : ""}" aria-hidden="true">♥</i>`).join(""));
       const h = this.root.querySelector('[data-hud-v="hearts"]');
       if (h) h.setAttribute("aria-label", `${this.hearts} ta yurak`);

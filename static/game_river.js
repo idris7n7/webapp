@@ -85,16 +85,15 @@
       this.D = D; this.THREE = THREE;
       const st = this.st = D.stage(this.stageEl, { fov: 40, far: 170, maxDpr: 1.6, envIntensity: 0.5 });
       D.curve.value = 0;
-      D.sky(st.scene, "#5fb4f2", "#dff2ff", { radius: 150 });
-      st.scene.fog = new THREE.Fog("#dff2ff", 45, 145);
-      st.scene.add(new THREE.HemisphereLight("#d4ecff", "#b9d79a", 1.1));
-      const sun = new THREE.DirectionalLight("#fff0d2", 2.4);
+      // a golden morning on the river that turns to sunset as the errands are done (the far mountains are part of the land)
+      const mood = this.mood = D.cinema.mood(st, { from: "morning", to: "sunset", fog: [45, 150], radius: 160, hills: false, moteCount: 60, moteOpts: { size: [34, 10, 40], pointSize: 0.14 } });
+      D.cinema.grade(this.stageEl.parentNode);
+      const sun = mood.key;
       sun.position.set(-8, 14, 10);
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
       Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12, near: 1, far: 50 });
       sun.shadow.bias = -0.0008;
-      st.scene.add(sun);
       this.v = new THREE.Vector3();
       this.texCache = {};
       this.buildLand();
@@ -158,13 +157,6 @@
       land.receiveShadow = true;
       land.castShadow = true;
       this.st.scene.add(land);
-      const sky = [];
-      for (let i = 0; i < 8; i++) {
-        const cx = -70 + i * 20 + rnd(-6, 6), cy = rnd(16, 26), cz = rnd(-125, -105);
-        for (let k = 0; k < 4; k++) sky.push(P(S("sphere"), "#ffffff", [cx + k * 4 - 6, cy + rnd(0, 1.5), cz], null, [rnd(7, 10), rnd(4, 6), 4]));
-      }
-      sky.push(P(S("sphere"), "#ffe27a", [40, 34, -118], null, [9, 9, 2]));
-      this.st.scene.add(new THREE.Mesh(D.merge(sky), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false })));
     },
     // the river: ripples drawn on a canvas, flowing towards the student (the texture slides along z)
     buildWater() {
@@ -603,7 +595,12 @@
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
       if (!this.paused) this.update(dt);
-      if (this.st) this.st.render();
+      if (this.st) {
+        this.timeK = (this.timeK || 0) + ((this.got.length / ITEMS) - (this.timeK || 0)) * 0.02;
+        if (Math.abs(this.timeK - this.mood.time) > 0.002) this.mood.setTime(this.timeK);
+        this.mood.update(dt, this.st.camera, 0);
+        this.st.render();
+      }
       this.raf = requestAnimationFrame((t) => this.loop(t));
     },
     updateTrip(dt) {

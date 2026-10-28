@@ -838,16 +838,32 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         token, _ = await self.student_token()
         grammar, vocab = self.arcade_content()
         sid = await self.arcade_start(token, "wordrun", "run_lost_at_3")
-        body = {"id": sid, "coins": (vocab * 2)[:30],
-                "answers": [self.pick(grammar[0]), self.pick(grammar[1]), self.pick(grammar[2], right=False)]}
+        # three wrong answers end the run (the third is the last); the right ones in between are kept
+        body = {"id": sid, "coins": (vocab * 2)[:50],
+                "answers": [self.pick(grammar[0], right=False), self.pick(grammar[1]), self.pick(grammar[2], right=False),
+                            self.pick(grammar[3]), self.pick(grammar[4], right=False)]}
         status, r = await self.call("POST", "/api/arcade/finish", token, body)
         self.assertEqual(status, 200, r)
-        self.assertEqual((r["outcome"], r["score"], r["attempts"], r["correct"], r["stats"]["coins"]), ("lose", 300, 3, 2, 30))
+        self.assertEqual((r["outcome"], r["score"], r["attempts"], r["correct"], r["stats"]["coins"]), ("lose", 500, 5, 2, 50))
         self.assertEqual(r["awarded"], server.GAME_DAILY_POINTS_CAP)   # 300 game points, the rating gets the daily game cap
         status, again = await self.call("POST", "/api/arcade/finish", token, body)
-        self.assertEqual((status, again["repeat"], again["awarded"], again["score"]), (200, True, r["awarded"], 300))
+        self.assertEqual((status, again["repeat"], again["awarded"], again["score"]), (200, True, r["awarded"], 500))
         _, lb = await self.call("GET", "/api/leaderboard?period=all", token)
         self.assertEqual((lb["me"]["allPoints"], lb["me"]["gameWeek"]), (server.GAME_DAILY_POINTS_CAP, {"wordrun": server.GAME_DAILY_POINTS_CAP}))
+
+    async def test_word_run_a_wrong_answer_costs_a_heart_not_the_run(self):
+        token, _ = await self.student_token()
+        grammar, vocab = self.arcade_content()
+        # one wrong answer, then on: the run is still going (quit early), nothing is lost
+        sid = await self.arcade_start(token, "wordrun", "run_one_wrong")
+        status, r = await self.call("POST", "/api/arcade/finish", token, {
+            "id": sid, "coins": vocab[:30], "answers": [self.pick(grammar[0], right=False), self.pick(grammar[1])]})
+        self.assertEqual((status, r["outcome"], r["correct"], r["attempts"]), (200, "quit", 1, 2), r)
+        # two wrong answers out of ten and home: still a win
+        sid = await self.arcade_start(token, "wordrun", "run_home_with_two_wrong")
+        answers = [self.pick(q, right=i not in (2, 6)) for i, q in enumerate(grammar[:10])]
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "coins": (vocab * 6)[:100], "answers": answers})
+        self.assertEqual((status, r["outcome"], r["correct"], r["score"]), (200, "win", 8, 1000), r)
 
     async def test_word_run_home_after_ten_right_answers_and_a_hundred_coins(self):
         token, _ = await self.student_token()
@@ -864,7 +880,8 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         cases = [
             {"coins": vocab[:31], "answers": good},                                             # 2 lights: at most 30 coins
             {"coins": vocab[:19], "answers": good},                                             # ...and at least 20
-            {"coins": vocab[:30], "answers": [self.pick(grammar[0], False), self.pick(grammar[1])]},  # ran on after a red light
+            {"coins": vocab[:30], "answers": [self.pick(grammar[0], False), self.pick(grammar[1], False), self.pick(grammar[2], False), self.pick(grammar[3])]},  # ran on after the third wrong answer
+            {"coins": vocab[:40], "answers": [self.pick(q, False) for q in grammar[:4]]},       # a fourth wrong answer
             {"coins": ["nope"] * 20, "answers": good},                                          # not a known word
             {"coins": vocab[:20], "answers": [good[0], good[0]]},                               # the same question twice
             {"coins": vocab[:20], "answers": [{"q": grammar[0]["id"], "c": 7}, good[1]]},       # not one of the options
@@ -897,6 +914,16 @@ class ServerTestCase(unittest.IsolatedAsyncioTestCase):
         sid = await self.arcade_start(token, "penalty", "penalty_bad_kicker")
         status, _ = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "kicker": 9, "keeper": 1, "rounds": rounds})
         self.assertEqual(status, 400)
+
+    async def test_penalty_rounds_need_no_draft_pick(self):
+        # the kick is the only decision of a round: the page sends no draft ("d" is null or missing)
+        token, _ = await self.student_token()
+        grammar, _ = self.arcade_content("B1")
+        sid = await self.arcade_start(token, "penalty", "penalty_no_draft", level="B1")
+        rounds = [dict(self.pick(q, right=i < 4), d=None) for i, q in enumerate(grammar[:10])]
+        rounds[0].pop("d")
+        status, r = await self.call("POST", "/api/arcade/finish", token, {"id": sid, "kicker": 2, "keeper": 4, "rounds": rounds})
+        self.assertEqual((status, r["correct"], r["score"]), (200, 4, 40), r)
 
     async def test_word_ninja_rewards_penalises_and_feeds_the_word_memory(self):
         token, _ = await self.student_token()
@@ -1639,6 +1666,17 @@ class FrontendFilesTests(unittest.TestCase):
         html = self.html()
         for name in ("game_wordrun.js", "game_penalty.js", "game_ninja.js", "game_river.js", "arcade/sprites.js"):
             self.assertNotIn("/static/" + name, html, name)
+
+    def test_the_movie_look_ships_with_the_3d_games(self):
+        # the shared cinematic layer (sky, hills, light, ink lines) is loaded right after arcade3d.js by every 3D game
+        with open(os.path.join(self.APP_DIR, "static", "arcade_core.js"), encoding="utf-8") as f:
+            core = f.read()
+        self.assertIn("arcade_cinema.js", core)
+        self.assertLess(core.index("arcade3d.js"), core.index("arcade_cinema.js"))
+        self.assertTrue(os.path.isfile(os.path.join(self.APP_DIR, "static", "arcade_cinema.js")))
+        for name in ("game_wordrun.js", "game_penalty.js", "game_ninja.js", "game_river.js"):
+            with open(os.path.join(self.APP_DIR, "static", name), encoding="utf-8") as f:
+                self.assertIn("D.cinema.mood(", f.read(), name)
 
     def test_every_local_script_and_stylesheet_exists(self):
         import re

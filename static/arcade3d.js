@@ -146,7 +146,9 @@
   function vcMaterial(bent, opts) {
     const k = "vc" + (bent ? "b" : "") + JSON.stringify(opts || {});
     if (!mats[k]) {
-      const m = new (T().MeshStandardMaterial)(Object.assign({ vertexColors: true, roughness: 0.82, metalness: 0 }, opts || {}));
+      const C = window.L1_3D && window.L1_3D.cinema; // the animated-movie look: soft cel shading
+      const m = C ? C.toonMaterial(Object.assign({ vertexColors: true }, opts || {}))
+        : new (T().MeshStandardMaterial)(Object.assign({ vertexColors: true, roughness: 0.82, metalness: 0 }, opts || {}));
       if (bent) bend(m);
       m.userData.shared = true;
       mats[k] = m;
@@ -156,7 +158,9 @@
   function mat(color, opts, bent) {
     const k = color + JSON.stringify(opts || {}) + (bent ? "b" : "");
     if (!mats[k]) {
-      const m = new (T().MeshStandardMaterial)(Object.assign({ color, roughness: 0.7, metalness: 0 }, opts || {}));
+      const C = window.L1_3D && window.L1_3D.cinema;
+      const m = C ? C.toonMaterial(Object.assign({ color }, opts || {}))
+        : new (T().MeshStandardMaterial)(Object.assign({ color, roughness: 0.7, metalness: 0 }, opts || {}));
       if (bent) bend(m);
       m.userData.shared = true;
       mats[k] = m;
@@ -422,7 +426,13 @@
     else put(head, shape("box"), "#8a3b2c", [0, -0.1, -0.15], [0.05, 0.012, 0.01]);
 
     const m = vcMaterial(!!look.bent, { roughness: 0.62 });
-    bins.forEach((list, j) => { const mesh = new THREE.Mesh(merge(list), m); mesh.castShadow = true; j.add(mesh); });
+    const cin = window.L1_3D && window.L1_3D.cinema;
+    bins.forEach((list, j) => {
+      const mesh = new THREE.Mesh(merge(list), m);
+      mesh.castShadow = true;
+      j.add(mesh);
+      if (cin && look.ink !== false) j.add(cin.outlineOf(mesh, !!look.bent)); // a thin dark-brown ink line, like a drawn cartoon
+    });
     if (look.number) { // the shirt number on the back (a kicker is usually seen from behind)
       const tex = textTexture(String(look.number), { w: 128, h: 128, color: look.numColor || "#ffffff", size: 96 });
       const num = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.8 }));

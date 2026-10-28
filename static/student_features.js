@@ -714,8 +714,8 @@
   // The arcade games (static/arcade_core.js and game_*.js, their content and picture frames) run the first time the Games
   // tab opens. When the browser is idle they are only downloaded (prefetch), not run, so the Home page stays light.
   const Lazy = {
-    files: ["arcade_data.js?v=2", "arcade/sprites.js?v=2", "arcade_core.js?v=4", "game_wordrun.js?v=4", "game_penalty.js?v=5",
-      "game_ninja.js?v=4", "game_river.js?v=5"],
+    files: ["arcade_data.js?v=2", "arcade/sprites.js?v=2", "arcade_core.js?v=8", "game_wordrun.js?v=8", "game_penalty.js?v=6",
+      "game_ninja.js?v=8", "game_river.js?v=6"],
     ready: false,
     promise: null,
     games() {

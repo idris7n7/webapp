@@ -33,6 +33,7 @@
       root.innerHTML = `<div class="ac-stage" data-stage></div><div class="pk3-dim" data-dim hidden></div>
         <div class="pk-page" data-page hidden></div><div data-targets></div>
         <div class="pk-aimhint" data-aimhint hidden></div>
+        <div class="pk-qbar" data-qbar hidden></div>
         <div class="ac-hud"><span class="ac-pill is-title">Penalti</span><span class="ac-pill" data-hud="round" hidden></span>
           <span class="ac-pill" data-hud="score" hidden></span><span class="ac-hud-fill"></span>${A.hudButtons()}</div>
         <div class="ac-banner" data-banner></div>`;
@@ -83,15 +84,15 @@
       this.D = D; this.THREE = THREE;
       const st = this.st = D.stage(this.stageEl, { fov: 34, far: 400, maxDpr: 1.6, envIntensity: 0.6 });
       D.curve.value = 0;
-      D.sky(st.scene, "#3f8fe8", "#cfe6ff", { radius: 300 });
-      st.scene.add(new THREE.HemisphereLight("#d6ecff", "#6a9a4a", 1.05));
-      const sun = this.sun = new THREE.DirectionalLight("#fff3dc", 2.4);
+      // the match ends at sunset: the cup final under the golden-hour sky (setTime follows the rounds)
+      const mood = this.mood = D.cinema.mood(st, { from: "afternoon", to: "sunset", fog: [90, 330], radius: 300, moteCount: 50, moteOpts: { size: [40, 14, 50], pointSize: 0.16 } });
+      D.cinema.grade(this.stageEl.parentNode);
+      const sun = this.sun = mood.key;
       sun.position.set(-12, 22, 18);
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
       Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 2, far: 70 });
       sun.target.position.set(0, 0, 6);
-      st.scene.add(sun, sun.target);
       this.buildPitch();
       this.buildGoal();
       this.buildStands();
@@ -302,9 +303,9 @@
       const ck = A.Ckpt.get("penalty");
       this.page.classList.remove("is-bottom");
       this.show(`<div class="pk-pick ac-start">${A.shk("thumbs_up", 120)}<h2>Penalti</h2>
-        <ul class="ac-rules"><li>Savolni o'qing, javobni tanlang va «Tayyorman!» tugmasini bosing.</li>
-          <li>Hakam hushtak chaladi — javoblar darvozaning chap, o'rta va o'ng tomonida paydo bo'ladi.</li>
-          <li>To'pni to'g'ri javob tomonga suring: to'g'ri — GOL, noto'g'ri — darvozabon ushlab qoladi. 10 ta zarba.</li></ul>
+        <ul class="ac-rules"><li>Savolni o'qing. Hakam hushtak chalganda javoblar darvozaning chap, o'rta va o'ng tomonida paydo bo'ladi.</li>
+          <li>To'pni to'g'ri javob tomonga suring: to'g'ri — GOL, noto'g'ri — darvozabon ushlab qoladi.</li>
+          <li>10 ta zarba. Ketma-ket gollar olomonni qizdiradi, kun esa kechga qarab ketadi!</li></ul>
         <span class="ac-lvl-line">Daraja: <b>${A.levelName(A.level())}</b></span>
         <div class="ac-actions is-col">${ck ? A.btn(`Davom ettirish (${ck.rounds.length}/${ROUNDS} zarba)`, 'data-ac="resume"', "is-primary") : ""}
           ${A.btn(ck ? "Yangi o'yin" : "Boshlash", 'data-ac="new"', ck ? "" : "is-primary")}${A.btn("Chiqish", 'data-ac="exit"', "is-ghost")}</div></div>`);
@@ -404,33 +405,24 @@
       if (!q) { this.finish(); return; }
       this.phase = "question";
       this.q = q;
-      this.draft = null;
+      this.draft = null; // one decision only: the kick itself (older saved rounds carried a draft pick)
       this.committed = false;
       this.anim = null;
       this.placeActors();
       this.panels.forEach((p) => { p.visible = false; });
       this.hud();
-      this.show(`<div class="ac-q" role="group" aria-label="Grammatika savoli">
-        <span class="ac-q-tag" style="background:var(--l1-primary)">Raund ${this.rounds.length + 1}/${ROUNDS}</span>
-        <div class="ac-q-text">${esc(q.q).replace("___", "<b>___</b>")}</div>
-        <div class="ac-opts">${q.o.map((o, i) => `<button type="button" class="ac-opt" data-opt="${i}" aria-pressed="false">${esc(o)}</button>`).join("")}</div>
-        <button type="button" class="ac-btn is-primary is-wide" data-ac="ready" disabled>Tayyorman!</button>
-        <span class="ac-muted">Javobni tanlang. Zarbadan oldin uni o'zgartirish mumkin.</span></div>`);
-      this.page.onclick = (ev) => {
-        const o = ev.target.closest("[data-opt]");
-        if (o && this.phase === "question") {
-          this.draft = +o.dataset.opt;
-          this.page.querySelectorAll("[data-opt]").forEach((b) => { const on = +b.dataset.opt === this.draft; b.classList.toggle("is-picked", on); b.setAttribute("aria-pressed", on); });
-          this.page.querySelector('[data-ac="ready"]').disabled = false;
-          A.sfx.tap();
-          return;
-        }
-        const r = ev.target.closest('[data-ac="ready"]');
-        if (r && !r.disabled && this.phase === "question" && this.draft != null) { r.disabled = true; this.whistle(); }
-      };
+      this.hidePage();
+      // the stadium stays in view: the question sits in a bar on top, the referee whistles, the answers appear on the goal
+      const bar = this.root.querySelector("[data-qbar]");
+      bar.hidden = false;
+      bar.setAttribute("role", "group");
+      bar.setAttribute("aria-label", "Grammatika savoli");
+      bar.innerHTML = `<span class="ac-q-tag" style="background:var(--l1-primary)">Raund ${this.rounds.length + 1}/${ROUNDS}</span>
+        <div class="ac-q-text">${esc(q.q).replace("___", "<b>___</b>")}</div>`;
+      this.timer = setTimeout(() => { if (this.phase === "question") this.whistle(); }, 1600);
     },
     whistle() {
-      this.phase = "whistle"; // Tayyorman! only arms the shot: nothing is scored here
+      this.phase = "whistle"; // the whistle only arms the shot: nothing is scored here
       this.hidePage();
       A.sfx.whistle();
       A.haptic("tap");
@@ -526,6 +518,7 @@
       this.phase = "shot";
       this.panels.forEach((p) => { p.material.opacity = 0.45; }); // see the ball and the keeper through them now
       this.root.querySelector("[data-aimhint]").hidden = true;
+      this.root.querySelector("[data-qbar]").hidden = true;
       this.root.querySelector("[data-targets]").innerHTML = "";
       // keeper: away from a right shot (a guess to one side on a middle shot), to the ball on a wrong one
       const away = zone === 1 ? (Math.random() < 0.5 ? 0 : 2) : 2 - zone;
@@ -612,7 +605,10 @@
             this.cheer = 1;
             this.sparks.burst(a.tx, a.ty, -0.8, "#ffd34d", 60, 5, 1.2, 4);
             this.sparks.burst(a.tx, a.ty, -0.8, "#ffffff", 30, 4, 1.0, 4);
-            this.banner("GOOOL!", "good");
+            let streak = 0;
+            for (let i = this.rounds.length - 1; i >= 0 && this.rounds[i].ok; i--) streak++;
+            this.banner(streak >= 3 ? `GOOOL! 🔥 ${streak} ketma-ket!` : "GOOOL!", "good");
+            if (streak >= 3) { this.cheer = 1.6; this.sparks.burst(0, 3, 4, "#ff8a3d", 70, 7, 1.6, 2); }
           } else {
             A.sfx.save(); A.sfx.wrong(); A.haptic("err");
             this.sparks.burst(a.tx, a.ty, 0, "#ffffff", 30, 3, 0.6, 2);
@@ -690,6 +686,9 @@
       cam.position.copy(this.camPos);
       cam.lookAt(this.camLook);
       if (Math.abs(cam.fov - fov) > 0.05) { cam.fov += (fov - cam.fov) * 0.12; cam.updateProjectionMatrix(); }
+      this.timeK = (this.timeK || 0) + ((this.rounds.length / ROUNDS) - (this.timeK || 0)) * 0.02;
+      if (Math.abs(this.timeK - this.mood.time) > 0.002) this.mood.setTime(this.timeK);
+      this.mood.update(0.016, cam, 0);
       st.render();
       if (this.trail && this.trail.length > 1) this.drawTrail();
     },
@@ -717,6 +716,7 @@
     explain() {
       if (!this.root) return;
       this.phase = "explain";
+      this.root.querySelector("[data-qbar]").hidden = true;
       const q = this.q, last = this.rounds[this.rounds.length - 1];
       if (this.rounds.length < ROUNDS) this.checkpoint(); else A.Ckpt.clear("penalty");
       this.show(`<div class="ac-q">
@@ -763,12 +763,13 @@
       if (this.paused || !["question", "whistle", "aim", "shot", "explain"].includes(this.phase)) return;
       this.paused = true;
       clearTimeout(this.timer);
-      const wasWhistle = this.phase === "whistle";
+      const wasWhistle = this.phase === "whistle", wasQuestion = this.phase === "question";
       A.pauseMenu(this.root, {
         resume: () => {
           this.paused = false;
           this.last = performance.now();
-          if (wasWhistle) { this.root.querySelectorAll(".pk3-whistle").forEach((e) => e.remove()); this.aim(); }
+          if (wasQuestion) this.whistle();
+          else if (wasWhistle) { this.root.querySelectorAll(".pk3-whistle").forEach((e) => e.remove()); this.aim(); }
           else if (this.phase === "explain") { const n = this.page.querySelector('[data-ac="next"]'); if (n) n.disabled = false; }
         },
         restart: () => { this.paused = false; this.endEarly(); this.pickKicker(); },
@@ -780,6 +781,7 @@
       this.phase = "results";
       A.finishSession(this.s, { kicker: this.kicker, keeper: this.keeper, rounds: this.rounds.map((r) => ({ q: r.q, c: r.c, d: r.d })) }, !this.rounds.length);
       this.root.querySelector("[data-targets]").innerHTML = "";
+      this.root.querySelector("[data-qbar]").hidden = true;
       this.root.querySelectorAll(".pk3-whistle").forEach((e) => e.remove());
       this.panels.forEach((p) => { p.visible = false; });
     },

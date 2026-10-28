@@ -2701,6 +2701,7 @@ ARCADE_POINTS = {
 }
 DICTIONARY_SAVE_BONUS = 20
 WORDRUN_COINS_PER_LIGHT, WORDRUN_LIGHTS = 10, 10
+WORDRUN_MAX_WRONG = 3     # Word Run: a wrong answer costs a heart; the third one ends the run
 PENALTY_ROUNDS, NINJA_CHALLENGES, RIVER_ITEMS, RIVER_MAX_WRONG = 10, 20, 20, 60
 # A real game takes time: at least this many seconds per coin / round / challenge / item before a report is believed.
 ARCADE_MIN_SECONDS = {"wordrun": 0.5, "penalty": 2, "ninja": 1.5, "river": 1.5}
@@ -2748,16 +2749,18 @@ def grade_arcade(game: str, data: dict) -> dict:
     if game == "wordrun":
         coins = word_ids("coins", WORDRUN_COINS_PER_LIGHT * WORDRUN_LIGHTS)
         oks = graded_questions(data.get("answers"), WORDRUN_LIGHTS)
-        # the run stops at the first wrong answer; every red light comes after exactly ten coins
-        if any(not ok for ok in oks[:-1]):
-            raise bad
+        # a wrong answer costs a heart and the run goes on; the third wrong answer ends it, so it is the last one.
+        # Every answer gate comes after exactly ten coins.
         n = len(oks)
-        lost = bool(oks) and not oks[-1]
+        wrong = n - sum(oks)
+        if wrong > WORDRUN_MAX_WRONG or (wrong == WORDRUN_MAX_WRONG and oks[-1]):
+            raise bad
+        lost = wrong == WORDRUN_MAX_WRONG
         top = WORDRUN_COINS_PER_LIGHT * n if (lost or n == WORDRUN_LIGHTS) else WORDRUN_COINS_PER_LIGHT * (n + 1)
         if not (WORDRUN_COINS_PER_LIGHT * n <= len(coins) <= top):
             raise bad
-        correct = sum(oks)
-        outcome = "win" if correct == WORDRUN_LIGHTS else "lose" if lost else "quit"
+        correct = n - wrong
+        outcome = "win" if n == WORDRUN_LIGHTS and not lost else "lose" if lost else "quit"
         return {"score": ARCADE_POINTS["coin"] * len(coins), "attempts": n, "correct": correct, "outcome": outcome,
                 "units": max(1, len(coins)), "words": coins, "stats": {"coins": len(coins)}}
     if game == "penalty":

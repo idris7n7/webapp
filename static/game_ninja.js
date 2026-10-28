@@ -25,7 +25,7 @@
   const G = {
     open(root) {
       this.root = root;
-      Object.assign(this, { phase: "loading", paused: false, raf: 0, t: 0, targets: [], parts: [], items: [], score: 0, mentor: "teach", camReady: false });
+      Object.assign(this, { phase: "loading", paused: false, raf: 0, t: 0, targets: [], parts: [], items: [], score: 0, streak: 0, mentor: "teach", camReady: false });
       root.innerHTML = `<div class="ac-stage" data-stage></div><canvas class="pk3-trail" data-trail></canvas>
         <div class="ac-hud"><span class="ac-pill is-title">Word Ninja</span><span class="ac-pill" data-hud="n">1/${CHALLENGES}</span>
           <span class="ac-pill" data-hud="score">0 ball</span><span class="ac-hud-fill"></span>${A.hudButtons()}</div>
@@ -76,33 +76,18 @@
     build() {
       const D = window.L1_3D, THREE = window.THREE;
       this.D = D; this.THREE = THREE;
-      const st = this.st = D.stage(this.stageEl, { fov: 40, far: 80, maxDpr: 1.75, envIntensity: 0.5 });
+      const st = this.st = D.stage(this.stageEl, { fov: 40, far: 320, maxDpr: 1.75, envIntensity: 0.5 });
       D.curve.value = 0;
-      st.scene.background = new THREE.Color("#3a2414");
-      st.scene.add(new THREE.HemisphereLight("#ffe9c9", "#5a3518", 1.0));
-      const key = new THREE.DirectionalLight("#fff1d8", 2.2);
+      // an open deck on a mountain top: the sky goes from sunset to dusk as the challenges pass, the lanterns glow brighter
+      const P = D.cinema.PALETTES;
+      const mood = this.mood = D.cinema.mood(st, { from: Object.assign({}, P.sunset, { sun: [0.55, 0.22, -1] }), to: Object.assign({}, P.dusk, { sun: [0.5, 0.06, -1] }),
+        fog: [40, 160], radius: 200, ground: { y: -14 }, moteCount: 70, moteOpts: { size: [30, 14, 24], pointSize: 0.2, color: "#ffc4d8", opacity: 0.85, fall: 0.7 } });
+      D.cinema.grade(this.stageEl.parentNode);
+      const key = mood.key;
       key.position.set(-5, 8, 12);
       key.castShadow = true;
       key.shadow.mapSize.set(1024, 1024);
       Object.assign(key.shadow.camera, { left: -12, right: 12, top: 9, bottom: -9, near: 1, far: 40 });
-      st.scene.add(key);
-      // the wooden wall: planks drawn on a canvas, warm light pools from two paper lanterns
-      const c = document.createElement("canvas");
-      c.width = 512; c.height = 512;
-      const g = c.getContext("2d");
-      for (let i = 0; i < 8; i++) {
-        const y = i * 64, base = [196, 128, 64].map((v) => v + (Math.random() - 0.5) * 22);
-        g.fillStyle = `rgb(${base[0]},${base[1]},${base[2]})`; g.fillRect(0, y, 512, 64);
-        for (let k = 0; k < 40; k++) { g.strokeStyle = `rgba(110,60,20,${0.08 + Math.random() * 0.12})`; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); const yy = y + Math.random() * 64; g.moveTo(0, yy); g.bezierCurveTo(170, yy + (Math.random() - 0.5) * 10, 340, yy + (Math.random() - 0.5) * 10, 512, yy); g.stroke(); }
-        g.fillStyle = "rgba(70,35,10,.55)"; g.fillRect(0, y + 62, 512, 3);
-      }
-      const tex = D.pictureTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(4, 2.5);
-      const wall = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
-      wall.position.z = -2.2;
-      wall.receiveShadow = true;
-      st.scene.add(wall);
       this.floor = new THREE.Mesh(new THREE.BoxGeometry(60, 1, 6), new THREE.MeshStandardMaterial({ color: "#8a5426", roughness: 0.7 }));
       this.floor.receiveShadow = true;
       st.scene.add(this.floor);
@@ -267,6 +252,7 @@
       if (this.committed || this.phase !== "falling") return;
       this.committed = true; // one answer per challenge: later hits of this swipe, a second finger, a tap, all ignored
       const ok = t.id === this.word.id;
+      this.streak = ok ? (this.streak || 0) + 1 : 0; // right answers in a row (only for the cheering)
       this.items.push({ w: this.word.id, p: t.id });
       this.score = this.calcScore();
       if (this.items.length >= CHALLENGES) { A.Ckpt.clear("ninja"); A.finishSession(this.s, { challenges: this.items }); } // the last answer: report now
@@ -277,7 +263,8 @@
       else if (ok) this.tapLiving(t);
       else this.miss(t);
       this.mentor = ok ? "cheer" : "sad";
-      this.banner(ok ? `To'g'ri! +${RULES.right}` : `Yana urinib ko'ring −${RULES.wrong}`, ok ? "good" : "bad");
+      this.banner(ok ? (this.streak >= 3 ? `To'g'ri! +${RULES.right} · 🔥 ${this.streak} ketma-ket` : `To'g'ri! +${RULES.right}`) : `Yana urinib ko'ring −${RULES.wrong}`, ok ? "good" : "bad");
+      if (ok && this.streak >= 3) this.sparks.burst(0, this.view.halfH * 0.5, 0.6, "#ffb020", 50, 6, 1.0, 4);
       A.haptic(ok ? "ok" : "err");
       this.hud();
       this.lastOk = ok;
@@ -285,6 +272,7 @@
     },
     slice(t, seg) {
       t.state = "cut";
+      this.slow = A.reducedMotion() ? 0 : 0.5;
       this.trail = [];
       A.sfx.slice(); A.sfx.right();
       // the cut runs along the swipe (screen y points down, world y up)
@@ -414,7 +402,8 @@
       if (!this.root || !this.st) return;
       const dt = Math.min(0.05, (now - this.last) / 1000);
       this.last = now;
-      if (!this.paused) this.update(dt);
+      const slowed = this.slow > 0 ? (this.slow -= dt, dt * 0.3) : dt; // a clean slice plays in slow motion
+      if (!this.paused) this.update(slowed);
       this.render();
       this.raf = requestAnimationFrame((t) => this.loop(t));
     },
@@ -424,6 +413,13 @@
       const reduce = A.reducedMotion();
       this.mentorFig.pose(this.mentor === "cheer" ? "cheer" : this.mentor === "sad" ? "sad" : this.mentor === "think" ? "think" : "wave", this.t);
       this.lanterns.forEach((l, i) => { l.rotation.z = Math.sin(this.t * 1.3 + i) * 0.06; });
+      const k = Math.min(1, this.items.length / CHALLENGES);
+      this.timeK = (this.timeK || 0) + (k - (this.timeK || 0)) * 0.03;
+      if (Math.abs(this.timeK - this.mood.time) > 0.002) {
+        this.mood.setTime(this.timeK);
+        this.lanterns.forEach((l) => { l.children[3].intensity = 8 + 24 * this.timeK; l.children[0].material.emissiveIntensity = 0.9 + 1.2 * this.timeK; });
+      }
+      this.mood.update(0.016, this.st.camera, -1.2); // petals drift down-wind
       for (const t of this.targets) {
         const o = t.obj.root;
         if (!t.frozen) {
